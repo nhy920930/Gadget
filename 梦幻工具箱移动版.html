@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#7b43f5">
+<title>梦幻工具箱移动版</title>
+<style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+        font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", sans-serif;
+        font-size: 15px; background: linear-gradient(180deg, #f2f4f7, #ccd0d6); margin: 0; padding: 10px;
+        max-width: 600px; margin: 0 auto; -webkit-text-size-adjust: 100%; color: #2f353c;
+    }
+    .app-header { text-align: center; font-size: 20px; font-weight: bold; color: #3d444d; padding: 12px 0; }
+    .card { background: #fff; border: 1px solid #d9dce3; border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+    .card-title { font-weight: bold; font-size: 16px; margin-bottom: 10px; color: #333; border-bottom: 1px solid #eef1f8; padding-bottom: 6px; }
+    .form-group { margin-bottom: 8px; }
+    .form-group label { display: block; font-size: 14px; font-weight: bold; color: #555; margin-bottom: 3px; }
+    .form-group input, .form-group select {
+        width: 100%; height: 40px; border: 1px solid #b0b6c3; border-radius: 4px;
+        padding: 0 8px; font-size: 15px; background: #fff;
+    }
+    .form-group input:focus, .form-group select:focus { border-color: #7b43f5; outline: none; }
+    .input-pair { display: flex; gap: 8px; margin-bottom: 8px; }
+    .input-pair .form-group { flex: 1; margin-bottom: 0; }
+    .btn-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .btn {
+        height: 42px; padding: 0 18px; border: none; border-radius: 4px;
+        background: linear-gradient(90deg, #7b43f5, #4895ef); color: #fff; font-size: 15px; font-weight: bold; cursor: pointer;
+        flex: 1; min-width: 80px;
+    }
+    .btn:active { background: linear-gradient(90deg, #5f33d8, #377cd8); }
+    .btn-danger { background: linear-gradient(90deg, #7b43f5, #4895ef); }
+    .btn-danger:active { background: linear-gradient(90deg, #5f33d8, #377cd8); }
+    .btn:disabled { background: linear-gradient(90deg, #d8dade, #c0c4ca); color: #9aa2ac; cursor: default; }
+    .btn-full { width: 100%; flex: none; }
+    .tip { color: #888; font-size: 13px; display: block; margin-top: 2px; }
+    .result { color: #d35400; font-weight: bold; font-size: 14px; display: block; margin-top: 8px; line-height: 1.6; }
+    #goldResult, #xiuResult { margin-top: 8px; font-size: 13px; color: #70787f; }
+    #goldResult b, #xiuResult b { color: #c0392b; }
+    #remindStatus { margin-top: 8px; font-size: 13px; color: #888; }
+    #remindStatus b { color: #2e8b57; }
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; }
+    table { border-collapse: collapse; width: 100%; min-width: 400px; background: transparent; }
+    th, td { border: 1px solid #c2c8d0; padding: 6px 8px; font-size: 14px; }
+    th { background-color: #6764f3; color: #ffffff; text-align: center; border-left-color: #6764f3; border-right-color: #6764f3; }
+    th.a1 { background: linear-gradient(90deg, #7b43f5, #7153f4); border-left-color: #7b43f5; border-right-color: #7153f4; }
+    th.a2 { background: linear-gradient(90deg, #7153f4, #6764f3); border-left-color: #7153f4; border-right-color: #6764f3; }
+    th.a3 { background: linear-gradient(90deg, #6764f3, #5c74f1); border-left-color: #6764f3; border-right-color: #5c74f1; }
+    th.a4 { background: linear-gradient(90deg, #5c74f1, #5285f0); border-left-color: #5c74f1; border-right-color: #5285f0; }
+    th.a5 { background: linear-gradient(90deg, #5285f0, #4895ef); border-left-color: #5285f0; border-right-color: #4895ef; }
+    th.g1 { background: linear-gradient(90deg, #7b43f5, #764bf4); border-left-color: #7b43f5; border-right-color: #764bf4; }
+    th.g2 { background: linear-gradient(90deg, #764bf4, #6e58f4); border-left-color: #764bf4; border-right-color: #6e58f4; }
+    th.g3 { background: linear-gradient(90deg, #6e58f4, #6764f3); border-left-color: #6e58f4; border-right-color: #6764f3; }
+    th.g4 { background: linear-gradient(90deg, #6764f3, #577cf1); border-left-color: #6764f3; border-right-color: #577cf1; }
+    th.g5 { background: linear-gradient(90deg, #577cf1, #4895ef); border-left-color: #577cf1; border-right-color: #4895ef; }
+    th.h1 { background: linear-gradient(90deg, #7b43f5, #754cf4); border-left-color: #7b43f5; border-right-color: #754cf4; }
+    th.h2 { background: linear-gradient(90deg, #754cf4, #7055f4); border-left-color: #754cf4; border-right-color: #7055f4; }
+    th.h3 { background: linear-gradient(90deg, #7055f4, #6a5ef3); border-left-color: #7055f4; border-right-color: #6a5ef3; }
+    th.h4 { background: linear-gradient(90deg, #6a5ef3, #6467f2); border-left-color: #6a5ef3; border-right-color: #6467f2; }
+    th.h5 { background: linear-gradient(90deg, #6467f2, #5f71f2); border-left-color: #6467f2; border-right-color: #5f71f2; }
+    th.h6 { background: linear-gradient(90deg, #5f71f2, #597af1); border-left-color: #5f71f2; border-right-color: #597af1; }
+    th.h7 { background: linear-gradient(90deg, #597af1, #5383f0); border-left-color: #597af1; border-right-color: #5383f0; }
+    th.h8 { background: linear-gradient(90deg, #5383f0, #4e8cf0); border-left-color: #5383f0; border-right-color: #4e8cf0; }
+    th.h9 { background: linear-gradient(90deg, #4e8cf0, #4895ef); border-left-color: #4e8cf0; border-right-color: #4895ef; }
+    th.x1 { background: linear-gradient(90deg, #7b43f5, #616cf2); border-left-color: #7b43f5; border-right-color: #616cf2; }
+    th.x2 { background: linear-gradient(90deg, #616cf2, #4895ef); border-left-color: #616cf2; border-right-color: #4895ef; }
+    .xiu-table { min-width: 0; }
+    .xiu-table td.xiu-item { text-align: left; font-weight: bold; }
+    .xiu-table td.xiu-val { text-align: left; }
+    td { text-align: right; }
+    td.lv, td.num { text-align: center; }
+    td.lv { font-weight: bold; }
+    tr.alt { background-color: #f9fafc; }
+    .history-header { margin-top: 12px; font-weight: bold; font-size: 15px; color: #555; padding-bottom: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+    .history-header select { width: 55px; height: 30px; border: 1px solid #b0b6c3; border-radius: 4px; font-size: 13px; }
+    .history-header .unit { font-weight: normal; font-size: 12px; color: #888; }
+    .btn-clear-hist { background: linear-gradient(90deg, #7b43f5, #4895ef); color: #fff; font-weight: bold; border: none; padding: 4px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+    .hist-del-btn { background: linear-gradient(90deg, #7b43f5, #4895ef); color: #fff; font-weight: bold; border: none; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 12px; }
+    .history-table tr.row-current { background-color: #fff8e1; }
+    .history-table td.hist-time { text-align: center; white-space: nowrap; font-size: 12px; color: #888; }
+    .history-table td.hist-info { text-align: left; font-size: 13px; }
+    .history-table td.hist-del { text-align: center; }
+    .history-table td.current-tag { text-align: center; font-weight: bold; color: #d35400; font-size: 13px; }
+    .history-table td.hist-tag { text-align: center; color: #888; font-size: 12px; }
+    /* 主题切换开关 */
+    .theme-toggle-row { display: flex; justify-content: flex-end; align-items: center; padding: 0 6px 6px; }
+    .theme-toggle { display: inline-flex; align-items: center; cursor: pointer; user-select: none; -webkit-user-select: none; }
+    .theme-toggle-chk { display: none; }
+    .theme-toggle-track {
+        display: inline-block; width: 44px; height: 24px; position: relative; vertical-align: middle;
+        background: linear-gradient(90deg, #d4d8de, #b4bac4); border-radius: 12px;
+        transition: background 0.25s;
+    }
+    .theme-toggle-chk:checked + .theme-toggle-track { background: linear-gradient(90deg, #7b43f5, #4895ef); }
+    .theme-toggle-knob {
+        display: block; width: 20px; height: 20px; position: absolute; top: 2px; left: 2px;
+        background: #ffffff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        transition: left 0.25s;
+    }
+    .theme-toggle-chk:checked + .theme-toggle-track .theme-toggle-knob { left: 22px; }
+    .theme-toggle-txt { font-size: 12px; color: #3d444d; margin-left: 6px; vertical-align: middle; font-weight: bold; }
+    /* 夜间主题 */
+    body.dark { background: linear-gradient(180deg, #2b2f35, #22262b); color: #c6cad0; }
+    body.dark .app-header { color: #aeb4bc; }
+    body.dark .card { background: rgba(43,47,53,0.78); border-color: #3c424a; }
+    body.dark .card-title { color: #aeb4bc; border-bottom-color: #3c424a; }
+    body.dark .form-group label { color: #aeb4bc; }
+    body.dark .form-group input, body.dark .form-group select { background: #292d33; border-color: #3c424a; color: #d2d6da; }
+    body.dark .form-group input:focus, body.dark .form-group select:focus { border-color: #7b43f5; }
+    body.dark .btn { background: linear-gradient(90deg, #8b5cf6, #5ba8f5); }
+    body.dark .btn:active { background: linear-gradient(90deg, #7042e0, #4690e8); }
+    body.dark .btn:disabled { background: linear-gradient(90deg, #3c4046, #2e3238); color: #767e86; }
+    body.dark .tip { color: #7c828a; }
+    body.dark #remindStatus { color: #7c828a; }
+    body.dark #remindStatus b { color: #4ecca3; }
+    body.dark #goldResult, body.dark #xiuResult { color: #7c828a; }
+    body.dark #goldResult b, body.dark #xiuResult b { color: #f0a050; }
+    body.dark th, body.dark td { border-color: #3c424a; }
+    body.dark td { color: #b6bcc2; }
+    body.dark th { background-color: #787af6; border-left-color: #787af6; border-right-color: #787af6; }
+    body.dark th.a1 { background: linear-gradient(90deg, #8b5cf6, #816bf6); border-left-color: #8b5cf6; border-right-color: #816bf6; }
+    body.dark th.a2 { background: linear-gradient(90deg, #816bf6, #787af6); border-left-color: #816bf6; border-right-color: #787af6; }
+    body.dark th.a3 { background: linear-gradient(90deg, #787af6, #6e8af5); border-left-color: #787af6; border-right-color: #6e8af5; }
+    body.dark th.a4 { background: linear-gradient(90deg, #6e8af5, #6599f5); border-left-color: #6e8af5; border-right-color: #6599f5; }
+    body.dark th.a5 { background: linear-gradient(90deg, #6599f5, #5ba8f5); border-left-color: #6599f5; border-right-color: #5ba8f5; }
+    body.dark th.g1 { background: linear-gradient(90deg, #8b5cf6, #8664f6); border-left-color: #8b5cf6; border-right-color: #8664f6; }
+    body.dark th.g2 { background: linear-gradient(90deg, #8664f6, #7f6ff6); border-left-color: #8664f6; border-right-color: #7f6ff6; }
+    body.dark th.g3 { background: linear-gradient(90deg, #7f6ff6, #787af6); border-left-color: #7f6ff6; border-right-color: #787af6; }
+    body.dark th.g4 { background: linear-gradient(90deg, #787af6, #6991f5); border-left-color: #787af6; border-right-color: #6991f5; }
+    body.dark th.g5 { background: linear-gradient(90deg, #6991f5, #5ba8f5); border-left-color: #6991f5; border-right-color: #5ba8f5; }
+    body.dark th.h1 { background: linear-gradient(90deg, #8b5cf6, #8664f6); border-left-color: #8b5cf6; border-right-color: #8664f6; }
+    body.dark th.h2 { background: linear-gradient(90deg, #8664f6, #806df6); border-left-color: #8664f6; border-right-color: #806df6; }
+    body.dark th.h3 { background: linear-gradient(90deg, #806df6, #7b75f6); border-left-color: #806df6; border-right-color: #7b75f6; }
+    body.dark th.h4 { background: linear-gradient(90deg, #7b75f6, #767ef6); border-left-color: #7b75f6; border-right-color: #767ef6; }
+    body.dark th.h5 { background: linear-gradient(90deg, #767ef6, #7086f5); border-left-color: #767ef6; border-right-color: #7086f5; }
+    body.dark th.h6 { background: linear-gradient(90deg, #7086f5, #6b8ff5); border-left-color: #7086f5; border-right-color: #6b8ff5; }
+    body.dark th.h7 { background: linear-gradient(90deg, #6b8ff5, #6697f5); border-left-color: #6b8ff5; border-right-color: #6697f5; }
+    body.dark th.h8 { background: linear-gradient(90deg, #6697f5, #60a0f5); border-left-color: #6697f5; border-right-color: #60a0f5; }
+    body.dark th.h9 { background: linear-gradient(90deg, #60a0f5, #5ba8f5); border-left-color: #60a0f5; border-right-color: #5ba8f5; }
+    body.dark th.x1 { background: linear-gradient(90deg, #8b5cf6, #7382f5); border-left-color: #8b5cf6; border-right-color: #7382f5; }
+    body.dark th.x2 { background: linear-gradient(90deg, #7382f5, #5ba8f5); border-left-color: #7382f5; border-right-color: #5ba8f5; }
+    body.dark .xiu-table td.xiu-item { color: #aeb4bc; }
+    body.dark tr.alt { background-color: #2c3038; }
+    body.dark .history-header { color: #aeb4bc; }
+    body.dark .history-table tr.row-current { background-color: #453a1e; }
+    body.dark .history-table td.hist-time { color: #7c828a; }
+    body.dark .history-table td.hist-info { color: #a6adb4; }
+    body.dark .history-table td.current-tag { color: #f0a050; }
+    body.dark .history-table td.hist-tag { color: #7c828a; }
+    body.dark .theme-toggle-txt { color: #aeb4bc; }
+    body.dark .result { color: #f0a050; }
+    @media (max-width: 380px) { .input-pair { flex-direction: column; gap: 6px; } }
+    /* 神器任务攻略 */
+    .sq-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .sq-group { flex-basis: 100%; margin-top: 6px; padding: 4px 10px; border-radius: 4px; color: #ffffff; font-weight: bold; font-size: 13px; background: linear-gradient(90deg, #4895ef, #7b43f5); }
+    body.dark .sq-group { background: linear-gradient(90deg, #5ba8f5, #8b5cf6); }
+    .sq-toggle { float: right; color: #7b43f5; font-size: 18px; font-weight: bold; }
+    body.dark .sq-toggle { color: #8b5cf6; }
+    .sq-card-toggle { cursor: pointer; }
+    .sq-link {
+        padding: 8px 12px; border-radius: 4px; color: #ffffff; font-weight: bold; font-size: 13px;
+        background: linear-gradient(90deg, #7b43f5, #4895ef); cursor: pointer;
+    }
+    .sq-link:active { background: linear-gradient(90deg, #5f33d8, #377cd8); }
+    #sqOverlay { position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.45); z-index: 900; display: none; }
+    #sqDialog {
+        position: fixed; left: 0; top: 0;
+        width: 100%; height: 100%; z-index: 901; display: none; flex-direction: column;
+        background: #fff; border-radius: 0; padding: 10px; box-sizing: border-box;
+    }
+    .sq-dialog-head { display: flex; align-items: center; margin-bottom: 8px; gap: 6px; flex-shrink: 0; }
+    #sqDialogTitle { flex: 1; font-weight: bold; font-size: 15px; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sq-dialog-btn {
+        height: 32px; padding: 0 10px; border: none; border-radius: 4px; color: #fff; font-size: 12px; font-weight: bold; cursor: pointer;
+        background: linear-gradient(90deg, #7b43f5, #4895ef); flex-shrink: 0;
+    }
+    .sq-dialog-btn:active { background: linear-gradient(90deg, #5f33d8, #377cd8); }
+    #sqFrame { flex: 1; width: 100%; border: 1px solid #d9dce3; border-radius: 4px; background: #fff; }
+    body.dark .sq-link { background: linear-gradient(90deg, #8b5cf6, #5ba8f5); }
+    body.dark #sqOverlay { background: rgba(0,0,0,0.6); }
+    body.dark #sqDialog { background: #2b2f35; }
+    body.dark #sqDialogTitle { color: #aeb4bc; }
+    body.dark #sqFrame { border-color: #3c424a; }
+</style>
+</head>
+<body>
+    <div class="app-header">梦幻工具箱移动版</div>
+    <div class="theme-toggle-row">
+        <label class="theme-toggle">
+            <input type="checkbox" id="chkTheme" class="theme-toggle-chk" onchange="toggleTheme()">
+            <span class="theme-toggle-track"><span class="theme-toggle-knob"></span></span>
+            <span class="theme-toggle-txt" id="themeTxt">☀ 日间</span>
+        </label>
+    </div>
+
+    <div class="card">
+        <div class="card-title">⏰ 定时提醒</div>
+        <div class="input-pair">
+            <div class="form-group"><label>小时</label><select id="selRemindHour"></select></div>
+            <div class="form-group"><label>分钟</label><select id="selRemindMinute"></select></div>
+            <div class="form-group"><label>秒</label><select id="selRemindSecond"></select></div>
+        </div>
+        <div class="form-group"><label>提醒内容</label><input type="text" id="txtRemindMsg" value="该起来活动一下啦，喝口水休息休息！"></div>
+        <div class="btn-row">
+            <button class="btn" id="btnRemindStart" onclick="startRemind()">运行</button>
+            <button class="btn" id="btnRemindStop" onclick="stopRemind()" disabled>停止</button>
+            <button class="btn" id="btnRemindTest" onclick="showRemindNotify()">测试</button>
+        </div>
+        <div id="remindStatus"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">👤 属性换算</div>
+        <div class="input-pair">
+            <div class="form-group"><label>种族</label>
+                <select id="selRace"><option value="human">人族</option><option value="immortal" selected>仙族</option><option value="demon">魔族</option></select>
+            </div>
+            <div class="form-group"><label>换算类型</label>
+                <select id="selCalcType" onchange="switchCalcType()"><option value="weapon" selected>⚔️ 武器换算</option><option value="equip">🛡️ 装备换算</option></select>
+            </div>
+        </div>
+        <div id="rowWeaponRequired" class="input-pair">
+            <div class="form-group"><label>武器伤害 <span class="tip" style="display:inline">必填</span></label><input type="number" step="any" id="txtWeaponDmg" onkeydown="onEnter(event,calcAttr)"></div>
+            <div class="form-group"><label>命中 <span class="tip" style="display:inline">必填</span></label><input type="number" step="any" id="txtWeaponHit" onkeydown="onEnter(event,calcAttr)"></div>
+        </div>
+        <div id="rowEquipRequired" class="input-pair" style="display:none">
+            <div class="form-group"><label>装备防御 <span class="tip" style="display:inline">必填</span></label><input type="number" step="any" id="txtEquipDef" onkeydown="onEnter(event,calcAttr)"></div>
+        </div>
+        <div class="input-pair">
+            <div class="form-group"><label>附加力量 <span class="tip" style="display:inline">选填</span></label><input type="number" step="any" id="txtStr" onkeydown="onEnter(event,calcAttr)"></div>
+            <div class="form-group"><label>附加魔力 <span class="tip" style="display:inline">选填</span></label><input type="number" step="any" id="txtMag" onkeydown="onEnter(event,calcAttr)"></div>
+        </div>
+        <div class="input-pair">
+            <div class="form-group"><label>附加体质 <span class="tip" style="display:inline">选填</span></label><input type="number" step="any" id="txtCon" onkeydown="onEnter(event,calcAttr)"></div>
+            <div class="form-group"><label>附加耐力 <span class="tip" style="display:inline">选填</span></label><input type="number" step="any" id="txtEnd" onkeydown="onEnter(event,calcAttr)"></div>
+        </div>
+        <div class="form-group"><label>附加敏捷 <span class="tip" style="display:inline">选填</span></label><input type="number" step="any" id="txtAgi" onkeydown="onEnter(event,calcAttr)"></div>
+        <button class="btn btn-full" id="btnCalcAttr" onclick="calcAttr()">计算武器属性</button>
+        <div id="divAttrTable" style="display:none" class="table-wrap">
+            <table><tr><th class="a1">伤害</th><th class="a2">法伤</th><th class="a3">防御</th><th class="a4">气血</th><th class="a5">速度</th></tr>
+            <tr><td class="num" id="tdADmg">/</td><td class="num" id="tdAMag">/</td><td class="num" id="tdADef">/</td><td class="num" id="tdAHp">/</td><td class="num" id="tdASpd">/</td></tr></table>
+        </div>
+        <div id="divHistory" style="display:none">
+            <div class="history-header">
+                <span>计算结果对比</span>
+                <button class="btn-clear-hist" onclick="clearHistory()">清空历史</button>
+                <select id="selHistoryMax" onchange="onChangeHistoryLimit()"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="5">5</option><option value="10" selected>10</option><option value="15">15</option><option value="20">20</option><option value="30">30</option></select>
+                <span class="unit">条</span>
+            </div>
+            <div id="divHistoryTable" class="table-wrap"></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">🏯 人物修炼消耗计算</div>
+        <div class="form-group"><label>修炼类型</label>
+            <select id="selXiuType"><option value="attack" selected>攻击修炼</option><option value="magic">法术修炼</option><option value="defend">防御修炼</option><option value="resist">抗法修炼</option><option value="hunt">猎术修炼</option></select>
+        </div>
+        <div class="input-pair">
+            <div class="form-group"><label>当前修炼等级 <span class="tip" style="display:inline">必填 0-25</span></label><input type="number" step="1" min="0" max="25" id="txtXiuCurLv" onkeydown="onEnter(event,calcXiu)"></div>
+            <div class="form-group"><label>当前经验 <span class="tip" style="display:inline">选填 默认0</span></label><input type="number" step="1" min="0" id="txtXiuCurExp" onkeydown="onEnter(event,calcXiu)"></div>
+        </div>
+        <div class="input-pair">
+            <div class="form-group"><label>目标修炼等级 <span class="tip" style="display:inline">必填 0-25</span></label><input type="number" step="1" min="0" max="25" id="txtXiuTgtLv" onkeydown="onEnter(event,calcXiu)"></div>
+            <div class="form-group"><label>目标经验 <span class="tip" style="display:inline">选填 默认0</span></label><input type="number" step="1" min="0" id="txtXiuTgtExp" onkeydown="onEnter(event,calcXiu)"></div>
+        </div>
+        <button class="btn btn-full" id="btnCalcXiu" onclick="calcXiu()">计算修炼消耗</button>
+        <div id="xiuResult"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-title sq-card-toggle" onclick="toggleSqSection()">⚔️ 神器任务攻略（序章/起/转/合）<span class="sq-toggle" id="sqToggleHint">▼</span></div>
+        <div id="sqSectionBody" style="display:none">
+            <span class="tip">点击任务名弹窗查看对应攻略（内容加载自网络）</span>
+            <div class="sq-links" id="sqLinks"></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">💰 汇率换算</div>
+        <div class="form-group"><label>金价比例（元/1000万梦幻币）</label><input type="number" step="any" id="txtGold" onkeydown="onEnter(event,calcGold)"></div>
+        <div class="input-pair">
+            <div class="form-group"><label>梦幻币（万） <span class="tip" style="display:inline">选填</span></label><input type="number" step="any" id="txtCoin" onkeydown="onEnter(event,calcGold)"></div>
+            <div class="form-group"><label>人民币（元） <span class="tip" style="display:inline">选填</span></label><input type="number" step="any" id="txtRmb" onkeydown="onEnter(event,calcGold)"></div>
+        </div>
+        <button class="btn btn-full" id="btnCalcGold" onclick="calcGold()">汇率换算</button>
+        <div id="goldResult"></div>
+    </div>
+    <div class="card">
+        <div class="card-title">💠 宝石成本计算</div>
+        <div class="form-group"><label>1级宝石单价（万）</label><input type="number" step="any" id="txtPrice" onkeydown="onEnter(event,calculate)"></div>
+        <button class="btn btn-full" onclick="calculate()">确认计算</button>
+        <span class="tip">合成规则：2个N级宝石 = 1个(N+1)级宝石</span>
+        <div class="table-wrap" id="resultArea"></div>
+    </div>
+
+    <div id="sqOverlay" onclick="closeSq()"></div>
+    <div id="sqDialog">
+        <div class="sq-dialog-head">
+            <span id="sqDialogTitle"></span>
+            <button class="sq-dialog-btn" onclick="openSqBrowser()">在浏览器中打开</button>
+            <button class="sq-dialog-btn" onclick="closeSq()">✕ 关闭</button>
+        </div>
+        <iframe id="sqFrame" src="about:blank" onload="sqLoaded()"></iframe>
+    </div>
+
+<script>
+// ================== 工具函数 ==================
+function pad2(n) { return (n < 10 ? '0' : '') + n; }
+function isNum(v) { return v !== '' && !isNaN(v) && isFinite(v); }
+function fmt(v, d) { return Number(v).toFixed(d); }
+function gv(id) { return document.getElementById(id).value; }
+function onEnter(e, fn) { if (e.key === 'Enter') fn(); }
+var RACE_CN = { human: '人族', immortal: '仙族', demon: '魔族' };
+
+// ================== 金价比例 ==================
+function getGoldRatio() {
+    var v = gv('txtGold');
+    if (v === '' || !isNum(v) || parseFloat(v) <= 0) { alert('请先在金价比例中输入大于0的有效数字！'); document.getElementById('txtGold').focus(); return 0; }
+    return parseFloat(v);
+}
+function calcGold() {
+    var g = getGoldRatio(); if (!g) return;
+    var cv = gv('txtCoin'), rv = gv('txtRmb'), c = -1, r = -1, cls;
+    if (cv !== '') {
+        if (!isNum(cv) || parseFloat(cv) < 0) { alert('梦幻币必须为非负数字（不填默认不换算）！'); document.getElementById('txtCoin').focus(); return; }
+        c = parseFloat(cv);
+    }
+    if (rv !== '') {
+        if (!isNum(rv) || parseFloat(rv) < 0) { alert('人民币必须为非负数字（不填默认不换算）！'); document.getElementById('txtRmb').focus(); return; }
+        r = parseFloat(rv);
+    }
+    var h = '<table class="xiu-table"><tr><th class="x1" width="30%">项目</th><th class="x2">结果</th></tr>';
+    h += '<tr><td class="xiu-item">金价比例</td><td class="xiu-val">' + fmt(g,2) + ' 元 / 1000万梦幻币</td></tr>';
+    h += '<tr class="alt"><td class="xiu-item">基准换算</td><td class="xiu-val">1 元 = ' + fmt(1000/g,2) + ' 万梦幻币，1 万梦幻币 = ' + fmt(g/1000,4) + ' 元</td></tr>';
+    if (c >= 0) h += '<tr><td class="xiu-item">梦幻币 → 人民币</td><td class="xiu-val">' + fmt(c,2) + ' 万梦幻币 ≈ <b>' + fmt(c/1000*g,2) + '</b> 元</td></tr>';
+    if (r >= 0) { cls = c >= 0 ? ' class="alt"' : ''; h += '<tr'+cls+'><td class="xiu-item">人民币 → 梦幻币</td><td class="xiu-val">' + fmt(r,2) + ' 元 ≈ <b>' + fmt(r/g*1000,2) + '</b> 万梦幻币</td></tr>'; }
+    h += '</table>';
+    document.getElementById('goldResult').innerHTML = h;
+}
+
+// ================== 宝石成本 ==================
+function calculate() {
+    var v = gv('txtPrice'); if (!isNum(v) || parseFloat(v) <= 0) { alert('请输入大于0的有效数字！'); return; }
+    var p = parseFloat(v), h = '<table><tr><th class="g1" width="10%">等级</th><th class="g2" width="15%">需要1级宝石</th><th class="g3" width="15%">累计1级宝石</th><th class="g4" width="30%">单个成本(万)</th><th class="g5" width="30%">累计成本(万)</th></tr>';
+    for (var i=1;i<=15;i++) { var n=Math.pow(2,i-1),c=Math.pow(2,i)-1,cls=i%2===0?' class="alt"':''; h+='<tr'+cls+'><td class="lv">'+i+'级</td><td class="num">'+n+'</td><td class="num">'+c+'</td><td>'+fmt(n*p,2)+'</td><td>'+fmt(c*p,2)+'</td></tr>'; }
+    document.getElementById('resultArea').innerHTML = h + '</table>';
+}
+
+// ================== 属性换算 ==================
+function switchCalcType() {
+    var isW = gv('selCalcType') === 'weapon';
+    document.getElementById('rowWeaponRequired').style.display = isW ? '' : 'none';
+    document.getElementById('rowEquipRequired').style.display = isW ? 'none' : '';
+    document.getElementById('btnCalcAttr').textContent = isW ? '计算武器属性' : '计算装备属性';
+    document.getElementById('divAttrTable').style.display = 'none';
+}
+function calcAttr() { gv('selCalcType') === 'weapon' ? calcWeapon() : calcEquip(); }
+function getCoeffs(race) {
+    return race==='human' ? [0.67,1.5,5] : race==='immortal' ? [0.57,1.6,4.5] : [0.77,1.4,6];
+}
+function getAttrs() {
+    var s=0,m=0,c=0,e=0,a=0,v;
+    v=gv('txtStr'); if(v!==''&&isNum(v)) s=parseFloat(v);
+    v=gv('txtMag'); if(v!==''&&isNum(v)) m=parseFloat(v);
+    v=gv('txtCon'); if(v!==''&&isNum(v)) c=parseFloat(v);
+    v=gv('txtEnd'); if(v!==''&&isNum(v)) e=parseFloat(v);
+    v=gv('txtAgi'); if(v!==''&&isNum(v)) a=parseFloat(v);
+    return [s,m,c,e,a];
+}
+
+var lastDesc='', lastResult='', arrHistory=[], historyCount=0;
+
+function calcWeapon() {
+    var dv=gv('txtWeaponDmg'), hv=gv('txtWeaponHit');
+    if (!isNum(dv)||dv==='') { alert('请输入武器伤害！'); return; }
+    if (!isNum(hv)||hv==='') { alert('请输入武器命中！'); return; }
+    var dmg=parseFloat(dv), hit=parseFloat(hv), race=gv('selRace'), co=getCoeffs(race), at=getAttrs();
+    var str=at[0],mag=at[1],con=at[2],end=at[3],agi=at[4];
+    var totDmg=dmg+str*co[0], spirit=str*0.4+mag*0.7+end*0.2+con*0.3;
+    var phys=hit/3+totDmg, magic=dmg/4+spirit, def=end*co[1], hp=con*co[2], spd=con*0.1+end*0.1+str*0.1+agi*0.7;
+    saveToHistory();
+    setTable(phys,magic,def,hp,spd);
+    lastDesc='武器 '+(RACE_CN[race]||race)+' 伤害:'+dmg+' 命中:'+hit;
+    if(str) lastDesc+=' 力:'+str; if(mag) lastDesc+=' 魔:'+mag; if(con) lastDesc+=' 体:'+con; if(end) lastDesc+=' 耐:'+end; if(agi) lastDesc+=' 敏:'+agi;
+    lastResult='伤害:'+fmt(phys,2)+'  法伤:'+fmt(magic,2)+'  防御:'+fmt(def,2)+'  气血:'+fmt(hp,2)+'  速度:'+fmt(spd,2);
+    renderHistory();
+}
+function calcEquip() {
+    var dv=gv('txtEquipDef');
+    if (!isNum(dv)||dv==='') { alert('请输入装备防御！'); return; }
+    var def0=parseFloat(dv), race=gv('selRace'), co=getCoeffs(race), at=getAttrs();
+    var str=at[0],mag=at[1],con=at[2],end=at[3],agi=at[4];
+    var dmg=str*co[0], spirit=str*0.4+mag*0.7+end*0.2+con*0.3;
+    var defense=def0+end*co[1], hp=con*co[2], spd=con*0.1+end*0.1+str*0.1+agi*0.7;
+    saveToHistory();
+    setTable(dmg,spirit,defense,hp,spd);
+    lastDesc='装备 '+(RACE_CN[race]||race)+' 防御:'+def0;
+    if(str) lastDesc+=' 力:'+str; if(mag) lastDesc+=' 魔:'+mag; if(con) lastDesc+=' 体:'+con; if(end) lastDesc+=' 耐:'+end; if(agi) lastDesc+=' 敏:'+agi;
+    lastResult='伤害:'+fmt(dmg,2)+'  法伤:'+fmt(spirit,2)+'  防御:'+fmt(defense,2)+'  气血:'+fmt(hp,2)+'  速度:'+fmt(spd,2);
+    renderHistory();
+}
+function setTable(a,b,c,d,e) {
+    document.getElementById('divAttrTable').style.display='';
+    document.getElementById('tdADmg').textContent=fmt(a,2); document.getElementById('tdAMag').textContent=fmt(b,2);
+    document.getElementById('tdADef').textContent=fmt(c,2); document.getElementById('tdAHp').textContent=fmt(d,2); document.getElementById('tdASpd').textContent=fmt(e,2);
+}
+
+// ================== 历史记录 ==================
+function saveToHistory() {
+    if (!lastDesc) return;
+    arrHistory.push([pad2(new Date().getHours())+':'+pad2(new Date().getMinutes())+':'+pad2(new Date().getSeconds()), lastDesc, lastResult]);
+    historyCount++; lastDesc=''; lastResult=''; trimHistory();
+}
+function trimHistory() {
+    var max=parseInt(gv('selHistoryMax'));
+    if (historyCount<=max) return;
+    var rm=historyCount-max; arrHistory.splice(0,rm); historyCount=max;
+}
+function onChangeHistoryLimit() { trimHistory(); if(lastDesc||historyCount>0) renderHistory(); }
+function deleteHistory(i) { arrHistory.splice(i,1); historyCount--; renderHistory(); }
+function clearHistory() { arrHistory=[]; historyCount=0; document.getElementById('divHistory').style.display='none'; document.getElementById('divHistoryTable').innerHTML=''; }
+function renderHistory() {
+    var h='<table class="history-table"><tr><th class="h1" width="8%"></th><th class="h2" width="9%">时间</th><th class="h3" width="28%">输入参数</th><th class="h4">伤害</th><th class="h5">法伤</th><th class="h6">防御</th><th class="h7">气血</th><th class="h8">速度</th><th class="h9" width="6%"></th></tr>';
+    if (lastDesc) {
+        var cr=lastResult.split('  ');
+        h+='<tr class="row-current"><td class="current-tag">当前</td><td class="hist-time">'+pad2(new Date().getHours())+':'+pad2(new Date().getMinutes())+':'+pad2(new Date().getSeconds())+'</td><td class="hist-info">'+lastDesc+'</td>';
+        for(var k=0;k<5;k++){var p=k<cr.length?cr[k].split(':')[1]:'/';h+='<td class="num">'+p+'</td>';}
+        h+='<td></td></tr>';
+    }
+    for (var i=historyCount-1;i>=0;i--) {
+        var e=arrHistory[i], hr=e[2].split('  ');
+        h+='<tr><td class="hist-tag">历史</td><td class="hist-time">'+e[0]+'</td><td class="hist-info">'+e[1]+'</td>';
+        for(var j=0;j<5;j++){var q=j<hr.length?hr[j].split(':')[1]:'/';h+='<td class="num">'+q+'</td>';}
+        h+='<td class="hist-del"><button class="hist-del-btn" onclick="deleteHistory('+i+')">删</button></td></tr>';
+    }
+    h+='</table>'; document.getElementById('divHistoryTable').innerHTML=h; document.getElementById('divHistory').style.display='';
+}
+
+// ================== 神器任务攻略（序章/起/转/合，游侠网 3g 移动版：单列无侧边栏、图片全 https） ==================
+var SQ_TASKS = [
+    ['序章', 'https://3g.ali213.net/gl/html/1270483.html'],
+    ['01 黄金甲之谜', 'https://3g.ali213.net/gl/html/1487223.html'],
+    ['02 泪痕碗之念', 'https://3g.ali213.net/gl/html/1341839.html'],
+    ['03 墨魂笔之踪', 'https://3g.ali213.net/gl/html/1218869.html'],
+    ['04 月光草之逝', 'https://3g.ali213.net/gl/html/1417191.html'],
+    ['05 轩辕剑之陨', 'https://3g.ali213.net/gl/html/1488319.html'],
+    ['06 千机锁之梏', 'https://3g.ali213.net/gl/html/1417123.html'],
+    ['07 清泽谱之惠', 'https://3g.ali213.net/gl/html/1265783.html'],
+    ['08 独弦琴之思', 'https://3g.ali213.net/gl/html/1488517.html'],
+    ['09 星斗盘之约', 'https://3g.ali213.net/gl/html/1489779.html'],
+    ['10 华光玉之伤', 'https://3g.ali213.net/gl/html/1490861.html'],
+    ['11 天罡印之谋', 'https://3g.ali213.net/gl/html/1491603.html'],
+    ['12 噬魂齿之争', 'https://3g.ali213.net/gl/html/1383189.html'],
+    ['13 昆仑镜之忆', 'https://3g.ali213.net/gl/html/1258467.html'],
+    ['14 明火珠之影', 'https://3g.ali213.net/gl/html/1491643.html'],
+    ['15 四神鼎之怨', 'https://3g.ali213.net/gl/html/1335975.html'],
+    ['16 玲珑结之愿', 'https://3g.ali213.net/gl/html/1491681.html'],
+    ['17 莫愁铃之恩', 'https://3g.ali213.net/gl/html/1491713.html'],
+    ['18 鸿蒙石之鉴', 'https://3g.ali213.net/gl/html/1461647.html'],
+    ['19 魔息角之怒', 'https://3g.ali213.net/gl/html/1417185.html'],
+    ['转01 重铸黄金甲', 'https://3g.ali213.net/gl/html/1491743.html'],
+    ['转02 情葬泪痕碗', 'https://3g.ali213.net/gl/html/1492343.html'],
+    ['转03 义绝墨魂笔', 'https://3g.ali213.net/gl/html/1492395.html'],
+    ['转04 历劫月光草', 'https://3g.ali213.net/gl/html/1492421.html'],
+    ['转05 命殒轩辕剑', 'https://3g.ali213.net/gl/html/1492491.html'],
+    ['转06 迷踪清泽谱', 'https://3g.ali213.net/gl/html/1461721.html'],
+    ['转07 悲瑟独弦琴', 'https://3g.ali213.net/gl/html/1492573.html'],
+    ['转08 魂印星斗盘', 'https://3g.ali213.net/gl/html/1461587.html'],
+    ['转09 忧思华光玉', 'https://3g.ali213.net/gl/html/1492819.html'],
+    ['转10 诡夺天罡印', 'https://3g.ali213.net/gl/html/1492863.html'],
+    ['转11 魔灭噬魂齿', 'https://3g.ali213.net/gl/html/1492941.html'],
+    ['转12 神归昆仑镜', 'https://3g.ali213.net/gl/html/1494873.html'],
+    ['转13 离焰明火珠', 'https://3g.ali213.net/gl/html/1495085.html'],
+    ['转14 计斗四神鼎', 'https://3g.ali213.net/gl/html/1495135.html'],
+    ['转15 觅影玲珑结', 'https://3g.ali213.net/gl/html/1495231.html'],
+    ['合01 噬魂迷勇志', 'https://3g.ali213.net/gl/html/1495269.html'],
+    ['合02 万怨出四神', 'https://3g.ali213.net/gl/html/1495391.html'],
+    ['合03 侠意问清泽', 'https://3g.ali213.net/gl/html/1424439.html'],
+    ['合04 独弦绝悲音', 'https://3g.ali213.net/gl/html/1495433.html'],
+    ['合05 烈义锻天罡', 'https://3g.ali213.net/gl/html/1425447.html'],
+    ['合06 玲珑系相思', 'https://3g.ali213.net/gl/html/1495473.html'],
+    ['合07 金甲碎雄图', 'https://3g.ali213.net/gl/html/1495517.html'],
+    ['合08 月光洗离恨', 'https://3g.ali213.net/gl/html/1495959.html'],
+    ['合09 痴念拭泪痕', 'https://3g.ali213.net/gl/html/1496027.html'],
+    ['合10 星斗成哀谶', 'https://3g.ali213.net/gl/html/1416303.html'],
+    ['合11 昆仑启镜心', 'https://3g.ali213.net/gl/html/1329307.html'],
+    ['合12 秉笔绘墨魂', 'https://3g.ali213.net/gl/html/1496163.html'],
+    ['合13 明火焚傲骨', 'https://3g.ali213.net/gl/html/1496193.html'],
+    ['合14 剑胆铸轩辕', 'https://3g.ali213.net/gl/html/1496229.html'],
+    ['合15 如梦前尘', 'https://3g.ali213.net/gl/html/1528669.html']
+];
+var SQ_GROUPS = [['序章', 0], ['神器任务·起', 1], ['神器任务·转', 20], ['神器任务·合', 35]];
+var sqCurrent = -1;
+function renderSqLinks() {
+    var h = '', g = 0;
+    for (var i = 0; i < SQ_TASKS.length; i++) {
+        if (g < SQ_GROUPS.length && SQ_GROUPS[g][1] === i) { h += '<span class="sq-group">' + SQ_GROUPS[g][0] + '</span>'; g++; }
+        h += '<a class="sq-link" onclick="showSq(' + i + ')">' + SQ_TASKS[i][0] + '</a>';
+    }
+    document.getElementById('sqLinks').innerHTML = h;
+}
+function showSq(i) {
+    sqCurrent = i;
+    document.getElementById('sqDialogTitle').textContent = SQ_TASKS[i][0] + '（加载中…）';
+    // #Content 为 3g 页正文容器锚点，加载后直接定位到正文，跳过顶部导航
+    document.getElementById('sqFrame').src = SQ_TASKS[i][1] + '#Content';
+    document.getElementById('sqOverlay').style.display = 'block';
+    document.getElementById('sqDialog').style.display = 'flex';
+}
+function toggleSqSection() {
+    var b = document.getElementById('sqSectionBody'), h = document.getElementById('sqToggleHint');
+    if (b.style.display === 'none') { b.style.display = ''; h.textContent = '▲'; }
+    else { b.style.display = 'none'; h.textContent = '▼'; }
+}
+function sqLoaded() {
+    if (sqCurrent >= 0) document.getElementById('sqDialogTitle').textContent = SQ_TASKS[sqCurrent][0];
+}
+function closeSq() {
+    document.getElementById('sqDialog').style.display = 'none';
+    document.getElementById('sqOverlay').style.display = 'none';
+    document.getElementById('sqFrame').src = 'about:blank';
+    sqCurrent = -1;
+}
+function openSqBrowser() {
+    if (sqCurrent >= 0) window.open(SQ_TASKS[sqCurrent][1], '_blank');
+}
+
+// ================== 修炼消耗 ==================
+var XIU_TYPES = { attack: ['攻击修炼', 3, 4.5], magic: ['法术修炼', 3, 4.5], hunt: ['猎术修炼', 3, 4.5], defend: ['防御修炼', 2, 3.5], resist: ['抗法修炼', 2, 3.5] };
+function xiuExpForLv(lv) { return (lv*lv + lv*3 + 11) * 10; }
+function calcXiu() {
+    var t = gv('selXiuType'), cv = gv('txtXiuCurLv'), tv = gv('txtXiuTgtLv');
+    var curLv, tgtLv, curExp = 0, tgtExp = 0, v;
+    if (!isNum(cv) || parseInt(cv) != cv || parseInt(cv) < 0 || parseInt(cv) > 25) { alert('请输入当前修炼等级（0-25的整数）！'); document.getElementById('txtXiuCurLv').focus(); return; }
+    curLv = parseInt(cv);
+    v = gv('txtXiuCurExp');
+    if (v !== '') { if (!isNum(v) || parseFloat(v) < 0 || parseInt(v) != parseFloat(v)) { alert('当前经验必须为非负整数（不填默认按0计算）！'); document.getElementById('txtXiuCurExp').focus(); return; } curExp = parseInt(v); }
+    if (!isNum(tv) || parseInt(tv) != tv || parseInt(tv) < 0 || parseInt(tv) > 25) { alert('请输入目标修炼等级（0-25的整数）！'); document.getElementById('txtXiuTgtLv').focus(); return; }
+    tgtLv = parseInt(tv);
+    if (tgtLv < curLv) { alert('目标修炼等级不能低于当前修炼等级！'); document.getElementById('txtXiuTgtLv').focus(); return; }
+    v = gv('txtXiuTgtExp');
+    if (v !== '') { if (!isNum(v) || parseFloat(v) < 0 || parseInt(v) != parseFloat(v)) { alert('目标经验必须为非负整数（不填默认按0计算）！'); document.getElementById('txtXiuTgtExp').focus(); return; } tgtExp = parseInt(v); }
+    if (curLv < 25 && curExp >= xiuExpForLv(curLv+1)) { alert('当前经验已达到升'+(curLv+1)+'级所需（'+xiuExpForLv(curLv+1)+'点），请先调整当前等级！'); return; }
+    if (tgtLv < 25 && tgtExp >= xiuExpForLv(tgtLv+1)) { alert('目标经验已达到升'+(tgtLv+1)+'级所需（'+xiuExpForLv(tgtLv+1)+'点），请调整目标等级！'); return; }
+    var needExp = tgtExp - curExp;
+    for (var i = curLv+1; i <= tgtLv; i++) needExp += xiuExpForLv(i);
+    if (needExp < 0) { alert('当前修炼进度已达到目标！'); return; }
+    var times = Math.ceil(needExp / 10), info = XIU_TYPES[t];
+    var needContrib = tgtLv * 150, contribHtml = '≥ <b>' + needContrib + '</b> 点';
+    var h = '<table class="xiu-table"><tr><th class="x1" width="30%">项目</th><th class="x2">结果</th></tr>';
+    h += '<tr><td class="xiu-item">修炼类型</td><td class="xiu-val">' + info[0] + '</td></tr>';
+    h += '<tr class="alt"><td class="xiu-item">修炼进度</td><td class="xiu-val">' + curLv + '级（' + curExp + '经验） → ' + tgtLv + '级（' + tgtExp + '经验）</td></tr>';
+    if (times === 0) {
+        h += '<tr><td class="xiu-item">还需修炼经验</td><td class="xiu-val"><b>0</b> 点（已达到目标进度，无需修炼）</td></tr>';
+        h += '<tr class="alt"><td class="xiu-item">要求帮派总贡献</td><td class="xiu-val">' + contribHtml + '（目标等级 ' + tgtLv + ' × 150）</td></tr>';
+    } else {
+        var coinN = times * info[1], coinF = times * info[2];
+        h += '<tr><td class="xiu-item">还需修炼经验</td><td class="xiu-val"><b>' + needExp + '</b> 点</td></tr>';
+        h += '<tr class="alt"><td class="xiu-item">修炼次数</td><td class="xiu-val"><b>' + times + '</b> 次（每次提升 10 点经验）</td></tr>';
+        h += '<tr><td class="xiu-item">正常模式消耗</td><td class="xiu-val"><b>' + fmt(coinN, coinN%1?1:0) + '</b> 万梦幻币 + <b>' + times*5 + '</b> 点资材</td></tr>';
+        h += '<tr class="alt"><td class="xiu-item">免资材模式消耗</td><td class="xiu-val"><b>' + fmt(coinF, coinF%1?1:0) + '</b> 万梦幻币（不消耗资材）</td></tr>';
+        h += '<tr><td class="xiu-item">要求帮派总贡献</td><td class="xiu-val">' + contribHtml + '（目标等级 ' + tgtLv + ' × 150）</td></tr>';
+    }
+    h += '</table>';
+    document.getElementById('xiuResult').innerHTML = h;
+}
+
+// ================== 主题切换 ==================
+function toggleTheme() {
+    var chk = document.getElementById('chkTheme');
+    if (chk.checked) {
+        document.body.className = 'dark';
+        document.getElementById('themeTxt').textContent = '🌙 夜间';
+    } else {
+        document.body.className = '';
+        document.getElementById('themeTxt').textContent = '☀ 日间';
+    }
+}
+
+// ================== 定时提醒 ==================
+var remindTimerId=null, remindUiTimerId=null, remindLastFired='', remindHour=-1, remindMinute=0, remindSecond=0;
+function fillRemindOptions() {
+    var sH=document.getElementById('selRemindHour'),sM=document.getElementById('selRemindMinute'),sS=document.getElementById('selRemindSecond');
+    var o=document.createElement('option'); o.text='不设置'; o.value='-1'; sH.add(o);
+    for(var i=0;i<=23;i++){var oh=document.createElement('option');oh.text=pad2(i);oh.value=String(i);sH.add(oh);}
+    for(var j=0;j<=59;j++){var om=document.createElement('option');om.text=pad2(j);om.value=String(j);sM.add(om);var os=document.createElement('option');os.text=pad2(j);os.value=String(j);sS.add(os);}
+}
+function startRemind() {
+    remindHour=parseInt(gv('selRemindHour'));remindMinute=parseInt(gv('selRemindMinute'));remindSecond=parseInt(gv('selRemindSecond'));remindLastFired='';
+    document.getElementById('btnRemindStart').disabled=true;document.getElementById('btnRemindStop').disabled=false;document.getElementById('btnRemindTest').disabled=true;
+    document.getElementById('selRemindHour').disabled=true;document.getElementById('selRemindMinute').disabled=true;document.getElementById('selRemindSecond').disabled=true;
+    stopTimers();remindTimerId=setInterval(checkRemindTime,1000);remindUiTimerId=setInterval(refreshRemindStatus,1000);checkRemindTime();refreshRemindStatus();
+}
+function stopRemind() {
+    stopTimers();document.getElementById('btnRemindStart').disabled=false;document.getElementById('btnRemindStop').disabled=true;document.getElementById('btnRemindTest').disabled=false;
+    document.getElementById('selRemindHour').disabled=false;document.getElementById('selRemindMinute').disabled=false;document.getElementById('selRemindSecond').disabled=false;
+    document.getElementById('remindStatus').innerHTML='已停止';
+}
+function stopTimers(){if(remindTimerId){clearInterval(remindTimerId);remindTimerId=null;}if(remindUiTimerId){clearInterval(remindUiTimerId);remindUiTimerId=null;}}
+function checkRemindTime() {
+    var now=new Date(),tgt,dk,key;
+    if(remindHour>=0){tgt=new Date(now.getFullYear(),now.getMonth(),now.getDate(),remindHour,remindMinute,remindSecond);dk=Math.floor((now-tgt)/1000);key=String(now.getDate());if(dk>=0&&dk<=10&&remindLastFired!==key){remindLastFired=key;showRemindNotify();}}
+    else{tgt=new Date(now.getFullYear(),now.getMonth(),now.getDate(),now.getHours(),remindMinute,remindSecond);dk=Math.floor((now-tgt)/1000);key=now.getDate()+'-'+now.getHours();if(dk>=0&&dk<=10&&remindLastFired!==key){remindLastFired=key;showRemindNotify();}}
+}
+function refreshRemindStatus() {
+    var now=new Date(),nxt,mode;
+    if(remindHour>=0){nxt=new Date(now.getFullYear(),now.getMonth(),now.getDate(),remindHour,remindMinute,remindSecond);if(nxt<=now)nxt=new Date(nxt.getTime()+86400000);mode='每天 '+pad2(remindHour)+':'+pad2(remindMinute)+':'+pad2(remindSecond);}
+    else{nxt=new Date(now.getFullYear(),now.getMonth(),now.getDate(),now.getHours(),remindMinute,remindSecond);if(nxt<=now)nxt=new Date(nxt.getTime()+3600000);mode='每小时第 '+pad2(remindMinute)+' 分 '+pad2(remindSecond)+' 秒';}
+    var df=Math.floor((nxt-now)/1000);
+    document.getElementById('remindStatus').innerHTML='<b>运行中</b>（'+mode+'） 下次提醒 '+pad2(nxt.getHours())+':'+pad2(nxt.getMinutes())+':'+pad2(nxt.getSeconds())+'（还剩 '+Math.floor(df/3600)+' 时 '+Math.floor((df%3600)/60)+' 分 '+(df%60)+' 秒）';
+}
+function showRemindNotify() {
+    var msg=gv('txtRemindMsg')||'时间到啦！',title='定时提醒 '+pad2(new Date().getHours())+':'+pad2(new Date().getMinutes())+':'+pad2(new Date().getSeconds());
+    if('Notification' in window&&Notification.permission==='granted'){new Notification(title,{body:msg});playBeep();}
+    else if('Notification' in window&&Notification.permission!=='denied'){Notification.requestPermission().then(function(p){if(p==='granted')new Notification(title,{body:msg});});playBeep();alert(title+'\n'+msg);}
+    else{playBeep();alert(title+'\n'+msg);}
+}
+function playBeep(){try{var c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator();o.connect(c.destination);o.frequency.value=800;o.start();setTimeout(function(){o.stop();c.close();},300);}catch(e){}}
+
+// ================== 初始化 ==================
+window.onload=function(){fillRemindOptions();renderSqLinks();if('Notification' in window&&Notification.permission==='default')Notification.requestPermission();};
+</script>
+</body>
+</html>

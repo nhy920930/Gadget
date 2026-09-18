@@ -1,0 +1,1260 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>梦幻工具箱</title>
+<hta:application
+    id="toolBox"
+    applicationname="梦幻工具箱"
+    border="thick"
+    maximizebutton="yes"
+    minimizebutton="yes"
+    scroll="auto"
+    singleinstance="yes"
+    contextmenu="no" />
+<style type="text/css">
+    body { font-family: "Microsoft YaHei", SimSun; font-size: 14px; background-color: #ccd0d6; color: #2f353c; margin: 0; padding: 18px; }
+    .input-bar {
+        width: 100%; padding: 16px 14px; font-size: 14px; margin-bottom: 16px;
+        background-color: #e8eaee;
+        border: 2px solid; border-color: #f8fafc #a2a8b2 #a2a8b2 #f8fafc;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#F2FFFFFF', endColorstr='#D8D8DCE4');
+    }
+    .input-bar label { font-weight: bold; display: inline-block; width: 220px; text-align: right; color: #3d444d; vertical-align: middle; }
+    .input-bar input, .input-bar select {
+        width: 150px; height: 30px; padding: 0 8px; font-size: 14px;
+        vertical-align: middle;
+        background-color: #eef0f3; color: #2f353c;
+        border: 2px solid; border-color: #9aa2ac #ffffff #ffffff #9aa2ac;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#E8FFFFFF', endColorstr='#D8E4E8EE');
+    }
+    .input-bar select { background-color: #f1f4f7; }
+    .input-bar button {
+        height: 34px; padding: 0 22px; margin-left: 10px; cursor: pointer;
+        vertical-align: middle;
+        font-size: 14px; font-weight: bold; color: #ffffff;
+        background-color: #7b43f5;
+        border: 2px solid; border-color: #7b43f5 #4895ef #4895ef #7b43f5;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7B43F5', endColorstr='#FF4895EF');
+    }
+    .input-bar button:active {
+        border-color: #5f33d8 #377cd8 #377cd8 #5f33d8;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF5F33D8', endColorstr='#FF377CD8');
+    }
+    #btnCalcAttr, #btnCalcGold, #btnCalculate, #btnCalcXiu { width: 120px; padding: 0; }
+    .tip { color: #70787f; margin-left: 10px; font-size: 13px; vertical-align: middle; }
+    #goldResult { margin-top: 10px; font-size: 13px; color: #70787f; }
+    #goldResult b { color: #c0392b; }
+    .hist-del-btn {
+        background-color: #7b43f5; color: #ffffff; font-weight: bold;
+        border: 2px solid; border-color: #7b43f5 #4895ef #4895ef #7b43f5;
+        padding: 1px 6px; cursor: pointer; font-size: 12px;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7B43F5', endColorstr='#FF4895EF');
+    }
+    body.dark .hist-del-btn {
+        background-color: #7b43f5;
+        border-color: #8b5cf6 #5ba8f5 #5ba8f5 #8b5cf6;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF8B5CF6', endColorstr='#FF5BA8F5');
+    }
+    .input-bar button[disabled] {
+        color: #9aa2ac; cursor: default;
+        background-color: #d8dade;
+        border-color: #e6e8eb #b6bac0 #b6bac0 #e6e8eb;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#D8DADE', endColorstr='#C0C4CA');
+    }
+    #remindStatus { margin-top: 10px; margin-left: 226px; font-size: 13px; color: #70787f; }
+    #remindStatus b { color: #2e8b57; }
+    #xiuResult { margin-top: 10px; font-size: 13px; color: #70787f; }
+    #xiuResult b { color: #c0392b; }
+    .xiu-table td.xiu-item { text-align: left; font-weight: bold; color: #3d444d; }
+    .xiu-table td.xiu-val { text-align: left; }
+    th.x1 { background-color: #7b43f5; border-left-color: #7b43f5; border-right-color: #616cf2; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7B43F5', endColorstr='#FF616CF2'); }
+    th.x2 { background-color: #616cf2; border-left-color: #616cf2; border-right-color: #4895ef; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF616CF2', endColorstr='#FF4895EF'); }
+    #resultArea {
+        margin-top: 16px; height: 600px; overflow-y: auto;
+        background-color: #eceef1;
+        border: 2px solid; border-color: #9aa2ac #ffffff #ffffff #9aa2ac;
+    }
+    table { border-collapse: collapse; width: 100%; background-color: transparent; }
+    th, td { border: 1px solid #c2c8d0; padding: 8px 10px; font-size: 14px; }
+    th {
+        text-align: center; color: #ffffff;
+        background-color: #6764f3;
+        border-left-color: #6764f3; border-right-color: #6764f3;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#FF6764F3', endColorstr='#FF5C5AE8');
+    }
+    th.a1 { background-color: #7b43f5; border-left-color: #7b43f5; border-right-color: #7153f4; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7B43F5', endColorstr='#FF7153F4'); }
+    th.a2 { background-color: #7153f4; border-left-color: #7153f4; border-right-color: #6764f3; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7153F4', endColorstr='#FF6764F3'); }
+    th.a3 { background-color: #6764f3; border-left-color: #6764f3; border-right-color: #5c74f1; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF6764F3', endColorstr='#FF5C74F1'); }
+    th.a4 { background-color: #5c74f1; border-left-color: #5c74f1; border-right-color: #5285f0; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF5C74F1', endColorstr='#FF5285F0'); }
+    th.a5 { background-color: #5285f0; border-left-color: #5285f0; border-right-color: #4895ef; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF5285F0', endColorstr='#FF4895EF'); }
+    th.g1 { background-color: #7b43f5; border-left-color: #7b43f5; border-right-color: #764bf4; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7B43F5', endColorstr='#FF764BF4'); }
+    th.g2 { background-color: #764bf4; border-left-color: #764bf4; border-right-color: #6e58f4; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF764BF4', endColorstr='#FF6E58F4'); }
+    th.g3 { background-color: #6e58f4; border-left-color: #6e58f4; border-right-color: #6764f3; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF6E58F4', endColorstr='#FF6764F3'); }
+    th.g4 { background-color: #6764f3; border-left-color: #6764f3; border-right-color: #577cf1; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF6764F3', endColorstr='#FF577CF1'); }
+    th.g5 { background-color: #577cf1; border-left-color: #577cf1; border-right-color: #4895ef; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF577CF1', endColorstr='#FF4895EF'); }
+    th.h1 { background-color: #7b43f5; border-left-color: #7b43f5; border-right-color: #754cf4; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7B43F5', endColorstr='#FF754CF4'); }
+    th.h2 { background-color: #754cf4; border-left-color: #754cf4; border-right-color: #7055f4; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF754CF4', endColorstr='#FF7055F4'); }
+    th.h3 { background-color: #7055f4; border-left-color: #7055f4; border-right-color: #6a5ef3; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7055F4', endColorstr='#FF6A5EF3'); }
+    th.h4 { background-color: #6a5ef3; border-left-color: #6a5ef3; border-right-color: #6467f2; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF6A5EF3', endColorstr='#FF6467F2'); }
+    th.h5 { background-color: #6467f2; border-left-color: #6467f2; border-right-color: #5f71f2; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF6467F2', endColorstr='#FF5F71F2'); }
+    th.h6 { background-color: #5f71f2; border-left-color: #5f71f2; border-right-color: #597af1; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF5F71F2', endColorstr='#FF597AF1'); }
+    th.h7 { background-color: #597af1; border-left-color: #597af1; border-right-color: #5383f0; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF597AF1', endColorstr='#FF5383F0'); }
+    th.h8 { background-color: #5383f0; border-left-color: #5383f0; border-right-color: #4e8cf0; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF5383F0', endColorstr='#FF4E8CF0'); }
+    th.h9 { background-color: #4e8cf0; border-left-color: #4e8cf0; border-right-color: #4895ef; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF4E8CF0', endColorstr='#FF4895EF'); }
+    td { text-align: right; color: #2f353c; }
+    td.lv, td.num { text-align: center; }
+    td.lv { font-weight: bold; }
+    tr.alt { background-color: #e6e9ed; }
+    .history-header { margin-top: 14px; font-weight: bold; font-size: 14px; color: #3d444d; padding-bottom: 6px; }
+    .history-table td.hist-time { text-align: center; white-space: nowrap; font-size: 12px; color: #70787f; }
+    .history-table td.hist-info { text-align: left; font-size: 13px; }
+    .history-table td.hist-del { text-align: center; }
+    .history-table tr.row-current { background-color: #fff3d6; }
+    .history-table td.current-tag { text-align: center; font-weight: bold; color: #c0392b; font-size: 13px; }
+    .history-table td.hist-tag { text-align: center; color: #70787f; font-size: 12px; }
+    .history-header select {
+        width: 50px; height: 24px; font-size: 12px;
+        background-color: #eef0f3;
+        border: 2px solid; border-color: #9aa2ac #ffffff #ffffff #9aa2ac;
+    }
+    .btn-clear-hist {
+        background-color: #7b43f5; color: #ffffff; font-weight: bold;
+        border: 2px solid; border-color: #7b43f5 #4895ef #4895ef #7b43f5;
+        padding: 2px 12px; cursor: pointer; font-size: 12px; margin-left: 4px;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7B43F5', endColorstr='#FF4895EF');
+    }
+    .btn-clear-hist:active {
+        border-color: #5f33d8 #377cd8 #377cd8 #5f33d8;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF5F33D8', endColorstr='#FF377CD8');
+    }
+    body.dark { background-color: #22262b; color: #c6cad0; }
+    body.dark .input-bar {
+        background-color: #2b2f35;
+        border-color: #4a5058 #0e1013 #0e1013 #4a5058;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#C8333740', endColorstr='#B0252930');
+    }
+    body.dark .input-bar label { color: #aeb4bc; }
+    body.dark input, body.dark select {
+        background-color: #292d33; color: #d2d6da;
+        border-color: #0e1013 #4a5058 #4a5058 #0e1013;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#C8292D33', endColorstr='#B022252B');
+    }
+    body.dark .input-bar select { background-color: #272b31; }
+    body.dark .input-bar button {
+        background-color: #7b43f5; color: #ffffff;
+        border-color: #8b5cf6 #5ba8f5 #5ba8f5 #8b5cf6;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF8B5CF6', endColorstr='#FF5BA8F5');
+    }
+    body.dark .input-bar button:active {
+        border-color: #6a3de0 #4a90e8 #4a90e8 #6a3de0;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7042E0', endColorstr='#FF4690E8');
+    }
+    body.dark .input-bar button[disabled] {
+        color: #767e86;
+        background-color: #3c4046;
+        border-color: #4c5158 #26292e #26292e #4c5158;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#3C4046', endColorstr='#2E3238');
+    }
+    body.dark .tip { color: #7c828a; }
+    body.dark #goldResult { color: #7c828a; }
+    body.dark #goldResult b { color: #f0a050; }
+    body.dark table { background-color: transparent; }
+    body.dark th {
+        background-color: #787af6; color: #ffffff; border-color: #5a4a90;
+        border-left-color: #787af6; border-right-color: #787af6;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#FF787AF6', endColorstr='#FF6E70E8');
+    }
+    body.dark th.a1 { background-color: #8b5cf6; border-left-color: #8b5cf6; border-right-color: #816bf6; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF8B5CF6', endColorstr='#FF816BF6'); }
+    body.dark th.a2 { background-color: #816bf6; border-left-color: #816bf6; border-right-color: #787af6; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF816BF6', endColorstr='#FF787AF6'); }
+    body.dark th.a3 { background-color: #787af6; border-left-color: #787af6; border-right-color: #6e8af5; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF787AF6', endColorstr='#FF6E8AF5'); }
+    body.dark th.a4 { background-color: #6e8af5; border-left-color: #6e8af5; border-right-color: #6599f5; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF6E8AF5', endColorstr='#FF6599F5'); }
+    body.dark th.a5 { background-color: #6599f5; border-left-color: #6599f5; border-right-color: #5ba8f5; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF6599F5', endColorstr='#FF5BA8F5'); }
+    body.dark th.g1 { background-color: #8b5cf6; border-left-color: #8b5cf6; border-right-color: #8664f6; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF8B5CF6', endColorstr='#FF8664F6'); }
+    body.dark th.g2 { background-color: #8664f6; border-left-color: #8664f6; border-right-color: #7f6ff6; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF8664F6', endColorstr='#FF7F6FF6'); }
+    body.dark th.g3 { background-color: #7f6ff6; border-left-color: #7f6ff6; border-right-color: #787af6; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7F6FF6', endColorstr='#FF787AF6'); }
+    body.dark th.g4 { background-color: #787af6; border-left-color: #787af6; border-right-color: #6991f5; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF787AF6', endColorstr='#FF6991F5'); }
+    body.dark th.g5 { background-color: #6991f5; border-left-color: #6991f5; border-right-color: #5ba8f5; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF6991F5', endColorstr='#FF5BA8F5'); }
+    body.dark th.h1 { background-color: #8b5cf6; border-left-color: #8b5cf6; border-right-color: #8664f6; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF8B5CF6', endColorstr='#FF8664F6'); }
+    body.dark th.h2 { background-color: #8664f6; border-left-color: #8664f6; border-right-color: #806df6; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF8664F6', endColorstr='#FF806DF6'); }
+    body.dark th.h3 { background-color: #806df6; border-left-color: #806df6; border-right-color: #7b75f6; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF806DF6', endColorstr='#FF7B75F6'); }
+    body.dark th.h4 { background-color: #7b75f6; border-left-color: #7b75f6; border-right-color: #767ef6; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7B75F6', endColorstr='#FF767EF6'); }
+    body.dark th.h5 { background-color: #767ef6; border-left-color: #767ef6; border-right-color: #7086f5; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF767EF6', endColorstr='#FF7086F5'); }
+    body.dark th.h6 { background-color: #7086f5; border-left-color: #7086f5; border-right-color: #6b8ff5; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7086F5', endColorstr='#FF6B8FF5'); }
+    body.dark th.h7 { background-color: #6b8ff5; border-left-color: #6b8ff5; border-right-color: #6697f5; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF6B8FF5', endColorstr='#FF6697F5'); }
+    body.dark th.h8 { background-color: #6697f5; border-left-color: #6697f5; border-right-color: #60a0f5; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF6697F5', endColorstr='#FF60A0F5'); }
+    body.dark th.h9 { background-color: #60a0f5; border-left-color: #60a0f5; border-right-color: #5ba8f5; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF60A0F5', endColorstr='#FF5BA8F5'); }
+    body.dark td { border-color: #3c424a; color: #b6bcc2; }
+    body.dark tr.alt { background-color: #2c3038; }
+    body.dark .history-header { color: #aeb4bc; }
+    body.dark .history-table td.hist-time { color: #7c828a; }
+    body.dark .history-table td.hist-info { color: #a6adb4; }
+    body.dark .history-table tr.row-current { background-color: #453a1e; }
+    body.dark .history-table td.current-tag { color: #f0a050; }
+    body.dark .history-table td.hist-tag { color: #7c828a; }
+    body.dark #remindStatus { color: #7c828a; }
+    body.dark #remindStatus b { color: #4ecca3; }
+    body.dark #xiuResult { color: #7c828a; }
+    body.dark #xiuResult b { color: #f0a050; }
+    body.dark .xiu-table td.xiu-item { color: #aeb4bc; }
+    body.dark th.x1 { background-color: #8b5cf6; border-left-color: #8b5cf6; border-right-color: #7382f5; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF8B5CF6', endColorstr='#FF7382F5'); }
+    body.dark th.x2 { background-color: #7382f5; border-left-color: #7382f5; border-right-color: #5ba8f5; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7382F5', endColorstr='#FF5BA8F5'); }
+    body.dark #resultArea {
+        background-color: #262a30;
+        border-color: #0e1013 #3c424a #3c424a #0e1013;
+    }
+    body.dark #resultArea table { background-color: transparent; }
+    body.dark .btn-clear-hist {
+        background-color: #7b43f5; color: #ffffff;
+        border-color: #8b5cf6 #5ba8f5 #5ba8f5 #8b5cf6;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF8B5CF6', endColorstr='#FF5BA8F5');
+    }
+    body.dark .btn-clear-hist:active {
+        border-color: #6a3de0 #4a90e8 #4a90e8 #6a3de0;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7042E0', endColorstr='#FF4690E8');
+    }
+    body.dark .history-header select {
+        background-color: #292d33;
+        border-color: #0e1013 #3c424a #3c424a #0e1013;
+    }
+    .theme-toggle { position: fixed; top: 10px; right: 20px; z-index: 999; }
+    .theme-toggle-chk { position: absolute; left: -9999px; }
+    .theme-toggle-track {
+        display: inline-block; width: 48px; height: 24px; position: relative; vertical-align: middle; cursor: pointer;
+        background-color: #c8ccd2;
+        border: 2px solid; border-color: #a0a6ae #eceef2 #eceef2 #a0a6ae;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#D8D4D8DE', endColorstr='#C0B4BAC4');
+    }
+    .theme-toggle-knob {
+        display: block; width: 20px; height: 20px; position: absolute; top: 0; left: 0;
+        background-color: #f2f4f6;
+        border: 2px solid; border-color: #ffffff #98a0a8 #98a0a8 #ffffff;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#EAFFFFFF', endColorstr='#D8E2E6EC');
+    }
+    .theme-toggle-txt { font-size: 12px; color: #3d444d; margin-left: 6px; vertical-align: middle; font-weight: bold; }
+    body.dark .theme-toggle-track {
+        background-color: #7b43f5;
+        border-color: #6a3de0 #5ba8f5 #5ba8f5 #6a3de0;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF8B5CF6', endColorstr='#FF5BA8F5');
+    }
+    body.dark .theme-toggle-track .theme-toggle-knob { left: 24px; }
+    body.dark .theme-toggle-knob {
+        background-color: #2e3238;
+        border-color: #6a7078 #16181c #16181c #6a7078;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#C82E3238', endColorstr='#B026292E');
+    }
+    body.dark .theme-toggle-txt { color: #aeb4bc; }
+    /* 神器任务攻略 */
+    #sqLinks { margin-top: 8px; }
+    .sq-group {
+        display: block; margin: 8px 0 2px 0; padding: 2px 10px; cursor: default;
+        color: #ffffff; font-weight: bold; font-size: 13px;
+        background-color: #4895ef;
+        border: 2px solid; border-color: #7b43f5 #16181c #16181c #7b43f5;
+    }
+    body.dark .sq-group { background-color: #5ba8f5; }
+    .sq-toggle {
+        display: inline-block; margin-left: 10px; padding: 2px 12px; cursor: pointer;
+        color: #ffffff; font-weight: bold; font-size: 12px;
+        background-color: #4895ef;
+        border: 2px solid; border-color: #7b43f5 #16181c #16181c #7b43f5;
+    }
+    body.dark .sq-toggle { background-color: #5ba8f5; }
+    .sq-link {
+        display: inline-block; margin: 3px 6px 3px 0; padding: 4px 12px; cursor: pointer;
+        color: #ffffff; font-weight: bold; font-size: 13px;
+        background-color: #7b43f5;
+        border: 2px solid; border-color: #7b43f5 #4895ef #4895ef #7b43f5;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7B43F5', endColorstr='#FF4895EF');
+    }
+    body.dark .sq-link {
+        background-color: #8b5cf6;
+        border-color: #8b5cf6 #5ba8f5 #5ba8f5 #8b5cf6;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF8B5CF6', endColorstr='#FF5BA8F5');
+    }
+    #sqOverlay {
+        position: absolute; left: 0; top: 0; z-index: 900; display: none;
+        background-color: #000000;
+        filter: progid:DXImageTransform.Microsoft.Alpha(opacity=40);
+    }
+    body.dark #sqOverlay { filter: progid:DXImageTransform.Microsoft.Alpha(opacity=55); }
+    #sqDialog {
+        position: absolute; z-index: 901; display: none; padding: 10px;
+        background-color: #e8eaee;
+        border: 2px solid; border-color: #f8fafc #a2a8b2 #a2a8b2 #f8fafc;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#F2FFFFFF', endColorstr='#D8D8DCE4');
+    }
+    body.dark #sqDialog {
+        background-color: #2b2f35;
+        border-color: #4a5058 #0e1013 #0e1013 #4a5058;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#C8333740', endColorstr='#B0252930');
+    }
+    .sq-dialog-head { margin-bottom: 8px; }
+    #sqDialogTitle { font-weight: bold; font-size: 14px; color: #3d444d; margin-right: 8px; vertical-align: middle; }
+    body.dark #sqDialogTitle { color: #aeb4bc; }
+    .sq-dialog-btn {
+        height: 28px; padding: 0 14px; margin-left: 8px; cursor: pointer; vertical-align: middle;
+        font-size: 13px; font-weight: bold; color: #ffffff;
+        background-color: #7b43f5;
+        border: 2px solid; border-color: #7b43f5 #4895ef #4895ef #7b43f5;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7B43F5', endColorstr='#FF4895EF');
+    }
+    body.dark .sq-dialog-btn {
+        background-color: #8b5cf6;
+        border-color: #8b5cf6 #5ba8f5 #5ba8f5 #8b5cf6;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF8B5CF6', endColorstr='#FF5BA8F5');
+    }
+    #sqFrame {
+        background-color: #ffffff;
+        border: 2px solid; border-color: #9aa2ac #ffffff #ffffff #9aa2ac;
+    }
+</style>
+<script language="VBScript">
+    Sub Window_OnLoad
+        Dim winW, winH
+        winW = 1100
+        winH = 1430
+        If winW > Int(screen.availWidth * 0.95) Then winW = Int(screen.availWidth * 0.95)
+        If winH > Int(screen.availHeight * 0.95) Then winH = Int(screen.availHeight * 0.95)
+        window.resizeTo winW, winH
+        window.moveTo (screen.availWidth - winW) \ 2, (screen.availHeight - winH) \ 2
+        FillRemindMinutes
+        RenderShenqiLinks
+        document.getElementById("txtPrice").focus
+    End Sub
+    Sub Window_OnUnload
+        StopRemindTimers
+    End Sub
+    Sub CheckEnter
+        If window.event.keyCode = 13 Then Calculate
+    End Sub
+    Sub CheckEnterGold
+        If window.event.keyCode = 13 Then CalcGold
+    End Sub
+    Function GetGoldRatio()
+        Dim strVal
+        GetGoldRatio = 0
+        strVal = document.getElementById("txtGold").value
+        If Not IsNumeric(strVal) Then
+            MsgBox "请先在金价比例中输入大于0的有效数字！", vbExclamation, "输入错误"
+            document.getElementById("txtGold").focus
+            Exit Function
+        End If
+        If CDbl(strVal) <= 0 Then
+            MsgBox "请先在金价比例中输入大于0的有效数字！", vbExclamation, "输入错误"
+            document.getElementById("txtGold").focus
+            Exit Function
+        End If
+        GetGoldRatio = CDbl(strVal)
+    End Function
+    Sub CalcGold
+        Dim dblGold, dblPerYuan, strVal, dblCoin, dblRmb, strHtml, strCls
+        dblGold = GetGoldRatio()
+        If dblGold = 0 Then Exit Sub
+        ' 换算基准：金价比例 g 元 / 1000万梦幻币（1千万 = 1000万），万↔千万因子为 1000
+        dblPerYuan = 1000 / dblGold
+        dblCoin = -1
+        dblRmb = -1
+        strVal = document.getElementById("txtCoin").value
+        If strVal <> "" Then
+            If Not IsNumeric(strVal) Or CDbl(strVal) < 0 Then
+                MsgBox "梦幻币必须为非负数字（不填默认不换算）！", vbExclamation, "输入错误"
+                document.getElementById("txtCoin").focus
+                Exit Sub
+            End If
+            dblCoin = CDbl(strVal)
+        End If
+        strVal = document.getElementById("txtRmb").value
+        If strVal <> "" Then
+            If Not IsNumeric(strVal) Or CDbl(strVal) < 0 Then
+                MsgBox "人民币必须为非负数字（不填默认不换算）！", vbExclamation, "输入错误"
+                document.getElementById("txtRmb").focus
+                Exit Sub
+            End If
+            dblRmb = CDbl(strVal)
+        End If
+        strHtml = "<table class=""xiu-table""><tr><th class=""x1"" width=""30%"">项目</th><th class=""x2"">结果</th></tr>"
+        strHtml = strHtml & "<tr><td class=""xiu-item"">金价比例</td><td class=""xiu-val"">" & FormatNumber(dblGold, 2) & " 元 / 1000万梦幻币</td></tr>"
+        strHtml = strHtml & "<tr class=""alt""><td class=""xiu-item"">基准换算</td><td class=""xiu-val"">1 元 = " & FormatNumber(dblPerYuan, 2) & " 万梦幻币，1 万梦幻币 = " & FormatNumber(dblGold / 1000, 4) & " 元</td></tr>"
+        If dblCoin >= 0 Then
+            strHtml = strHtml & "<tr><td class=""xiu-item"">梦幻币 → 人民币</td><td class=""xiu-val"">" & FormatNumber(dblCoin, 2) & " 万梦幻币 ≈ <b>" & FormatNumber(dblCoin / 1000 * dblGold, 2) & "</b> 元</td></tr>"
+        End If
+        If dblRmb >= 0 Then
+            If dblCoin >= 0 Then strCls = " class=""alt""" Else strCls = ""
+            strHtml = strHtml & "<tr" & strCls & "><td class=""xiu-item"">人民币 → 梦幻币</td><td class=""xiu-val"">" & FormatNumber(dblRmb, 2) & " 元 ≈ <b>" & FormatNumber(dblRmb / dblGold * 1000, 2) & "</b> 万梦幻币</td></tr>"
+        End If
+        strHtml = strHtml & "</table>"
+        document.getElementById("goldResult").innerHTML = strHtml
+    End Sub
+    Sub Calculate
+        Dim strVal, dblPrice, i, lngNeed, lngCum, dblCost, dblCumCost, strHtml, strCls
+        strVal = document.getElementById("txtPrice").value
+        If Not IsNumeric(strVal) Then
+            MsgBox "请输入大于0的有效数字！", vbExclamation, "输入错误"
+            document.getElementById("txtPrice").focus
+            Exit Sub
+        End If
+        dblPrice = CDbl(strVal)
+        If dblPrice <= 0 Then
+            MsgBox "请输入大于0的有效数字！", vbExclamation, "输入错误"
+            document.getElementById("txtPrice").focus
+            Exit Sub
+        End If
+        strHtml = "<table><tr><th class=""g1"" width=""10%"">等级</th><th class=""g2"" width=""15%"">需要1级宝石(个)</th><th class=""g3"" width=""15%"">累计1级宝石(个)</th><th class=""g4"" width=""30%"">单个成本(万)</th><th class=""g5"" width=""30%"">累计成本(万)</th></tr>"
+        For i = 1 To 15
+            lngNeed = 2 ^ (i - 1)
+            lngCum = 2 ^ i - 1
+            dblCost = lngNeed * dblPrice
+            dblCumCost = lngCum * dblPrice
+            If i Mod 2 = 0 Then strCls = " class=""alt""" Else strCls = ""
+            strHtml = strHtml & "<tr" & strCls & "><td class=""lv"">" & i & "级</td><td class=""num"">" & lngNeed & "</td><td class=""num"">" & lngCum & "</td><td>" & FormatNumber(dblCost, 2) & "</td><td>" & FormatNumber(dblCumCost, 2) & "</td></tr>"
+        Next
+        document.getElementById("resultArea").innerHTML = strHtml & "</table>"
+    End Sub
+    Dim arrHistory, historyCount, lastDesc, lastResult
+    ReDim arrHistory(0)
+    historyCount = 0
+    lastDesc = ""
+    lastResult = ""
+    Dim remindTimerId, remindUiTimerId, remindLastFired, remindHour, remindMinute, remindSecond
+    remindTimerId = 0
+    remindUiTimerId = 0
+    remindHour = -1
+    Function Pad2(n)
+        Pad2 = Right("0" & n, 2)
+    End Function
+    Sub FillRemindMinutes
+        FillHourOptions "selRemindHour"
+        FillTimeOptions "selRemindMinute"
+        FillTimeOptions "selRemindSecond"
+    End Sub
+    Sub FillTimeOptions(strId)
+        Dim i, objSel, objOpt
+        Set objSel = document.getElementById(strId)
+        For i = 0 To 59
+            Set objOpt = document.createElement("OPTION")
+            objSel.options.Add objOpt
+            objOpt.text = Pad2(i)
+            objOpt.value = CStr(i)
+        Next
+    End Sub
+    Sub FillHourOptions(strId)
+        Dim i, objSel, objOpt
+        Set objSel = document.getElementById(strId)
+        Set objOpt = document.createElement("OPTION")
+        objSel.options.Add objOpt
+        objOpt.text = "不设置"
+        objOpt.value = "-1"
+        For i = 0 To 23
+            Set objOpt = document.createElement("OPTION")
+            objSel.options.Add objOpt
+            objOpt.text = Pad2(i)
+            objOpt.value = CStr(i)
+        Next
+    End Sub
+    Sub StartRemind
+        remindHour = CInt(document.getElementById("selRemindHour").value)
+        remindMinute = CInt(document.getElementById("selRemindMinute").value)
+        remindSecond = CInt(document.getElementById("selRemindSecond").value)
+        remindLastFired = ""
+        document.getElementById("btnRemindStart").disabled = True
+        document.getElementById("btnRemindStop").disabled = False
+        document.getElementById("btnRemindTest").disabled = True
+        document.getElementById("selRemindHour").disabled = True
+        document.getElementById("selRemindMinute").disabled = True
+        document.getElementById("selRemindSecond").disabled = True
+        StopRemindTimers
+        remindTimerId = window.setInterval("CheckRemindTime", 1000, "VBScript")
+        remindUiTimerId = window.setInterval("RefreshRemindStatus", 1000, "VBScript")
+        CheckRemindTime
+        RefreshRemindStatus
+    End Sub
+    Sub StopRemind
+        StopRemindTimers
+        document.getElementById("btnRemindStart").disabled = False
+        document.getElementById("btnRemindStop").disabled = True
+        document.getElementById("btnRemindTest").disabled = False
+        document.getElementById("selRemindHour").disabled = False
+        document.getElementById("selRemindMinute").disabled = False
+        document.getElementById("selRemindSecond").disabled = False
+        document.getElementById("remindStatus").innerHTML = "已停止"
+    End Sub
+    Sub StopRemindTimers
+        If remindTimerId <> 0 Then window.clearInterval(remindTimerId) : remindTimerId = 0
+        If remindUiTimerId <> 0 Then window.clearInterval(remindUiTimerId) : remindUiTimerId = 0
+    End Sub
+    Sub CheckRemindTime
+        Dim dtNow, dtTarget, lngDelta, strKey
+        dtNow = Now
+        If remindHour >= 0 Then
+            dtTarget = DateSerial(Year(dtNow), Month(dtNow), Day(dtNow)) + TimeSerial(remindHour, remindMinute, remindSecond)
+            lngDelta = DateDiff("s", dtTarget, dtNow)
+            If lngDelta >= 0 And lngDelta <= 10 Then
+                strKey = Day(dtNow)
+                If remindLastFired <> strKey Then
+                    remindLastFired = strKey
+                    ShowRemindNotify
+                End If
+            End If
+        Else
+            dtTarget = DateSerial(Year(dtNow), Month(dtNow), Day(dtNow)) + TimeSerial(Hour(dtNow), remindMinute, remindSecond)
+            lngDelta = DateDiff("s", dtTarget, dtNow)
+            If lngDelta >= 0 And lngDelta <= 10 Then
+                strKey = Day(dtNow) & "-" & Hour(dtNow)
+                If remindLastFired <> strKey Then
+                    remindLastFired = strKey
+                    ShowRemindNotify
+                End If
+            End If
+        End If
+    End Sub
+    Sub RefreshRemindStatus
+        Dim dtNow, dtNext, lngDiff, strMode
+        dtNow = Now
+        If remindHour >= 0 Then
+            dtNext = DateSerial(Year(dtNow), Month(dtNow), Day(dtNow)) + TimeSerial(remindHour, remindMinute, remindSecond)
+            If dtNext <= dtNow Then dtNext = DateAdd("d", 1, dtNext)
+            strMode = "每天 " & Pad2(remindHour) & ":" & Pad2(remindMinute) & ":" & Pad2(remindSecond)
+        Else
+            dtNext = DateSerial(Year(dtNow), Month(dtNow), Day(dtNow)) + TimeSerial(Hour(dtNow), remindMinute, remindSecond)
+            If dtNext <= dtNow Then dtNext = DateAdd("h", 1, dtNext)
+            strMode = "每小时第 " & Pad2(remindMinute) & " 分 " & Pad2(remindSecond) & " 秒"
+        End If
+        lngDiff = DateDiff("s", dtNow, dtNext)
+        document.getElementById("remindStatus").innerHTML = "<b>运行中</b>（" & strMode & "） 下次提醒 " & Pad2(Hour(dtNext)) & ":" & Pad2(Minute(dtNext)) & ":" & Pad2(Second(dtNext)) & "（还剩 " & (lngDiff \ 3600) & " 时 " & ((lngDiff Mod 3600) \ 60) & " 分 " & (lngDiff Mod 60) & " 秒）"
+    End Sub
+    Sub ShowRemindNotify
+        Dim strMsg, strTitle, strPs, strCmd
+        strMsg = document.getElementById("txtRemindMsg").value
+        If strMsg = "" Then strMsg = "时间到啦！"
+        strMsg = Replace(strMsg, """", "")
+        strMsg = Replace(strMsg, "'", "''")
+        strTitle = "定时提醒 " & Pad2(Hour(Now)) & ":" & Pad2(Minute(Now)) & ":" & Pad2(Second(Now))
+        strPs = "Add-Type -AssemblyName System.Windows.Forms;Add-Type -AssemblyName System.Drawing;$n=New-Object System.Windows.Forms.NotifyIcon;$n.Icon=[System.Drawing.SystemIcons]::Information;$n.Visible=$true;$n.ShowBalloonTip(10000,'" & strTitle & "','" & strMsg & "',[System.Windows.Forms.ToolTipIcon]::Info);[System.Media.SystemSounds]::Exclamation.Play();Start-Sleep -Seconds 12;$n.Dispose()"
+        strCmd = "powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command """ & strPs & """"
+        CreateObject("WScript.Shell").Run strCmd, 0, False
+    End Sub
+    Sub CheckEnterAttr
+        If window.event.keyCode = 13 Then CalcAttr
+    End Sub
+    Sub CalcAttr
+        If document.getElementById("selCalcType").value = "weapon" Then
+            CalcWeapon
+        Else
+            CalcEquip
+        End If
+    End Sub
+    Sub SwitchCalcType
+        If document.getElementById("selCalcType").value = "weapon" Then
+            document.getElementById("rowWeaponRequired").style.display = ""
+            document.getElementById("rowEquipRequired").style.display = "none"
+            document.getElementById("btnCalcAttr").innerText = "计算武器属性"
+        Else
+            document.getElementById("rowWeaponRequired").style.display = "none"
+            document.getElementById("rowEquipRequired").style.display = ""
+            document.getElementById("btnCalcAttr").innerText = "计算装备属性"
+        End If
+        document.getElementById("divAttrTable").style.display = "none"
+    End Sub
+    Sub CheckEnterXiu
+        If window.event.keyCode = 13 Then CalcXiulian
+    End Sub
+    Function XiuExpForLv(lv)
+        XiuExpForLv = (lv * lv + lv * 3 + 11) * 10
+    End Function
+    Sub CalcXiulian
+        Dim strType, strName, strVal
+        Dim curLv, tgtLv, curExp, tgtExp
+        Dim i, needExp, times, perCoin, perCoinFree, coinN, coinF, strN, strF
+        Dim needContrib, contribHtml, xiuHtml
+
+        strType = document.getElementById("selXiuType").value
+        strVal = document.getElementById("txtXiuCurLv").value
+        If Not IsNumeric(strVal) Or strVal = "" Then
+            MsgBox "请输入当前修炼等级（0-25的整数）！", vbExclamation, "输入错误"
+            document.getElementById("txtXiuCurLv").focus
+            Exit Sub
+        End If
+        If CDbl(strVal) <> Int(CDbl(strVal)) Or CDbl(strVal) < 0 Or CDbl(strVal) > 25 Then
+            MsgBox "当前修炼等级必须为0-25的整数！", vbExclamation, "输入错误"
+            document.getElementById("txtXiuCurLv").focus
+            Exit Sub
+        End If
+        curLv = CInt(strVal)
+
+        curExp = 0
+        strVal = document.getElementById("txtXiuCurExp").value
+        If strVal <> "" Then
+            If Not IsNumeric(strVal) Or CDbl(strVal) < 0 Or CDbl(strVal) <> Int(CDbl(strVal)) Then
+                MsgBox "当前经验必须为非负整数（不填默认按0计算）！", vbExclamation, "输入错误"
+                document.getElementById("txtXiuCurExp").focus
+                Exit Sub
+            End If
+            curExp = CLng(strVal)
+        End If
+
+        strVal = document.getElementById("txtXiuTgtLv").value
+        If Not IsNumeric(strVal) Or strVal = "" Then
+            MsgBox "请输入目标修炼等级（0-25的整数）！", vbExclamation, "输入错误"
+            document.getElementById("txtXiuTgtLv").focus
+            Exit Sub
+        End If
+        If CDbl(strVal) <> Int(CDbl(strVal)) Or CDbl(strVal) < 0 Or CDbl(strVal) > 25 Then
+            MsgBox "目标修炼等级必须为0-25的整数！", vbExclamation, "输入错误"
+            document.getElementById("txtXiuTgtLv").focus
+            Exit Sub
+        End If
+        tgtLv = CInt(strVal)
+        If tgtLv < curLv Then
+            MsgBox "目标修炼等级不能低于当前修炼等级！", vbExclamation, "输入错误"
+            document.getElementById("txtXiuTgtLv").focus
+            Exit Sub
+        End If
+
+        tgtExp = 0
+        strVal = document.getElementById("txtXiuTgtExp").value
+        If strVal <> "" Then
+            If Not IsNumeric(strVal) Or CDbl(strVal) < 0 Or CDbl(strVal) <> Int(CDbl(strVal)) Then
+                MsgBox "目标经验必须为非负整数（不填默认按0计算）！", vbExclamation, "输入错误"
+                document.getElementById("txtXiuTgtExp").focus
+                Exit Sub
+            End If
+            tgtExp = CLng(strVal)
+        End If
+
+        If curLv < 25 And curExp >= XiuExpForLv(curLv + 1) Then
+            MsgBox "当前经验已达到升" & (curLv + 1) & "级所需（" & XiuExpForLv(curLv + 1) & "点），请先调整当前等级！", vbExclamation, "输入错误"
+            Exit Sub
+        End If
+        If tgtLv < 25 And tgtExp >= XiuExpForLv(tgtLv + 1) Then
+            MsgBox "目标经验已达到升" & (tgtLv + 1) & "级所需（" & XiuExpForLv(tgtLv + 1) & "点），请调整目标等级！", vbExclamation, "输入错误"
+            Exit Sub
+        End If
+
+        needExp = tgtExp - curExp
+        For i = curLv + 1 To tgtLv
+            needExp = needExp + XiuExpForLv(i)
+        Next
+        If needExp < 0 Then
+            MsgBox "当前修炼进度已达到目标！", vbInformation, "提示"
+            Exit Sub
+        End If
+
+        times = Int((needExp + 9) / 10)
+
+        Select Case strType
+            Case "attack" : strName = "攻击修炼" : perCoin = 3 : perCoinFree = 4.5
+            Case "magic"  : strName = "法术修炼" : perCoin = 3 : perCoinFree = 4.5
+            Case "hunt"   : strName = "猎术修炼" : perCoin = 3 : perCoinFree = 4.5
+            Case "defend" : strName = "防御修炼" : perCoin = 2 : perCoinFree = 3.5
+            Case "resist" : strName = "抗法修炼" : perCoin = 2 : perCoinFree = 3.5
+        End Select
+
+        needContrib = tgtLv * 150
+        contribHtml = "≥ <b>" & needContrib & "</b> 点"
+        xiuHtml = "<table class=""xiu-table""><tr><th class=""x1"" width=""30%"">项目</th><th class=""x2"">结果</th></tr>"
+        xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">修炼类型</td><td class=""xiu-val"">" & strName & "</td></tr>"
+        xiuHtml = xiuHtml & "<tr class=""alt""><td class=""xiu-item"">修炼进度</td><td class=""xiu-val"">" & curLv & "级（" & curExp & "经验） → " & tgtLv & "级（" & tgtExp & "经验）</td></tr>"
+        If times = 0 Then
+            xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">还需修炼经验</td><td class=""xiu-val""><b>0</b> 点（已达到目标进度，无需修炼）</td></tr>"
+            xiuHtml = xiuHtml & "<tr class=""alt""><td class=""xiu-item"">要求帮派总贡献</td><td class=""xiu-val"">" & contribHtml & "（目标等级 " & tgtLv & " × 150）</td></tr>"
+        Else
+            coinN = times * perCoin
+            coinF = times * perCoinFree
+            If coinN = Int(coinN) Then strN = FormatNumber(coinN, 0) Else strN = FormatNumber(coinN, 1)
+            If coinF = Int(coinF) Then strF = FormatNumber(coinF, 0) Else strF = FormatNumber(coinF, 1)
+            xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">还需修炼经验</td><td class=""xiu-val""><b>" & needExp & "</b> 点</td></tr>"
+            xiuHtml = xiuHtml & "<tr class=""alt""><td class=""xiu-item"">修炼次数</td><td class=""xiu-val""><b>" & times & "</b> 次（每次提升 10 点经验）</td></tr>"
+            xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">正常模式消耗</td><td class=""xiu-val""><b>" & strN & "</b> 万梦幻币 + <b>" & times * 5 & "</b> 点资材</td></tr>"
+            xiuHtml = xiuHtml & "<tr class=""alt""><td class=""xiu-item"">免资材模式消耗</td><td class=""xiu-val""><b>" & strF & "</b> 万梦幻币（不消耗资材）</td></tr>"
+            xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">要求帮派总贡献</td><td class=""xiu-val"">" & contribHtml & "（目标等级 " & tgtLv & " × 150）</td></tr>"
+        End If
+        xiuHtml = xiuHtml & "</table>"
+        document.getElementById("xiuResult").innerHTML = xiuHtml
+    End Sub
+    Sub CalcWeapon
+        Dim strRace, strDmg, strHit, dblDmg, dblHit
+        Dim dblStr, dblMag, dblEnd, dblCon, dblAgi
+        Dim dblStrDmgCoeff, dblEndDefCoeff, dblConHpCoeff
+        Dim dblSpirit, dblTotalDmg, dblPhysInit, dblMagicInit, dblDefense, dblHp, dblSpeed
+        strRace = document.getElementById("selRace").value
+        strDmg = document.getElementById("txtWeaponDmg").value
+        If Not IsNumeric(strDmg) Or strDmg = "" Then
+            MsgBox "请输入武器伤害！", vbExclamation, "输入错误"
+            document.getElementById("txtWeaponDmg").focus
+            Exit Sub
+        End If
+        dblDmg = CDbl(strDmg)
+        strHit = document.getElementById("txtWeaponHit").value
+        If Not IsNumeric(strHit) Or strHit = "" Then
+            MsgBox "请输入武器命中！", vbExclamation, "输入错误"
+            document.getElementById("txtWeaponHit").focus
+            Exit Sub
+        End If
+        dblHit = CDbl(strHit)
+        dblStr = 0 : dblMag = 0 : dblEnd = 0 : dblCon = 0 : dblAgi = 0
+        If document.getElementById("txtStr").value <> "" And IsNumeric(document.getElementById("txtStr").value) Then dblStr = CDbl(document.getElementById("txtStr").value)
+        If document.getElementById("txtMag").value <> "" And IsNumeric(document.getElementById("txtMag").value) Then dblMag = CDbl(document.getElementById("txtMag").value)
+        If document.getElementById("txtEnd").value <> "" And IsNumeric(document.getElementById("txtEnd").value) Then dblEnd = CDbl(document.getElementById("txtEnd").value)
+        If document.getElementById("txtCon").value <> "" And IsNumeric(document.getElementById("txtCon").value) Then dblCon = CDbl(document.getElementById("txtCon").value)
+        If document.getElementById("txtAgi").value <> "" And IsNumeric(document.getElementById("txtAgi").value) Then dblAgi = CDbl(document.getElementById("txtAgi").value)
+        Select Case strRace
+            Case "human" : dblStrDmgCoeff = 0.67 : dblEndDefCoeff = 1.5 : dblConHpCoeff = 5
+            Case "immortal" : dblStrDmgCoeff = 0.57 : dblEndDefCoeff = 1.6 : dblConHpCoeff = 4.5
+            Case "demon" : dblStrDmgCoeff = 0.77 : dblEndDefCoeff = 1.4 : dblConHpCoeff = 6
+        End Select
+        dblTotalDmg = dblDmg + dblStr * dblStrDmgCoeff
+        dblSpirit = dblStr * 0.4 + dblMag * 0.7 + dblEnd * 0.2 + dblCon * 0.3
+        dblPhysInit = dblHit / 3 + dblTotalDmg
+        SaveToHistory
+        dblMagicInit = dblDmg / 4 + dblSpirit
+        dblDefense = dblEnd * dblEndDefCoeff
+        dblHp = dblCon * dblConHpCoeff
+        dblSpeed = dblCon * 0.1 + dblEnd * 0.1 + dblStr * 0.1 + dblAgi * 0.7
+        document.getElementById("divAttrTable").style.display = ""
+        document.getElementById("tdADmg").innerText = FormatNumber(dblPhysInit, 2)
+        document.getElementById("tdAMag").innerText = FormatNumber(dblMagicInit, 2)
+        document.getElementById("tdADef").innerText = FormatNumber(dblDefense, 2)
+        document.getElementById("tdAHp").innerText = FormatNumber(dblHp, 2)
+        document.getElementById("tdASpd").innerText = FormatNumber(dblSpeed, 2)
+        Dim rn
+        Select Case strRace : Case "human" : rn = "人族" : Case "immortal" : rn = "仙族" : Case "demon" : rn = "魔族" : Case Else : rn = strRace : End Select
+        lastDesc = "武器 " & rn & " 伤害:" & dblDmg & " 命中:" & dblHit
+        If dblStr <> 0 Then lastDesc = lastDesc & " 力:" & dblStr
+        If dblMag <> 0 Then lastDesc = lastDesc & " 魔:" & dblMag
+        If dblCon <> 0 Then lastDesc = lastDesc & " 体:" & dblCon
+        If dblEnd <> 0 Then lastDesc = lastDesc & " 耐:" & dblEnd
+        If dblAgi <> 0 Then lastDesc = lastDesc & " 敏:" & dblAgi
+        lastResult = "伤害:" & FormatNumber(dblPhysInit, 2) & "  法伤:" & FormatNumber(dblMagicInit, 2) & "  防御:" & FormatNumber(dblDefense, 2) & "  气血:" & FormatNumber(dblHp, 2) & "  速度:" & FormatNumber(dblSpeed, 2)
+        RenderHistory
+    End Sub
+    Sub CalcEquip
+        Dim strRace, dblDef, dblCon, dblEnd, dblStr, dblMag, dblAgi, strVal
+        Dim dblStrDmgCoeff, dblEndDefCoeff, dblConHpCoeff
+        Dim dblDamage, dblSpirit, dblDefense, dblSpeed, dblHp
+        strRace = document.getElementById("selRace").value
+        strVal = document.getElementById("txtEquipDef").value
+        If Not IsNumeric(strVal) Or strVal = "" Then
+            MsgBox "请输入装备防御！", vbExclamation, "输入错误"
+            document.getElementById("txtEquipDef").focus
+            Exit Sub
+        End If
+        dblDef = CDbl(strVal)
+        dblCon = 0 : dblEnd = 0 : dblStr = 0 : dblMag = 0 : dblAgi = 0
+        If document.getElementById("txtCon").value <> "" And IsNumeric(document.getElementById("txtCon").value) Then dblCon = CDbl(document.getElementById("txtCon").value)
+        If document.getElementById("txtEnd").value <> "" And IsNumeric(document.getElementById("txtEnd").value) Then dblEnd = CDbl(document.getElementById("txtEnd").value)
+        If document.getElementById("txtStr").value <> "" And IsNumeric(document.getElementById("txtStr").value) Then dblStr = CDbl(document.getElementById("txtStr").value)
+        If document.getElementById("txtMag").value <> "" And IsNumeric(document.getElementById("txtMag").value) Then dblMag = CDbl(document.getElementById("txtMag").value)
+        If document.getElementById("txtAgi").value <> "" And IsNumeric(document.getElementById("txtAgi").value) Then dblAgi = CDbl(document.getElementById("txtAgi").value)
+        Select Case strRace
+            Case "human" : dblStrDmgCoeff = 0.67 : dblEndDefCoeff = 1.5 : dblConHpCoeff = 5
+            Case "immortal" : dblStrDmgCoeff = 0.57 : dblEndDefCoeff = 1.6 : dblConHpCoeff = 4.5
+            Case "demon" : dblStrDmgCoeff = 0.77 : dblEndDefCoeff = 1.4 : dblConHpCoeff = 6
+        End Select
+        dblDamage = dblStr * dblStrDmgCoeff
+        dblSpirit = dblStr * 0.4 + dblMag * 0.7 + dblEnd * 0.2 + dblCon * 0.3
+        SaveToHistory
+        dblDefense = dblDef + dblEnd * dblEndDefCoeff
+        dblHp = dblCon * dblConHpCoeff
+        dblSpeed = dblCon * 0.1 + dblEnd * 0.1 + dblStr * 0.1 + dblAgi * 0.7
+        document.getElementById("divAttrTable").style.display = ""
+        document.getElementById("tdADmg").innerText = FormatNumber(dblDamage, 2)
+        document.getElementById("tdAMag").innerText = FormatNumber(dblSpirit, 2)
+        document.getElementById("tdADef").innerText = FormatNumber(dblDefense, 2)
+        document.getElementById("tdAHp").innerText = FormatNumber(dblHp, 2)
+        document.getElementById("tdASpd").innerText = FormatNumber(dblSpeed, 2)
+        Dim rn2
+        Select Case strRace : Case "human" : rn2 = "人族" : Case "immortal" : rn2 = "仙族" : Case "demon" : rn2 = "魔族" : Case Else : rn2 = strRace : End Select
+        lastDesc = "装备 " & rn2 & " 防御:" & dblDef
+        If dblStr <> 0 Then lastDesc = lastDesc & " 力:" & dblStr
+        If dblMag <> 0 Then lastDesc = lastDesc & " 魔:" & dblMag
+        If dblCon <> 0 Then lastDesc = lastDesc & " 体:" & dblCon
+        If dblEnd <> 0 Then lastDesc = lastDesc & " 耐:" & dblEnd
+        If dblAgi <> 0 Then lastDesc = lastDesc & " 敏:" & dblAgi
+        lastResult = "伤害:" & FormatNumber(dblDamage, 2) & "  法伤:" & FormatNumber(dblSpirit, 2) & "  防御:" & FormatNumber(dblDefense, 2) & "  气血:" & FormatNumber(dblHp, 2) & "  速度:" & FormatNumber(dblSpeed, 2)
+        RenderHistory
+    End Sub
+    ' ================== 神器任务攻略（序章/起/转/合） ==================
+    Dim arrShenqi, sqCurrentIdx
+    arrShenqi = Array( _
+        Array("序章", "https://gl.ali213.net/html/2023-12/1270483.html"), _
+        Array("01 黄金甲之谜", "https://gl.ali213.net/html/2024-8/1487223.html"), _
+        Array("02 泪痕碗之念", "https://gl.ali213.net/html/2024-3/1341839.html"), _
+        Array("03 墨魂笔之踪", "https://gl.ali213.net/html/2023-11/1218869.html"), _
+        Array("04 月光草之逝", "https://gl.ali213.net/html/2024-6/1417191.html"), _
+        Array("05 轩辕剑之陨", "https://gl.ali213.net/html/2024-9/1488319.html"), _
+        Array("06 千机锁之梏", "https://gl.ali213.net/html/2024-6/1417123.html"), _
+        Array("07 清泽谱之惠", "https://gl.ali213.net/html/2023-12/1265783.html"), _
+        Array("08 独弦琴之思", "https://gl.ali213.net/html/2024-9/1488517.html"), _
+        Array("09 星斗盘之约", "https://gl.ali213.net/html/2024-9/1489779.html"), _
+        Array("10 华光玉之伤", "https://gl.ali213.net/html/2024-9/1490861.html"), _
+        Array("11 天罡印之谋", "https://gl.ali213.net/html/2024-9/1491603.html"), _
+        Array("12 噬魂齿之争", "https://gl.ali213.net/html/2024-5/1383189.html"), _
+        Array("13 昆仑镜之忆", "https://gl.ali213.net/html/2023-12/1258467.html"), _
+        Array("14 明火珠之影", "https://gl.ali213.net/html/2024-9/1491643.html"), _
+        Array("15 四神鼎之怨", "https://gl.ali213.net/html/2024-3/1335975.html"), _
+        Array("16 玲珑结之愿", "https://gl.ali213.net/html/2024-9/1491681.html"), _
+        Array("17 莫愁铃之恩", "https://gl.ali213.net/html/2024-9/1491713.html"), _
+        Array("18 鸿蒙石之鉴", "https://gl.ali213.net/html/2024-7/1461647.html"), _
+        Array("19 魔息角之怒", "https://gl.ali213.net/html/2024-6/1417185.html"), _
+        Array("转01 重铸黄金甲", "https://gl.ali213.net/html/2024-9/1491743.html"), _
+        Array("转02 情葬泪痕碗", "https://gl.ali213.net/html/2024-9/1492343.html"), _
+        Array("转03 义绝墨魂笔", "https://gl.ali213.net/html/2024-9/1492395.html"), _
+        Array("转04 历劫月光草", "https://gl.ali213.net/html/2024-9/1492421.html"), _
+        Array("转05 命殒轩辕剑", "https://gl.ali213.net/html/2024-9/1492491.html"), _
+        Array("转06 迷踪清泽谱", "https://gl.ali213.net/html/2024-7/1461721.html"), _
+        Array("转07 悲瑟独弦琴", "https://gl.ali213.net/html/2024-9/1492573.html"), _
+        Array("转08 魂印星斗盘", "https://gl.ali213.net/html/2024-7/1461587.html"), _
+        Array("转09 忧思华光玉", "https://gl.ali213.net/html/2024-9/1492819.html"), _
+        Array("转10 诡夺天罡印", "https://gl.ali213.net/html/2024-9/1492863.html"), _
+        Array("转11 魔灭噬魂齿", "https://gl.ali213.net/html/2024-9/1492941.html"), _
+        Array("转12 神归昆仑镜", "https://gl.ali213.net/html/2024-9/1494873.html"), _
+        Array("转13 离焰明火珠", "https://gl.ali213.net/html/2024-9/1495085.html"), _
+        Array("转14 计斗四神鼎", "https://gl.ali213.net/html/2024-9/1495135.html"), _
+        Array("转15 觅影玲珑结", "https://gl.ali213.net/html/2024-9/1495231.html"), _
+        Array("合01 噬魂迷勇志", "https://gl.ali213.net/html/2024-9/1495269.html"), _
+        Array("合02 万怨出四神", "https://gl.ali213.net/html/2024-9/1495391.html"), _
+        Array("合03 侠意问清泽", "https://gl.ali213.net/html/2024-6/1424439.html"), _
+        Array("合04 独弦绝悲音", "https://gl.ali213.net/html/2024-9/1495433.html"), _
+        Array("合05 烈义锻天罡", "https://gl.ali213.net/html/2024-6/1425447.html"), _
+        Array("合06 玲珑系相思", "https://gl.ali213.net/html/2024-9/1495473.html"), _
+        Array("合07 金甲碎雄图", "https://gl.ali213.net/html/2024-9/1495517.html"), _
+        Array("合08 月光洗离恨", "https://gl.ali213.net/html/2024-9/1495959.html"), _
+        Array("合09 痴念拭泪痕", "https://gl.ali213.net/html/2024-9/1496027.html"), _
+        Array("合10 星斗成哀谶", "https://gl.ali213.net/html/2024-6/1416303.html"), _
+        Array("合11 昆仑启镜心", "https://gl.ali213.net/html/2024-2/1329307.html"), _
+        Array("合12 秉笔绘墨魂", "https://gl.ali213.net/html/2024-9/1496163.html"), _
+        Array("合13 明火焚傲骨", "https://gl.ali213.net/html/2024-9/1496193.html"), _
+        Array("合14 剑胆铸轩辕", "https://gl.ali213.net/html/2024-9/1496229.html"), _
+        Array("合15 如梦前尘", "https://gl.ali213.net/html/2024-10/1528669.html") _
+    )
+    Dim arrSqGroups
+    arrSqGroups = Array( _
+        Array("序章", 0), _
+        Array("神器任务·起", 1), _
+        Array("神器任务·转", 20), _
+        Array("神器任务·合", 35) _
+    )
+    sqCurrentIdx = -1
+    Dim sqHttp, sqFetchIdx, sqCache
+    Set sqCache = CreateObject("Scripting.Dictionary")
+    sqFetchIdx = -1
+    Sub RenderShenqiLinks
+        Dim i, g, strHtml
+        strHtml = ""
+        g = 0
+        For i = 0 To UBound(arrShenqi)
+            If g <= UBound(arrSqGroups) Then
+                If arrSqGroups(g)(1) = i Then
+                    strHtml = strHtml & "<span class=""sq-group"">" & arrSqGroups(g)(0) & "</span>"
+                    g = g + 1
+                End If
+            End If
+            strHtml = strHtml & "<a class=""sq-link"" onclick=""ShowShenqi " & i & """>" & arrShenqi(i)(0) & "</a>"
+        Next
+        document.getElementById("sqLinks").innerHTML = strHtml
+    End Sub
+    ' 攻略区默认折叠，点击标题行展开/收起
+    Sub ToggleSqSection
+        Dim objLinks, objHint
+        Set objLinks = document.getElementById("sqLinks")
+        Set objHint = document.getElementById("sqToggleHint")
+        If objLinks.style.display = "none" Then
+            objLinks.style.display = "block"
+            objHint.innerText = "▲ 收起"
+        Else
+            objLinks.style.display = "none"
+            objHint.innerText = "▼ 展开"
+        End If
+    End Sub
+    Sub ShowShenqi(idx)
+        sqCurrentIdx = CInt(idx)
+        sqFetchIdx = sqCurrentIdx
+        document.getElementById("sqDialogTitle").innerText = arrShenqi(sqCurrentIdx)(0)
+        PositionSqDialog
+        document.getElementById("sqOverlay").style.display = "block"
+        document.getElementById("sqDialog").style.display = "block"
+        If sqCache.Exists(sqCurrentIdx) Then
+            WriteSqFrame sqCache(sqCurrentIdx)
+            Exit Sub
+        End If
+        WriteSqFrame SqNoticePage("攻略加载中，请稍候……")
+        On Error Resume Next
+        If IsObject(sqHttp) Then sqHttp.abort
+        Set sqHttp = CreateObject("MSXML2.XMLHTTP.6.0")
+        If Err.Number = 0 Then
+            sqHttp.onreadystatechange = GetRef("SqGuideStateChanged")
+            sqHttp.open "GET", arrShenqi(sqCurrentIdx)(1), True
+            sqHttp.setRequestHeader "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            sqHttp.send
+        End If
+        If Err.Number <> 0 Then
+            Err.Clear
+            WriteSqFrame SqNoticePage("攻略页面获取失败（网络异常），请点击上方“在浏览器中打开”按钮查看。")
+        End If
+        On Error GoTo 0
+    End Sub
+    Sub SqGuideStateChanged
+        Dim strHtml, strBody, strCharset
+        On Error Resume Next
+        If Not IsObject(sqHttp) Then Exit Sub
+        If sqHttp.readyState <> 4 Then Exit Sub
+        If sqFetchIdx < 0 Then Exit Sub
+        If sqHttp.status = 200 Then
+            If InStr(1, arrShenqi(sqFetchIdx)(1), "xyq.163.com", vbTextCompare) > 0 Then
+                strCharset = "gb2312"
+            Else
+                strCharset = "utf-8"
+            End If
+            strHtml = SqDecodeBody(sqHttp.responseBody, strCharset)
+            ' 优先提取纯正文（丢弃导航/推荐位/评论区，加快加载与滚动），失败则回退整页清洗
+            strBody = SqExtractBody(strHtml, arrShenqi(sqFetchIdx)(1))
+            If Len(strBody) > 300 Then
+                strHtml = strBody
+            Else
+                strHtml = SqTransformHtml(strHtml, arrShenqi(sqFetchIdx)(1))
+            End If
+            If Len(strHtml) > 500 Then
+                sqCache(sqFetchIdx) = strHtml
+                If sqCurrentIdx = sqFetchIdx Then WriteSqFrame strHtml
+            Else
+                If sqCurrentIdx = sqFetchIdx Then WriteSqFrame SqNoticePage("攻略内容获取失败，请点击上方“在浏览器中打开”按钮查看。")
+            End If
+        Else
+            If sqCurrentIdx = sqFetchIdx Then WriteSqFrame SqNoticePage("攻略页面获取失败（网络异常），请点击上方“在浏览器中打开”按钮查看。")
+        End If
+    End Sub
+    Function SqNoticePage(strMsg)
+        SqNoticePage = "<html><head></head>" & _
+            "<body style=""font-family:'Microsoft YaHei';font-size:14px;color:#555;padding:24px;line-height:1.8;"">" & strMsg & "</body></html>"
+    End Function
+    Function SqDecodeBody(varBody, strCharset)
+        Dim stm
+        Set stm = CreateObject("ADODB.Stream")
+        stm.Type = 1
+        stm.Open
+        stm.Write varBody
+        stm.Position = 0
+        stm.Type = 2
+        stm.Charset = strCharset
+        SqDecodeBody = stm.ReadText
+        stm.Close
+    End Function
+    ' 提取攻略正文：仅保留 .c-detail 正文容器内容并按锚点截尾（截止到神器小结/结束语），
+    ' 丢弃导航、推荐位、侧边栏、评论区等全部非正文区域；DOM 最小化，加快加载并让滚动更流畅
+    Function SqExtractBody(strHtml, strUrl)
+        Dim re, m, posStart, posEnd, posTry, posJ, posP, strBody
+        SqExtractBody = ""
+        Set re = New RegExp
+        re.IgnoreCase = True
+        re.Global = False
+        re.Pattern = "<div\b[^>]*c-detail[^>]*>"
+        Set m = re.Execute(strHtml)
+        If m.Count = 0 Then Exit Function
+        posStart = m(0).FirstIndex + m(0).Length + 1
+        posEnd = Len(strHtml)
+        ' 逐个截尾锚点：保留到最早出现者之前
+        posTry = InStr(posStart, strHtml, "share-container", vbTextCompare)
+        If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
+        posTry = InStr(posStart, strHtml, "hidden-table", vbTextCompare)
+        If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
+        posTry = InStr(posStart, strHtml, "newsbbs", vbTextCompare)
+        If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
+        posTry = InStr(posStart, strHtml, "gl_r", vbTextCompare)
+        If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
+        posTry = InStr(posStart, strHtml, ChrW(&H63A8) & ChrW(&H8350) & ChrW(&H9605) & ChrW(&H8BFB))  ' 推荐阅读
+        If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
+        ' 结束语“以上就是……”：保留到其段落结束（含神器小结自然收尾）
+        posJ = InStr(posStart, strHtml, ChrW(&H4EE5) & ChrW(&H4E0A) & ChrW(&H5C31) & ChrW(&H662F))
+        If posJ > 0 Then
+            posP = InStr(posJ, strHtml, "</p>", vbTextCompare)
+            If posP > 0 And posP + 3 < posEnd Then posEnd = posP + 3
+        End If
+        If posEnd <= posStart Then Exit Function
+        strBody = Mid(strHtml, posStart, posEnd - posStart + 1)
+        ' 正文中偶发的脚本与事件属性同样剥离，旧 IE 引擎执行会报脚本错误
+        re.Global = True
+        re.IgnoreCase = True
+        re.Pattern = "<script\b[\s\S]*?</script\s*>"
+        strBody = re.Replace(strBody, "")
+        re.Pattern = "<script\b[^>]*>"
+        strBody = re.Replace(strBody, "")
+        re.Pattern = " on[a-zA-Z]+\s*=\s*""[^""]*"""
+        strBody = re.Replace(strBody, "")
+        re.Pattern = " on[a-zA-Z]+\s*=\s*'[^']*'"
+        strBody = re.Replace(strBody, "")
+        SqExtractBody = "<html><head>" & _
+            "<base href=""" & strUrl & """>" & _
+            "<style>" & _
+            "html{overflow-y:scroll;}" & _
+            "body{margin:0;padding:14px 18px;font-family:'Microsoft YaHei';font-size:15px;line-height:1.8;color:#333333;background-color:#ffffff;}" & _
+            "img{max-width:100%;height:auto;}" & _
+            "p{margin:10px 0;}" & _
+            "</style></head><body>" & strBody & "</body></html>"
+    End Function
+    Function SqTransformHtml(strHtml, strUrl)
+        Dim re, strBase
+        Set re = New RegExp
+        re.Global = True
+        re.IgnoreCase = True
+        ' 移除脚本与嵌套框架：旧 IE 引擎无法执行现代 JS，保留会触发“脚本错误”弹窗
+        re.Pattern = "<script\b[\s\S]*?</script\s*>"
+        strHtml = re.Replace(strHtml, "")
+        re.Pattern = "<script\b[^>]*>"
+        strHtml = re.Replace(strHtml, "")
+        re.Pattern = "<iframe\b[\s\S]*?</iframe\s*>"
+        strHtml = re.Replace(strHtml, "")
+        re.Pattern = "<iframe\b[^>]*>"
+        strHtml = re.Replace(strHtml, "")
+        ' 移除事件属性，防止调用已剥离的脚本
+        re.Pattern = " on[a-zA-Z]+\s*=\s*""[^""]*"""
+        strHtml = re.Replace(strHtml, "")
+        re.Pattern = " on[a-zA-Z]+\s*=\s*'[^']*'"
+        strHtml = re.Replace(strHtml, "")
+        ' javascript: 链接改为空锚
+        re.Pattern = "(href\s*=\s*[""'])\s*javascript:[^""']*"
+        strHtml = re.Replace(strHtml, "$1#")
+        ' 移除 charset/refresh 声明（内容已解码为 Unicode 注入，refresh 会导致整页跳转）
+        re.Pattern = "<meta\b[^>]*(http-equiv\s*=\s*[""']?refresh|charset)[^>]*>"
+        strHtml = re.Replace(strHtml, "")
+        ' 图片直链重写：http://f.xyq.netease.com 302 到 https://xyq-f.netease.com/forum/，改走 https 直连
+        strHtml = Replace(strHtml, "https://f.xyq.netease.com/", "https://xyq-f.netease.com/forum/", 1, -1, vbTextCompare)
+        strHtml = Replace(strHtml, "http://f.xyq.netease.com/", "https://xyq-f.netease.com/forum/", 1, -1, vbTextCompare)
+        strHtml = Replace(strHtml, "//f.xyq.netease.com/", "//xyq-f.netease.com/forum/", 1, -1, vbTextCompare)
+        ' 注入 base 使相对资源按原页面地址解析；隐藏侧边栏/评论区，正文自适应弹窗宽度；固定滚动条防抖
+        strBase = "<base href=""" & strUrl & """>" & _
+            "<style>" & _
+            "html{overflow-y:scroll;}" & _
+            "img{max-width:100%;height:auto;}" & _
+            ".gl_r,.right_box,.pl{display:none !important;}" & _
+            "footer{display:none !important;}" & _
+            ".gl_l{float:none !important;width:auto !important;max-width:100% !important;}" & _
+            ".content,.base{width:auto !important;max-width:100% !important;}" & _
+            "</style>"
+        re.Global = False
+        re.Pattern = "(<head\b[^>]*>)"
+        If re.Test(strHtml) Then
+            strHtml = re.Replace(strHtml, "$1" & strBase)
+        Else
+            strHtml = strBase & strHtml
+        End If
+        SqTransformHtml = strHtml
+    End Function
+    Sub WriteSqFrame(strHtml)
+        Dim objDoc, objLink
+        Set objDoc = Nothing
+        On Error Resume Next
+        Set objDoc = document.getElementById("sqFrame").contentWindow.document
+        On Error GoTo 0
+        If objDoc Is Nothing Then Exit Sub
+        On Error Resume Next
+        objDoc.open
+        objDoc.write strHtml
+        objDoc.close
+        ' 禁用页内链接：点击跳转会加载带脚本的完整页面
+        For Each objLink In objDoc.links
+            objLink.removeAttribute "href"
+        Next
+        On Error GoTo 0
+    End Sub
+    Sub PositionSqDialog
+        Dim vw, vh, dw, dh
+        vw = document.body.clientWidth
+        vh = document.body.clientHeight
+        dw = Int(vw * 0.9)
+        If dw > 1020 Then dw = 1020
+        dh = Int(vh * 0.85)
+        document.getElementById("sqOverlay").style.pixelWidth = document.body.scrollWidth
+        document.getElementById("sqOverlay").style.pixelHeight = document.body.scrollHeight
+        document.getElementById("sqDialog").style.pixelWidth = dw
+        document.getElementById("sqDialog").style.pixelHeight = dh
+        document.getElementById("sqDialog").style.pixelLeft = Int((vw - dw) / 2) + document.body.scrollLeft
+        document.getElementById("sqDialog").style.pixelTop = Int((vh - dh) / 2) + document.body.scrollTop
+        document.getElementById("sqFrame").style.pixelWidth = dw - 28
+        document.getElementById("sqFrame").style.pixelHeight = dh - 72
+    End Sub
+    Sub CloseSq
+        document.getElementById("sqDialog").style.display = "none"
+        document.getElementById("sqOverlay").style.display = "none"
+        sqCurrentIdx = -1
+    End Sub
+    Sub OpenSqBrowser
+        Dim objShell
+        If sqCurrentIdx < 0 Then Exit Sub
+        Set objShell = CreateObject("WScript.Shell")
+        objShell.Run "explorer.exe " & arrShenqi(sqCurrentIdx)(1), 1, False
+    End Sub
+    Sub SaveToHistory
+        Dim idx
+        If lastDesc = "" Then Exit Sub
+        idx = historyCount
+        historyCount = historyCount + 1
+        ReDim Preserve arrHistory(historyCount - 1)
+        arrHistory(idx) = Array(Pad2(Hour(Now)) & ":" & Pad2(Minute(Now)) & ":" & Pad2(Second(Now)), lastDesc, lastResult)
+        lastDesc = ""
+        lastResult = ""
+        TrimHistory
+    End Sub
+    Sub TrimHistory
+        Dim maxH, removeCount, i
+        maxH = CInt(document.getElementById("selHistoryMax").value)
+        If historyCount <= maxH Then Exit Sub
+        removeCount = historyCount - maxH
+        For i = 0 To historyCount - removeCount - 1
+            arrHistory(i) = arrHistory(i + removeCount)
+        Next
+        historyCount = maxH
+        ReDim Preserve arrHistory(historyCount - 1)
+    End Sub
+    Sub OnChangeHistoryLimit
+        TrimHistory
+        If lastDesc <> "" Or historyCount > 0 Then RenderHistory
+    End Sub
+    Sub RenderHistory
+        Dim html, i, e, cR, hR, j
+        html = "<table class=""history-table""><tr><th class=""h1"" width=""8%""></th><th class=""h2"" width=""9%"">时间</th><th class=""h3"" width=""28%"">输入参数</th><th class=""h4"">伤害</th><th class=""h5"">法伤</th><th class=""h6"">防御</th><th class=""h7"">气血</th><th class=""h8"">速度</th><th class=""h9"" width=""6%""></th></tr>"
+        If lastDesc <> "" Then
+            cR = Split(lastResult, "  ")
+            html = html & "<tr class=""row-current""><td class=""current-tag"">当前</td><td class=""hist-time"">" & Pad2(Hour(Now)) & ":" & Pad2(Minute(Now)) & ":" & Pad2(Second(Now)) & "</td><td class=""hist-info"">" & lastDesc & "</td>"
+            For i = 0 To 4
+                If i <= UBound(cR) Then html = html & "<td class=""num"">" & Split(cR(i), ":")(1) & "</td>" Else html = html & "<td class=""num"">/</td>"
+            Next
+            html = html & "<td></td></tr>"
+        End If
+        For i = historyCount - 1 To 0 Step -1
+            e = arrHistory(i)
+            hR = Split(e(2), "  ")
+            html = html & "<tr><td class=""hist-tag"">历史</td><td class=""hist-time"">" & e(0) & "</td><td class=""hist-info"">" & e(1) & "</td>"
+            For j = 0 To 4
+                If j <= UBound(hR) Then html = html & "<td class=""num"">" & Split(hR(j), ":")(1) & "</td>" Else html = html & "<td class=""num"">/</td>"
+            Next
+            html = html & "<td class=""hist-del""><button class=""hist-del-btn"" onclick=""DeleteHistory " & i & """>删</button></td></tr>"
+        Next
+        html = html & "</table>"
+        document.getElementById("divHistoryTable").innerHTML = html
+        document.getElementById("divHistory").style.display = ""
+    End Sub
+    Sub DeleteHistory(idx)
+        Dim i
+        If idx < 0 Or idx >= historyCount Then Exit Sub
+        For i = idx To historyCount - 2
+            arrHistory(i) = arrHistory(i + 1)
+        Next
+        historyCount = historyCount - 1
+        If historyCount = 0 Then ReDim arrHistory(0) Else ReDim Preserve arrHistory(historyCount - 1)
+        RenderHistory
+    End Sub
+    Sub ClearHistory
+        ReDim arrHistory(0)
+        historyCount = 0
+        document.getElementById("divHistory").style.display = "none"
+        document.getElementById("divHistoryTable").innerHTML = ""
+    End Sub
+    Sub ToggleTheme
+        Dim chk, track
+        Set chk = document.getElementById("chkTheme")
+        Set track = document.getElementById("toggleTrack")
+        If document.body.className = "dark" Then
+            document.body.className = ""
+            chk.checked = False
+            track.className = "theme-toggle-track"
+            document.getElementById("themeTxt").innerText = "☀ 日间"
+        Else
+            document.body.className = "dark"
+            chk.checked = True
+            track.className = "theme-toggle-track on"
+            document.getElementById("themeTxt").innerText = "🌙 夜间"
+        End If
+    End Sub
+</script>
+</head>
+<body>
+    <input type="checkbox" id="chkTheme" class="theme-toggle-chk" onclick="ToggleTheme"><label class="theme-toggle" for="chkTheme"><span class="theme-toggle-track" id="toggleTrack"><span class="theme-toggle-knob"></span></span><span class="theme-toggle-txt" id="themeTxt">☀ 日间</span></label>
+    <div class="input-bar">
+        <div><label>⏰ 定时提醒（小时）：</label><select id="selRemindHour"></select></div>
+        <div><label>（第几分）：</label><select id="selRemindMinute"></select></div>
+        <div><label>（第几秒）：</label><select id="selRemindSecond"></select></div>
+        <div>
+            <label>提醒内容：</label>
+            <input type="text" id="txtRemindMsg" style="width: 220px;" value="该起来活动一下啦，喝口水休息休息！">
+            <button id="btnRemindStart" onclick="StartRemind">运行</button>
+            <button id="btnRemindStop" onclick="StopRemind" disabled>停止</button>
+            <button id="btnRemindTest" onclick="ShowRemindNotify">测试</button>
+        </div>
+        <div id="remindStatus"></div>
+    </div>
+    <div class="input-bar">
+        <div><label>👤 种族选择：</label><select id="selRace"><option value="human">人族</option><option value="immortal" selected>仙族</option><option value="demon">魔族</option></select></div>
+        <div>
+            <label>⚙️ 换算类型：</label>
+            <select id="selCalcType" onchange="SwitchCalcType"><option value="weapon" selected>⚔️ 武器换算</option><option value="equip">🛡️ 装备换算</option></select>
+            <button id="btnCalcAttr" onclick="CalcAttr">计算武器属性</button>
+        </div>
+        <div id="rowWeaponRequired">
+            <label>武器伤害：</label><input type="text" id="txtWeaponDmg" onkeydown="CheckEnterAttr"><span class="tip">必填</span>
+            <label style="width: auto; margin-left: 10px;">命中：</label><input type="text" id="txtWeaponHit" onkeydown="CheckEnterAttr"><span class="tip">必填</span>
+        </div>
+        <div id="rowEquipRequired" style="display: none;">
+            <label>装备防御：</label><input type="text" id="txtEquipDef" onkeydown="CheckEnterAttr"><span class="tip">必填</span>
+        </div>
+        <div>
+            <label>附加力量：</label><input type="text" id="txtStr" onkeydown="CheckEnterAttr"><span class="tip">选填</span>
+            <label style="width: auto; margin-left: 10px;">魔力：</label><input type="text" id="txtMag" onkeydown="CheckEnterAttr"><span class="tip">选填</span>
+        </div>
+        <div>
+            <label>附加体质：</label><input type="text" id="txtCon" onkeydown="CheckEnterAttr"><span class="tip">选填</span>
+            <label style="width: auto; margin-left: 10px;">耐力：</label><input type="text" id="txtEnd" onkeydown="CheckEnterAttr"><span class="tip">选填</span>
+        </div>
+        <div><label>附加敏捷：</label><input type="text" id="txtAgi" onkeydown="CheckEnterAttr"><span class="tip">选填</span></div>
+        <div id="divAttrTable" style="display: none; margin-top: 8px;">
+            <table><tr><th class="a1">伤害</th><th class="a2">法伤</th><th class="a3">防御</th><th class="a4">气血</th><th class="a5">速度</th></tr><tr><td class="num" id="tdADmg">/</td><td class="num" id="tdAMag">/</td><td class="num" id="tdADef">/</td><td class="num" id="tdAHp">/</td><td class="num" id="tdASpd">/</td></tr></table>
+        </div>
+        <div id="divHistory" style="display: none;">
+            <div class="history-header">计算结果对比<button id="btnClearHistory" class="btn-clear-hist" onclick="ClearHistory">清空历史</button><select id="selHistoryMax" style="margin-left:4px;" onchange="OnChangeHistoryLimit"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="5">5</option><option value="10" selected>10</option><option value="15">15</option><option value="20">20</option><option value="30">30</option></select><span style="font-weight:normal;font-size:12px;color:#888;margin-left:2px;">条</span></div>
+            <div id="divHistoryTable"></div>
+        </div>
+    </div>
+    <div class="input-bar">
+        <div>
+            <label>🏯 修炼类型：</label>
+            <select id="selXiuType"><option value="attack" selected>攻击修炼</option><option value="magic">法术修炼</option><option value="defend">防御修炼</option><option value="resist">抗法修炼</option><option value="hunt">猎术修炼</option></select>
+            <button id="btnCalcXiu" onclick="CalcXiulian">计算修炼消耗</button>
+        </div>
+        <div>
+            <label>当前修炼等级：</label><input type="text" id="txtXiuCurLv" onkeydown="CheckEnterXiu"><span class="tip">必填 0-25</span>
+            <label style="width: auto; margin-left: 10px;">当前经验：</label><input type="text" id="txtXiuCurExp" onkeydown="CheckEnterXiu"><span class="tip">选填 默认0</span>
+        </div>
+        <div>
+            <label>目标修炼等级：</label><input type="text" id="txtXiuTgtLv" onkeydown="CheckEnterXiu"><span class="tip">必填 0-25</span>
+            <label style="width: auto; margin-left: 10px;">目标经验：</label><input type="text" id="txtXiuTgtExp" onkeydown="CheckEnterXiu"><span class="tip">选填 默认0</span>
+        </div>
+        <div id="xiuResult"></div>
+    </div>
+    <div class="input-bar">
+        <div style="cursor: pointer;" onclick="ToggleSqSection"><label style="width: auto; text-align: left;">⚔️ 神器任务攻略（序章/起/转/合）：</label><span class="sq-toggle" id="sqToggleHint">▼ 展开</span><span class="tip">点击任务名弹窗查看攻略（内容加载自网络）</span></div>
+        <div id="sqLinks" style="display: none;"></div>
+    </div>
+    <div class="input-bar">
+        <div>
+            <label>💰 金价比例（元/1000万梦幻币）：</label><input type="text" id="txtGold" onkeydown="CheckEnterGold"><button id="btnCalcGold" onclick="CalcGold">汇率换算</button>
+        </div>
+        <div>
+            <label>梦幻币（万）：</label><input type="text" id="txtCoin" onkeydown="CheckEnterGold"><span class="tip">选填</span>
+            <label style="width: auto; margin-left: 10px;">人民币（元）：</label><input type="text" id="txtRmb" onkeydown="CheckEnterGold"><span class="tip">选填</span>
+        </div>
+        <div id="goldResult"></div>
+    </div>
+    <div class="input-bar">
+        <label>1级宝石单价（万）：</label><input type="text" id="txtPrice" onkeydown="CheckEnter"><button id="btnCalculate" onclick="Calculate">确认计算</button><span class="tip">合成规则：2个N级宝石 = 1个(N+1)级宝石</span>
+    </div>
+    <div id="resultArea"></div>
+    <div id="sqOverlay" onclick="CloseSq"></div>
+    <div id="sqDialog">
+        <div class="sq-dialog-head">
+            <span id="sqDialogTitle"></span>
+            <button class="sq-dialog-btn" onclick="OpenSqBrowser">在浏览器中打开</button>
+            <button class="sq-dialog-btn" onclick="CloseSq">✕ 关闭</button>
+        </div>
+        <iframe id="sqFrame" application="yes"></iframe>
+    </div>
+</body>
+</html>
