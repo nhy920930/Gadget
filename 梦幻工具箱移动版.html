@@ -74,6 +74,14 @@
     td.lv, td.num { text-align: center; }
     td.lv { font-weight: bold; }
     tr.alt { background-color: #f9fafc; }
+    /* 宝石成本多选：选择模式下“单个成本”单元格可点击，选中高亮 */
+    .pick-mode td.cost { cursor: pointer; }
+    td.cost.picked { background: #ffd76e; font-weight: bold; }
+    body.dark td.cost.picked { background: #6b5210; }
+    #gemSumResult { margin-top: 8px; font-size: 13px; color: #70787f; }
+    #gemSumResult b { color: #c0392b; }
+    body.dark #gemSumResult { color: #7c828a; }
+    body.dark #gemSumResult b { color: #f0a050; }
     .history-header { margin-top: 12px; font-weight: bold; font-size: 15px; color: #555; padding-bottom: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
     .history-header select { width: 55px; height: 30px; border: 1px solid #b0b6c3; border-radius: 4px; font-size: 13px; }
     .history-header .unit { font-weight: normal; font-size: 12px; color: #888; }
@@ -292,8 +300,13 @@
     <div class="card">
         <div class="card-title">💠 宝石成本计算</div>
         <div class="form-group"><label>1级宝石单价（万）</label><input type="number" step="any" id="txtPrice" onkeydown="onEnter(event,calculate)"></div>
-        <button class="btn btn-full" onclick="calculate()">确认计算</button>
+        <button class="btn btn-full" onclick="calculate()">确认换算</button>
+        <div class="btn-row">
+            <button class="btn" id="btnGemSelect" onclick="toggleGemSelect()">选择</button>
+            <button class="btn" id="btnGemSum" onclick="calcGemSum()">计算</button>
+        </div>
         <span class="tip">合成规则：2个N级宝石 = 1个(N+1)级宝石</span>
+        <div id="gemSumResult"></div>
         <div class="table-wrap" id="resultArea"></div>
     </div>
 
@@ -343,11 +356,44 @@ function calcGold() {
 }
 
 // ================== 宝石成本 ==================
+var gemSelectOn = false, gemPicked = {}, gemCosts = [];
 function calculate() {
     var v = gv('txtPrice'); if (!isNum(v) || parseFloat(v) <= 0) { alert('请输入大于0的有效数字！'); return; }
     var p = parseFloat(v), h = '<table><tr><th class="g1" width="10%">等级</th><th class="g2" width="15%">需要1级宝石</th><th class="g3" width="15%">累计1级宝石</th><th class="g4" width="30%">单个成本(万)</th><th class="g5" width="30%">累计成本(万)</th></tr>';
-    for (var i=1;i<=15;i++) { var n=Math.pow(2,i-1),c=Math.pow(2,i)-1,cls=i%2===0?' class="alt"':''; h+='<tr'+cls+'><td class="lv">'+i+'级</td><td class="num">'+n+'</td><td class="num">'+c+'</td><td>'+fmt(n*p,2)+'</td><td>'+fmt(c*p,2)+'</td></tr>'; }
+    for (var i=1;i<=15;i++) { var n=Math.pow(2,i-1),c=Math.pow(2,i)-1,cls=i%2===0?' class="alt"':''; gemCosts[i]=n*p; h+='<tr'+cls+'><td class="lv">'+i+'级</td><td class="num">'+n+'</td><td class="num">'+c+'</td><td class="cost" onclick="toggleGemPick('+i+',this)">'+fmt(n*p,2)+'</td><td>'+fmt(c*p,2)+'</td></tr>'; }
     document.getElementById('resultArea').innerHTML = h + '</table>';
+    // 表格重新生成后重置多选与合计结果
+    gemPicked = {};
+    document.getElementById('gemSumResult').innerHTML = '';
+}
+// 进入/退出宝石成本多选模式
+function toggleGemSelect() {
+    if (!gemSelectOn) {
+        if (!document.getElementById('resultArea').innerHTML) { alert('请先输入宝石单价并点击“确认换算”生成表格！'); return; }
+        gemSelectOn = true;
+        document.getElementById('btnGemSelect').textContent = '退出选择';
+        document.getElementById('resultArea').className = 'table-wrap pick-mode';
+        document.getElementById('gemSumResult').innerHTML = '选择模式：点击表格中“单个成本(万)”列的金额进行多选，选好后点击“计算”按钮合计。';
+    } else {
+        gemSelectOn = false;
+        document.getElementById('btnGemSelect').textContent = '选择';
+        document.getElementById('resultArea').className = 'table-wrap';
+        document.getElementById('gemSumResult').innerHTML = '';
+    }
+}
+// 点击“单个成本”单元格切换选中状态（仅选择模式下生效）
+function toggleGemPick(i, td) {
+    if (!gemSelectOn) return;
+    if (gemPicked[i]) { delete gemPicked[i]; td.className = 'cost'; }
+    else { gemPicked[i] = true; td.className = 'cost picked'; }
+}
+// 合计已选的单个成本
+function calcGemSum() {
+    var keys = Object.keys(gemPicked);
+    if (!keys.length) { alert('尚未选择任何宝石成本！请先点击“选择”按钮进入选择模式，再点击表格中的金额多选。'); return; }
+    var s = 0;
+    for (var k = 0; k < keys.length; k++) s += gemCosts[keys[k]];
+    document.getElementById('gemSumResult').innerHTML = '已选 <b>' + keys.length + '</b> 项单个成本合计：<b>' + fmt(s, 2) + '</b> 万梦幻币';
 }
 
 // ================== 属性换算 ==================

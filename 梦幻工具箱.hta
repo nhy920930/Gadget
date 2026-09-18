@@ -74,6 +74,14 @@
         background-color: #eceef1;
         border: 2px solid; border-color: #9aa2ac #ffffff #ffffff #9aa2ac;
     }
+    /* 宝石成本多选：选择模式下“单个成本”单元格可点击，选中高亮 */
+    #resultArea.pick td.cost { cursor: pointer; }
+    td.picked { background-color: #ffd76e; font-weight: bold; }
+    body.dark td.picked { background-color: #6b5210; }
+    #gemSumResult { margin-top: 10px; font-size: 13px; color: #70787f; }
+    #gemSumResult b { color: #c0392b; }
+    body.dark #gemSumResult { color: #7c828a; }
+    body.dark #gemSumResult b { color: #f0a050; }
     table { border-collapse: collapse; width: 100%; background-color: transparent; }
     th, td { border: 1px solid #c2c8d0; padding: 8px 10px; font-size: 14px; }
     th {
@@ -410,6 +418,10 @@
         strHtml = strHtml & "</table>"
         document.getElementById("goldResult").innerHTML = strHtml
     End Sub
+    ' 宝石成本多选合计：gemCosts(i) 为 i 级单个成本；gemPicked 记录选中行（键=等级）
+    Dim gemSelectOn, gemPicked, gemCosts(15)
+    Set gemPicked = CreateObject("Scripting.Dictionary")
+    gemSelectOn = False
     Sub Calculate
         Dim strVal, dblPrice, i, lngNeed, lngCum, dblCost, dblCumCost, strHtml, strCls
         strVal = document.getElementById("txtPrice").value
@@ -430,10 +442,59 @@
             lngCum = 2 ^ i - 1
             dblCost = lngNeed * dblPrice
             dblCumCost = lngCum * dblPrice
+            gemCosts(i) = dblCost
             If i Mod 2 = 0 Then strCls = " class=""alt""" Else strCls = ""
-            strHtml = strHtml & "<tr" & strCls & "><td class=""lv"">" & i & "级</td><td class=""num"">" & lngNeed & "</td><td class=""num"">" & lngCum & "</td><td>" & FormatNumber(dblCost, 2) & "</td><td>" & FormatNumber(dblCumCost, 2) & "</td></tr>"
+            strHtml = strHtml & "<tr" & strCls & "><td class=""lv"">" & i & "级</td><td class=""num"">" & lngNeed & "</td><td class=""num"">" & lngCum & "</td><td class=""cost"" onclick=""ToggleGemPick " & i & """>" & FormatNumber(dblCost, 2) & "</td><td>" & FormatNumber(dblCumCost, 2) & "</td></tr>"
         Next
         document.getElementById("resultArea").innerHTML = strHtml & "</table>"
+        ' 表格重新生成后重置多选与合计结果
+        gemPicked.RemoveAll
+        document.getElementById("gemSumResult").innerHTML = ""
+    End Sub
+    ' 进入/退出宝石成本多选模式
+    Sub ToggleGemSelect
+        If Not gemSelectOn Then
+            If document.getElementById("resultArea").innerHTML = "" Then
+                MsgBox "请先输入宝石单价并点击“确认换算”生成表格！", vbExclamation, "提示"
+                Exit Sub
+            End If
+            gemSelectOn = True
+            document.getElementById("btnGemSelect").innerText = "退出选择"
+            document.getElementById("resultArea").className = "pick"
+            document.getElementById("gemSumResult").innerHTML = "选择模式：点击表格中“单个成本(万)”列的金额进行多选，选好后点击“计算”按钮合计。"
+        Else
+            gemSelectOn = False
+            document.getElementById("btnGemSelect").innerText = "选择"
+            document.getElementById("resultArea").className = ""
+            document.getElementById("gemSumResult").innerHTML = ""
+        End If
+    End Sub
+    ' 点击“单个成本”单元格切换选中状态（仅选择模式下生效）
+    Sub ToggleGemPick(idx)
+        Dim objTd
+        If Not gemSelectOn Then Exit Sub
+        If idx < 1 Or idx > 15 Then Exit Sub
+        Set objTd = window.event.srcElement
+        If gemPicked.Exists(idx) Then
+            gemPicked.Remove idx
+            objTd.className = "cost"
+        Else
+            gemPicked(idx) = True
+            objTd.className = "cost picked"
+        End If
+    End Sub
+    ' 合计已选的单个成本
+    Sub CalcGemSum
+        Dim k, dblSum
+        If gemPicked.Count = 0 Then
+            MsgBox "尚未选择任何宝石成本！请先点击“选择”按钮进入选择模式，再点击表格中的金额多选。", vbExclamation, "提示"
+            Exit Sub
+        End If
+        dblSum = 0
+        For Each k In gemPicked.Keys
+            dblSum = dblSum + gemCosts(k)
+        Next
+        document.getElementById("gemSumResult").innerHTML = "已选 <b>" & gemPicked.Count & "</b> 项单个成本合计：<b>" & FormatNumber(dblSum, 2) & "</b> 万梦幻币"
     End Sub
     Dim arrHistory, historyCount, lastDesc, lastResult
     ReDim arrHistory(0)
@@ -1434,7 +1495,8 @@
         <div id="goldResult"></div>
     </div>
     <div class="input-bar">
-        <label>1级宝石单价（万）：</label><input type="text" id="txtPrice" onkeydown="CheckEnter"><button id="btnCalculate" onclick="Calculate">确认计算</button><span class="tip">合成规则：2个N级宝石 = 1个(N+1)级宝石</span>
+        <label>1级宝石单价（万）：</label><input type="text" id="txtPrice" onkeydown="CheckEnter"><button id="btnCalculate" onclick="Calculate">确认换算</button><button id="btnGemSelect" onclick="ToggleGemSelect">选择</button><button id="btnGemSum" onclick="CalcGemSum">计算</button><span class="tip">合成规则：2个N级宝石 = 1个(N+1)级宝石</span>
+        <div id="gemSumResult"></div>
     </div>
     <div id="resultArea"></div>
     <div id="sqOverlay" onclick="CloseSq"></div>
