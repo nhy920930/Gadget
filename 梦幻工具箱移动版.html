@@ -510,6 +510,8 @@ function showSq(i) {
     document.getElementById('sqFrame').src = SQ_TASKS[i][1] + '#Content';
     document.getElementById('sqOverlay').style.display = 'block';
     document.getElementById('sqDialog').style.display = 'flex';
+    // 弹窗为全屏自适应；打开时锁定背景滚动，防止横竖屏/滚动带动弹窗跳动
+    document.body.style.overflow = 'hidden';
 }
 function toggleSqSection() {
     var b = document.getElementById('sqSectionBody'), h = document.getElementById('sqToggleHint');
@@ -523,6 +525,7 @@ function closeSq() {
     document.getElementById('sqDialog').style.display = 'none';
     document.getElementById('sqOverlay').style.display = 'none';
     document.getElementById('sqFrame').src = 'about:blank';
+    document.body.style.overflow = '';
     sqCurrent = -1;
 }
 function openSqBrowser() {

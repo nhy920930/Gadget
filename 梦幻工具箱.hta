@@ -288,7 +288,7 @@
         border-color: #4a5058 #0e1013 #0e1013 #4a5058;
         filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#C8333740', endColorstr='#B0252930');
     }
-    .sq-dialog-head { margin-bottom: 8px; }
+    .sq-dialog-head { margin-bottom: 8px; cursor: move; }
     #sqDialogTitle { font-weight: bold; font-size: 14px; color: #3d444d; margin-right: 8px; vertical-align: middle; }
     body.dark #sqDialogTitle { color: #aeb4bc; }
     .sq-dialog-btn {
@@ -307,6 +307,26 @@
         background-color: #ffffff;
         border: 2px solid; border-color: #9aa2ac #ffffff #ffffff #9aa2ac;
     }
+    /* 弹窗右下角拖拽手柄：鼠标拖动可自由调整弹窗大小 */
+    .sq-resize-handle {
+        position: absolute; right: 3px; bottom: 3px; width: 18px; height: 18px;
+        cursor: se-resize; z-index: 940; overflow: hidden;
+    }
+    .sq-resize-handle span {
+        position: absolute; right: 0; display: block; height: 3px;
+        background-color: #7b43f5;
+    }
+    .sq-resize-handle .sq-rh-1 { bottom: 0; width: 16px; }
+    .sq-resize-handle .sq-rh-2 { bottom: 6px; width: 10px; }
+    .sq-resize-handle .sq-rh-3 { bottom: 12px; width: 4px; }
+    body.dark .sq-resize-handle span { background-color: #8b5cf6; }
+    /* 拖拽调整大小期间的透明遮罩：盖住 iframe，防止其吞掉鼠标移动事件 */
+    #sqDragMask {
+        position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+        z-index: 950; display: none; cursor: se-resize;
+        background-color: #ffffff;
+        filter: progid:DXImageTransform.Microsoft.Alpha(opacity=1);
+    }
 </style>
 <script language="VBScript">
     Sub Window_OnLoad
@@ -317,6 +337,11 @@
         If winH > Int(screen.availHeight * 0.95) Then winH = Int(screen.availHeight * 0.95)
         window.resizeTo winW, winH
         window.moveTo (screen.availWidth - winW) \ 2, (screen.availHeight - winH) \ 2
+        ' 主窗口尺寸变化时同步调整攻略弹窗；窗口失去焦点时结束未完成的拖拽
+        On Error Resume Next
+        window.onresize = GetRef("Window_OnResize")
+        window.onblur = GetRef("Window_OnBlur")
+        On Error GoTo 0
         FillRemindMinutes
         RenderShenqiLinks
         document.getElementById("txtPrice").focus
@@ -838,6 +863,19 @@
     Dim sqHttp, sqFetchIdx, sqCache
     Set sqCache = CreateObject("Scripting.Dictionary")
     sqFetchIdx = -1
+    ' 弹窗尺寸状态：sqUserW/H 为用户拖拽调整后的尺寸（0 表示未调整，始终跟随主窗口自适应）
+    Dim sqUserW, sqUserH, sqResizeOn, sqDragStartX, sqDragStartY, sqDragStartW, sqDragStartH
+    sqUserW = 0
+    sqUserH = 0
+    sqResizeOn = False
+    ' 弹窗位置状态：sqUserLeft/Top 为用户拖动后的位置（-1 表示未拖动过，打开时居中）
+    Dim sqUserLeft, sqUserTop, sqMoveOn, sqMoveStartX, sqMoveStartY, sqMoveStartL, sqMoveStartT
+    sqUserLeft = -1
+    sqUserTop = -1
+    sqMoveOn = False
+    ' 弹窗打开期间禁用主界面滚动条时保存的滚动位置（关闭弹窗时恢复）
+    Dim sqSavedScrollTop
+    sqSavedScrollTop = 0
     Sub RenderShenqiLinks
         Dim i, g, strHtml
         strHtml = ""
@@ -870,6 +908,10 @@
         sqCurrentIdx = CInt(idx)
         sqFetchIdx = sqCurrentIdx
         document.getElementById("sqDialogTitle").innerText = arrShenqi(sqCurrentIdx)(0)
+        ' 弹窗打开期间禁用主界面滚动条（防止背景滚动带动视野），关闭弹窗时恢复
+        sqSavedScrollTop = document.body.scrollTop
+        document.body.style.overflow = "hidden"
+        document.body.scrollTop = sqSavedScrollTop
         PositionSqDialog
         document.getElementById("sqOverlay").style.display = "block"
         document.getElementById("sqDialog").style.display = "block"
@@ -1056,25 +1098,173 @@
         Next
         On Error GoTo 0
     End Sub
+    ' 弹窗定位：未手动调整过时按主窗口 90% x 85% 自适应；调整过则保持用户尺寸
+    '（超出当前视口时压缩到视口内）。位置未拖动过时居中，拖动过则保持（限制在视口内）
     Sub PositionSqDialog
-        Dim vw, vh, dw, dh
+        Dim vw, vh, dw, dh, dlgL, dlgT, maxL, maxT
         vw = document.body.clientWidth
         vh = document.body.clientHeight
-        dw = Int(vw * 0.9)
-        If dw > 1020 Then dw = 1020
-        dh = Int(vh * 0.85)
+        If sqUserW > 0 And sqUserH > 0 Then
+            dw = sqUserW
+            dh = sqUserH
+            If dw > vw Then dw = vw
+            If dh > vh Then dh = vh
+            If dw < 400 Then dw = 400
+            If dh < 300 Then dh = 300
+        Else
+            dw = Int(vw * 0.9)
+            If dw > 1020 Then dw = 1020
+            dh = Int(vh * 0.85)
+        End If
         document.getElementById("sqOverlay").style.pixelWidth = document.body.scrollWidth
         document.getElementById("sqOverlay").style.pixelHeight = document.body.scrollHeight
         document.getElementById("sqDialog").style.pixelWidth = dw
         document.getElementById("sqDialog").style.pixelHeight = dh
-        document.getElementById("sqDialog").style.pixelLeft = Int((vw - dw) / 2) + document.body.scrollLeft
-        document.getElementById("sqDialog").style.pixelTop = Int((vh - dh) / 2) + document.body.scrollTop
+        If sqUserLeft >= 0 And sqUserTop >= 0 Then
+            dlgL = sqUserLeft
+            dlgT = sqUserTop
+            maxL = document.body.scrollLeft + vw - dw
+            maxT = document.body.scrollTop + vh - dh
+            If dlgL < document.body.scrollLeft Then dlgL = document.body.scrollLeft
+            If dlgL > maxL Then dlgL = maxL
+            If dlgT < document.body.scrollTop Then dlgT = document.body.scrollTop
+            If dlgT > maxT Then dlgT = maxT
+        Else
+            dlgL = Int((vw - dw) / 2) + document.body.scrollLeft
+            dlgT = Int((vh - dh) / 2) + document.body.scrollTop
+        End If
+        document.getElementById("sqDialog").style.pixelLeft = dlgL
+        document.getElementById("sqDialog").style.pixelTop = dlgT
         document.getElementById("sqFrame").style.pixelWidth = dw - 28
         document.getElementById("sqFrame").style.pixelHeight = dh - 72
+    End Sub
+    Sub Window_OnResize
+        If sqCurrentIdx >= 0 Then PositionSqDialog
+    End Sub
+    Sub Window_OnBlur
+        If sqResizeOn Then StopSqResize
+        If sqMoveOn Then StopSqMove
+    End Sub
+    ' 按住标题栏拖动弹窗（标题栏按钮除外）：位置限制在工具箱窗口可视范围内
+    Sub StartSqMove
+        Dim objDialog
+        If UCase(window.event.srcElement.tagName) = "BUTTON" Then Exit Sub
+        Set objDialog = document.getElementById("sqDialog")
+        sqMoveStartX = window.event.clientX
+        sqMoveStartY = window.event.clientY
+        sqMoveStartL = objDialog.offsetLeft
+        sqMoveStartT = objDialog.offsetTop
+        sqMoveOn = True
+        document.getElementById("sqDragMask").style.pixelWidth = objDialog.offsetWidth
+        document.getElementById("sqDragMask").style.pixelHeight = objDialog.offsetHeight
+        document.getElementById("sqDragMask").style.cursor = "move"
+        document.getElementById("sqDragMask").style.display = "block"
+        document.onmousemove = GetRef("DoSqMove")
+        document.onmouseup = GetRef("StopSqMove")
+        document.body.style.cursor = "move"
+        On Error Resume Next
+        document.getElementById("sqDragMask").setCapture
+        On Error GoTo 0
+        window.event.returnValue = False
+    End Sub
+    Sub DoSqMove
+        Dim objDialog, vw, vh, minL, minT, maxL, maxT, nleft, ntop
+        If Not sqMoveOn Then Exit Sub
+        Set objDialog = document.getElementById("sqDialog")
+        vw = document.body.clientWidth
+        vh = document.body.clientHeight
+        minL = document.body.scrollLeft
+        minT = document.body.scrollTop
+        maxL = minL + vw - objDialog.offsetWidth
+        maxT = minT + vh - objDialog.offsetHeight
+        If maxL < minL Then maxL = minL
+        If maxT < minT Then maxT = minT
+        nleft = sqMoveStartL + window.event.clientX - sqMoveStartX
+        ntop = sqMoveStartT + window.event.clientY - sqMoveStartY
+        If nleft < minL Then nleft = minL
+        If nleft > maxL Then nleft = maxL
+        If ntop < minT Then ntop = minT
+        If ntop > maxT Then ntop = maxT
+        objDialog.style.pixelLeft = nleft
+        objDialog.style.pixelTop = ntop
+    End Sub
+    Sub StopSqMove
+        If Not sqMoveOn Then Exit Sub
+        sqMoveOn = False
+        sqUserLeft = document.getElementById("sqDialog").style.pixelLeft
+        sqUserTop = document.getElementById("sqDialog").style.pixelTop
+        document.getElementById("sqDragMask").style.display = "none"
+        Set document.onmousemove = Nothing
+        Set document.onmouseup = Nothing
+        document.body.style.cursor = ""
+        On Error Resume Next
+        document.getElementById("sqDragMask").releaseCapture
+        On Error GoTo 0
+    End Sub
+    ' 开始拖拽右下角手柄：显示覆盖遮罩并捕获鼠标，拖动中实时调整弹窗尺寸（400x300 ~ 当前视口）
+    Sub StartSqResize
+        sqDragStartX = window.event.clientX
+        sqDragStartY = window.event.clientY
+        sqDragStartW = document.getElementById("sqDialog").offsetWidth
+        sqDragStartH = document.getElementById("sqDialog").offsetHeight
+        sqResizeOn = True
+        document.getElementById("sqDragMask").style.pixelWidth = sqDragStartW
+        document.getElementById("sqDragMask").style.pixelHeight = sqDragStartH
+        document.getElementById("sqDragMask").style.cursor = "se-resize"
+        document.getElementById("sqDragMask").style.display = "block"
+        document.onmousemove = GetRef("DoSqResize")
+        document.onmouseup = GetRef("StopSqResize")
+        document.body.style.cursor = "se-resize"
+        On Error Resume Next
+        document.getElementById("sqDragMask").setCapture
+        On Error GoTo 0
+        window.event.returnValue = False
+    End Sub
+    Sub DoSqResize
+        Dim vw, vh, nw, nh
+        If Not sqResizeOn Then Exit Sub
+        vw = document.body.clientWidth
+        vh = document.body.clientHeight
+        nw = sqDragStartW + window.event.clientX - sqDragStartX
+        nh = sqDragStartH + window.event.clientY - sqDragStartY
+        If nw < 400 Then nw = 400
+        If nh < 300 Then nh = 300
+        If nw > vw Then nw = vw
+        If nh > vh Then nh = vh
+        sqUserW = nw
+        sqUserH = nh
+        document.getElementById("sqDialog").style.pixelWidth = nw
+        document.getElementById("sqDialog").style.pixelHeight = nh
+        document.getElementById("sqFrame").style.pixelWidth = nw - 28
+        document.getElementById("sqFrame").style.pixelHeight = nh - 72
+        document.getElementById("sqDragMask").style.pixelWidth = nw
+        document.getElementById("sqDragMask").style.pixelHeight = nh
+    End Sub
+    Sub StopSqResize
+        If Not sqResizeOn Then Exit Sub
+        sqResizeOn = False
+        document.getElementById("sqDragMask").style.display = "none"
+        Set document.onmousemove = Nothing
+        Set document.onmouseup = Nothing
+        document.body.style.cursor = ""
+        On Error Resume Next
+        document.getElementById("sqDragMask").releaseCapture
+        On Error GoTo 0
+    End Sub
+    ' 双击手柄恢复默认自适应大小并重新居中
+    Sub ResetSqDialogSize
+        sqUserW = 0
+        sqUserH = 0
+        sqUserLeft = -1
+        sqUserTop = -1
+        If Not sqResizeOn Then PositionSqDialog
     End Sub
     Sub CloseSq
         document.getElementById("sqDialog").style.display = "none"
         document.getElementById("sqOverlay").style.display = "none"
+        ' 恢复主界面滚动条与滚动位置
+        document.body.style.overflow = ""
+        document.body.scrollTop = sqSavedScrollTop
         sqCurrentIdx = -1
     End Sub
     Sub OpenSqBrowser
@@ -1249,12 +1439,14 @@
     <div id="resultArea"></div>
     <div id="sqOverlay" onclick="CloseSq"></div>
     <div id="sqDialog">
-        <div class="sq-dialog-head">
+        <div class="sq-dialog-head" onmousedown="StartSqMove" title="按住可拖动弹窗">
             <span id="sqDialogTitle"></span>
             <button class="sq-dialog-btn" onclick="OpenSqBrowser">在浏览器中打开</button>
             <button class="sq-dialog-btn" onclick="CloseSq">✕ 关闭</button>
         </div>
         <iframe id="sqFrame" application="yes"></iframe>
+        <div id="sqDragMask"></div>
+        <div class="sq-resize-handle" onmousedown="StartSqResize" ondblclick="ResetSqDialogSize" title="拖动可自由调整弹窗大小（双击恢复默认）"><span class="sq-rh-1"></span><span class="sq-rh-2"></span><span class="sq-rh-3"></span></div>
     </div>
 </body>
 </html>
