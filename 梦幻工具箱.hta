@@ -114,6 +114,11 @@
     td.lv, td.num { text-align: center; }
     td.lv { font-weight: bold; }
     tr.alt { background-color: #e6e9ed; }
+    .pet-block-title { margin-top: 12px; font-weight: bold; font-size: 14px; color: #3d444d; }
+    .pet-note { margin-top: 6px; font-size: 12px; color: #70787f; line-height: 1.7; }
+    .pet-score-table td { text-align: center; }
+    .pet-cnt { text-align: center; white-space: nowrap; }
+    .input-bar .pet-cnt-btn { width: 22px; height: 22px; padding: 0; font-size: 13px; font-weight: bold; line-height: 1; }
     .history-header { margin-top: 14px; font-weight: bold; font-size: 14px; color: #3d444d; padding-bottom: 6px; }
     .history-table td.hist-time { text-align: center; white-space: nowrap; font-size: 12px; color: #70787f; }
     .history-table td.hist-info { text-align: left; font-size: 13px; }
@@ -194,6 +199,8 @@
     body.dark th.h9 { background-color: #60a0f5; border-left-color: #60a0f5; border-right-color: #5ba8f5; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF60A0F5', endColorstr='#FF5BA8F5'); }
     body.dark td { border-color: #3c424a; color: #b6bcc2; }
     body.dark tr.alt { background-color: #2c3038; }
+    body.dark .pet-block-title { color: #aeb4bc; }
+    body.dark .pet-note { color: #7c828a; }
     body.dark .history-header { color: #aeb4bc; }
     body.dark .history-table td.hist-time { color: #7c828a; }
     body.dark .history-table td.hist-info { color: #a6adb4; }
@@ -718,6 +725,8 @@
         Dim curLv, tgtLv, curExp, tgtExp
         Dim i, needExp, times, perCoin, perCoinFree, coinN, coinF, strN, strF
         Dim needContrib, contribHtml, xiuHtml
+        Dim jiuPrice, jiuQuality, jiuTotalQ, jiuCount, jiuCoin, jiuCoinStr, jiuHtml
+        Dim guoPrice, baiHuan, guoCount, guoCoin, guoCoinStr, guoStr
 
         strType = document.getElementById("selXiuType").value
         strVal = document.getElementById("txtXiuCurLv").value
@@ -736,7 +745,12 @@
         curExp = 0
         strVal = document.getElementById("txtXiuCurExp").value
         If strVal <> "" Then
-            If Not IsNumeric(strVal) Or CDbl(strVal) < 0 Or CDbl(strVal) <> Int(CDbl(strVal)) Then
+            If Not IsNumeric(strVal) Then
+                MsgBox "当前经验必须为非负整数（不填默认按0计算）！", vbExclamation, "输入错误"
+                document.getElementById("txtXiuCurExp").focus
+                Exit Sub
+            End If
+            If CDbl(strVal) < 0 Or CDbl(strVal) <> Int(CDbl(strVal)) Then
                 MsgBox "当前经验必须为非负整数（不填默认按0计算）！", vbExclamation, "输入错误"
                 document.getElementById("txtXiuCurExp").focus
                 Exit Sub
@@ -765,12 +779,69 @@
         tgtExp = 0
         strVal = document.getElementById("txtXiuTgtExp").value
         If strVal <> "" Then
-            If Not IsNumeric(strVal) Or CDbl(strVal) < 0 Or CDbl(strVal) <> Int(CDbl(strVal)) Then
+            If Not IsNumeric(strVal) Then
+                MsgBox "目标经验必须为非负整数（不填默认按0计算）！", vbExclamation, "输入错误"
+                document.getElementById("txtXiuTgtExp").focus
+                Exit Sub
+            End If
+            If CDbl(strVal) < 0 Or CDbl(strVal) <> Int(CDbl(strVal)) Then
                 MsgBox "目标经验必须为非负整数（不填默认按0计算）！", vbExclamation, "输入错误"
                 document.getElementById("txtXiuTgtExp").focus
                 Exit Sub
             End If
             tgtExp = CLng(strVal)
+        End If
+
+        ' 九转金丹选填项（仅人物修炼）：每颗经验 = 品质×0.5，总品质 = 还需经验×2；填了品质时按颗数向上取整
+        jiuPrice = 0
+        jiuQuality = 0
+        jiuHtml = ""
+        guoPrice = 0
+        If strType = "pet" Then
+            ' 召唤兽修炼：修炼果价格（万/颗，选填），每颗固定 150 点经验
+            strVal = Trim(document.getElementById("txtGuoPrice").value)
+            If strVal <> "" Then
+                If Not IsNumeric(strVal) Then
+                    MsgBox "修炼果价格必须为大于0的数字（不填则不计算总成本）！", vbExclamation, "输入错误"
+                    document.getElementById("txtGuoPrice").focus
+                    Exit Sub
+                End If
+                If CDbl(strVal) <= 0 Then
+                    MsgBox "修炼果价格必须为大于0的数字（不填则不计算总成本）！", vbExclamation, "输入错误"
+                    document.getElementById("txtGuoPrice").focus
+                    Exit Sub
+                End If
+                guoPrice = CDbl(strVal)
+            End If
+        Else
+            strVal = Trim(document.getElementById("txtJiuPrice").value)
+            If strVal <> "" Then
+                If Not IsNumeric(strVal) Then
+                    MsgBox "九转金丹每品质价格必须为大于0的数字（不填则不计算金丹）！", vbExclamation, "输入错误"
+                    document.getElementById("txtJiuPrice").focus
+                    Exit Sub
+                End If
+                If CDbl(strVal) <= 0 Then
+                    MsgBox "九转金丹每品质价格必须为大于0的数字（不填则不计算金丹）！", vbExclamation, "输入错误"
+                    document.getElementById("txtJiuPrice").focus
+                    Exit Sub
+                End If
+                jiuPrice = CDbl(strVal)
+            End If
+            strVal = Trim(document.getElementById("txtJiuQuality").value)
+            If strVal <> "" Then
+                If Not IsNumeric(strVal) Then
+                    MsgBox "九转金丹品质必须为大于0的数字（不填则不计算金丹）！", vbExclamation, "输入错误"
+                    document.getElementById("txtJiuQuality").focus
+                    Exit Sub
+                End If
+                If CDbl(strVal) <= 0 Then
+                    MsgBox "九转金丹品质必须为大于0的数字（不填则不计算金丹）！", vbExclamation, "输入错误"
+                    document.getElementById("txtJiuQuality").focus
+                    Exit Sub
+                End If
+                jiuQuality = CDbl(strVal)
+            End If
         End If
 
         If curLv < 25 And curExp >= XiuExpForLv(curLv + 1) Then
@@ -799,6 +870,7 @@
             Case "hunt"   : strName = "猎术修炼" : perCoin = 3 : perCoinFree = 4.5
             Case "defend" : strName = "防御修炼" : perCoin = 2 : perCoinFree = 3.5
             Case "resist" : strName = "抗法修炼" : perCoin = 2 : perCoinFree = 3.5
+            Case "pet"    : strName = "召唤兽修炼" : perCoin = 0 : perCoinFree = 0
         End Select
 
         needContrib = tgtLv * 150
@@ -808,20 +880,69 @@
         xiuHtml = xiuHtml & "<tr class=""alt""><td class=""xiu-item"">修炼进度</td><td class=""xiu-val"">" & curLv & "级（" & curExp & "经验） → " & tgtLv & "级（" & tgtExp & "经验）</td></tr>"
         If times = 0 Then
             xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">还需修炼经验</td><td class=""xiu-val""><b>0</b> 点（已达到目标进度，无需修炼）</td></tr>"
-            xiuHtml = xiuHtml & "<tr class=""alt""><td class=""xiu-item"">要求帮派总贡献</td><td class=""xiu-val"">" & contribHtml & "（目标等级 " & tgtLv & " × 150）</td></tr>"
+            If strType <> "pet" Then
+                xiuHtml = xiuHtml & "<tr class=""alt""><td class=""xiu-item"">要求帮派总贡献</td><td class=""xiu-val"">" & contribHtml & "（目标等级 " & tgtLv & " × 150）</td></tr>"
+            End If
         Else
-            coinN = times * perCoin
-            coinF = times * perCoinFree
-            If coinN = Int(coinN) Then strN = FormatNumber(coinN, 0) Else strN = FormatNumber(coinN, 1)
-            If coinF = Int(coinF) Then strF = FormatNumber(coinF, 0) Else strF = FormatNumber(coinF, 1)
             xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">还需修炼经验</td><td class=""xiu-val""><b>" & needExp & "</b> 点</td></tr>"
-            xiuHtml = xiuHtml & "<tr class=""alt""><td class=""xiu-item"">修炼次数</td><td class=""xiu-val""><b>" & times & "</b> 次（每次提升 10 点经验）</td></tr>"
-            xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">正常模式消耗</td><td class=""xiu-val""><b>" & strN & "</b> 万梦幻币 + <b>" & times * 5 & "</b> 点资材</td></tr>"
-            xiuHtml = xiuHtml & "<tr class=""alt""><td class=""xiu-item"">免资材模式消耗</td><td class=""xiu-val""><b>" & strF & "</b> 万梦幻币（不消耗资材）</td></tr>"
-            xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">要求帮派总贡献</td><td class=""xiu-val"">" & contribHtml & "（目标等级 " & tgtLv & " × 150）</td></tr>"
+            If strType = "pet" Then
+                ' 召唤兽修炼：每百环约 760 点经验、每颗修炼果固定 150 点经验，次数与个数均向上取整
+                baiHuan = -Int(-needExp / 760)
+                guoCount = -Int(-needExp / 150)
+                xiuHtml = xiuHtml & "<tr class=""alt""><td class=""xiu-item"">召唤兽修炼百环</td><td class=""xiu-val""><b>" & baiHuan & "</b> 次（每百环约 760 点经验）</td></tr>"
+                guoStr = "<b>" & guoCount & "</b> 个（每颗 150 点经验）"
+                If guoPrice > 0 Then
+                    guoCoin = guoCount * guoPrice
+                    If guoCoin = Int(guoCoin) Then guoCoinStr = FormatNumber(guoCoin, 0) Else guoCoinStr = FormatNumber(guoCoin, 1)
+                    guoStr = guoStr & "，<b>" & guoCoinStr & "</b> 万梦幻币"
+                End If
+                xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">修炼果</td><td class=""xiu-val"">" & guoStr & "</td></tr>"
+            Else
+                coinN = times * perCoin
+                coinF = times * perCoinFree
+                If coinN = Int(coinN) Then strN = FormatNumber(coinN, 0) Else strN = FormatNumber(coinN, 1)
+                If coinF = Int(coinF) Then strF = FormatNumber(coinF, 0) Else strF = FormatNumber(coinF, 1)
+                xiuHtml = xiuHtml & "<tr class=""alt""><td class=""xiu-item"">修炼次数</td><td class=""xiu-val""><b>" & times & "</b> 次（每次提升 10 点经验）</td></tr>"
+                xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">正常模式消耗</td><td class=""xiu-val""><b>" & strN & "</b> 万梦幻币 + <b>" & times * 5 & "</b> 点资材</td></tr>"
+                xiuHtml = xiuHtml & "<tr class=""alt""><td class=""xiu-item"">免资材模式消耗</td><td class=""xiu-val""><b>" & strF & "</b> 万梦幻币（不消耗资材）</td></tr>"
+                ' 九转金丹方案（填了价格或品质时显示；经验 = 品质×0.5，总品质 = 还需经验×2）
+                If jiuPrice > 0 Or jiuQuality > 0 Then
+                    jiuTotalQ = needExp * 2
+                    If jiuQuality > 0 Then
+                        jiuCount = -Int(-needExp / (jiuQuality * 0.5))
+                        jiuTotalQ = jiuCount * jiuQuality
+                    End If
+                    If jiuPrice > 0 Then
+                        jiuCoin = jiuTotalQ * jiuPrice / 10000
+                        If jiuCoin = Int(jiuCoin) Then jiuCoinStr = FormatNumber(jiuCoin, 0) Else jiuCoinStr = FormatNumber(jiuCoin, 1)
+                    End If
+                    If jiuQuality > 0 Then
+                        If jiuPrice > 0 Then
+                            jiuHtml = "<tr><td class=""xiu-item"">九转金丹</td><td class=""xiu-val""><b>" & jiuTotalQ & "</b> 品质（<b>" & jiuCount & "</b> 颗 × " & jiuQuality & " 品），<b>" & jiuCoinStr & "</b> 万梦幻币</td></tr>"
+                        Else
+                            jiuHtml = "<tr><td class=""xiu-item"">九转金丹</td><td class=""xiu-val""><b>" & jiuTotalQ & "</b> 品质（<b>" & jiuCount & "</b> 颗 × " & jiuQuality & " 品）</td></tr>"
+                        End If
+                    Else
+                        jiuHtml = "<tr><td class=""xiu-item"">九转金丹</td><td class=""xiu-val""><b>" & jiuTotalQ & "</b> 品质，<b>" & jiuCoinStr & "</b> 万梦幻币</td></tr>"
+                    End If
+                    xiuHtml = xiuHtml & jiuHtml
+                End If
+                xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">要求帮派总贡献</td><td class=""xiu-val"">" & contribHtml & "（目标等级 " & tgtLv & " × 150）</td></tr>"
+            End If
         End If
         xiuHtml = xiuHtml & "</table>"
         document.getElementById("xiuResult").innerHTML = xiuHtml
+    End Sub
+    Sub OnXiuTypeChange
+        Dim isPet
+        isPet = (document.getElementById("selXiuType").value = "pet")
+        If isPet Then
+            document.getElementById("divXiuJiu").style.display = "none"
+            document.getElementById("divXiuGuo").style.display = ""
+        Else
+            document.getElementById("divXiuJiu").style.display = ""
+            document.getElementById("divXiuGuo").style.display = "none"
+        End If
     End Sub
     Sub CalcWeapon
         Dim strRace, strDmg, strHit, dblDmg, dblHit
@@ -930,20 +1051,20 @@
     arrShenqi = Array( _
         Array("序章", "https://gl.ali213.net/html/2023-12/1270483.html"), _
         Array("01 黄金甲之谜", "https://gl.ali213.net/html/2024-8/1487223.html"), _
-        Array("02 泪痕碗之念", "https://gl.ali213.net/html/2024-3/1341839.html"), _
+        Array("02 泪痕碗之念", "https://ol.3dmgame.com/gl/213803.html"), _
         Array("03 墨魂笔之踪", "https://gl.ali213.net/html/2023-11/1218869.html"), _
-        Array("04 月光草之逝", "https://gl.ali213.net/html/2024-6/1417191.html"), _
+        Array("04 月光草之逝", "https://ol.3dmgame.com/gl/213809.html"), _
         Array("05 轩辕剑之陨", "https://gl.ali213.net/html/2024-9/1488319.html"), _
-        Array("06 千机锁之梏", "https://gl.ali213.net/html/2024-6/1417123.html"), _
-        Array("07 清泽谱之惠", "https://gl.ali213.net/html/2023-12/1265783.html"), _
+        Array("06 千机锁之梏", "https://ol.3dmgame.com/gl/213817.html"), _
+        Array("07 清泽谱之惠", "https://ol.3dmgame.com/gl/213821.html"), _
         Array("08 独弦琴之思", "https://gl.ali213.net/html/2024-9/1488517.html"), _
         Array("09 星斗盘之约", "https://gl.ali213.net/html/2024-9/1489779.html"), _
         Array("10 华光玉之伤", "https://gl.ali213.net/html/2024-9/1490861.html"), _
         Array("11 天罡印之谋", "https://gl.ali213.net/html/2024-9/1491603.html"), _
-        Array("12 噬魂齿之争", "https://gl.ali213.net/html/2024-5/1383189.html"), _
+        Array("12 噬魂齿之争", "https://ol.3dmgame.com/gl/213834.html"), _
         Array("13 昆仑镜之忆", "https://gl.ali213.net/html/2023-12/1258467.html"), _
         Array("14 明火珠之影", "https://gl.ali213.net/html/2024-9/1491643.html"), _
-        Array("15 四神鼎之怨", "https://gl.ali213.net/html/2024-3/1335975.html"), _
+        Array("15 四神鼎之怨", "https://ol.3dmgame.com/gl/213838.html"), _
         Array("16 玲珑结之愿", "https://gl.ali213.net/html/2024-9/1491681.html"), _
         Array("17 莫愁铃之恩", "https://gl.ali213.net/html/2024-9/1491713.html"), _
         Array("18 鸿蒙石之鉴", "https://gl.ali213.net/html/2024-7/1461647.html"), _
@@ -1031,6 +1152,41 @@
             objHint.innerText = "▼ 展开"
         End If
     End Sub
+    ' 宠环任务区默认折叠，点击标题行展开/收起（规则同神器攻略）
+    Sub TogglePetSection
+        Dim objBody, objHint
+        Set objBody = document.getElementById("petSection")
+        Set objHint = document.getElementById("petToggleHint")
+        If objBody.style.display = "none" Then
+            objBody.style.display = "block"
+            objHint.innerText = "▲ 收起"
+        Else
+            objBody.style.display = "none"
+            objHint.innerText = "▼ 展开"
+        End If
+    End Sub
+    ' 宠环跑环计数：+/- 按钮统计各项任务出现次数，状态存 DOM（初始 0，不减到负数）
+    Sub PetAdd(idx)
+        PetChange idx, 1
+    End Sub
+    Sub PetSub(idx)
+        PetChange idx, -1
+    End Sub
+    Sub PetChange(idx, delta)
+        Dim objCnt, lngN
+        Set objCnt = document.getElementById("petCnt" & idx)
+        If objCnt Is Nothing Then Exit Sub
+        lngN = CLng(objCnt.innerText) + CLng(delta)
+        If lngN < 0 Then lngN = 0
+        objCnt.innerText = CStr(lngN)
+    End Sub
+    Sub PetCountReset
+        Dim i, objCnt
+        For i = 0 To 12
+            Set objCnt = document.getElementById("petCnt" & i)
+            If Not objCnt Is Nothing Then objCnt.innerText = "0"
+        Next
+    End Sub
     Sub ShowShenqi(idx)
         sqCurrentIdx = CInt(idx)
         sqFetchIdx = sqCurrentIdx
@@ -1108,36 +1264,77 @@
         SqDecodeBody = stm.ReadText
         stm.Close
     End Function
-    ' 提取攻略正文：仅保留 .c-detail 正文容器内容并按锚点截尾（截止到神器小结/结束语），
+    ' 提取攻略正文：仅保留正文容器内容并按锚点截尾（截止到神器小结/结束语），
     ' 丢弃导航、推荐位、侧边栏、评论区等全部非正文区域；DOM 最小化，加快加载并让滚动更流畅
+    ' 游侠站正文容器为 .c-detail；3DM 站桌面版为 warp_center、移动版为 detaile_cont，截尾锚点按站点区分
     Function SqExtractBody(strHtml, strUrl)
-        Dim re, m, posStart, posEnd, posTry, posJ, posP, strBody
+        Dim re, m, posStart, posEnd, posTry, posJ, posP, strBody, blnIs3dm, posLt, posGt, intCh
         SqExtractBody = ""
+        blnIs3dm = False
         Set re = New RegExp
         re.IgnoreCase = True
         re.Global = False
         re.Pattern = "<div\b[^>]*c-detail[^>]*>"
         Set m = re.Execute(strHtml)
-        If m.Count = 0 Then Exit Function
+        If m.Count = 0 Then
+            ' 3DM 站：抓取走桌面 UA 得到 warp_center 桌面版，移动 UA 才得到 detaile_cont，两个容器都按 3DM 处理
+            re.Pattern = "<div\b[^>]*detaile_cont[^>]*>"
+            Set m = re.Execute(strHtml)
+            If m.Count = 0 Then
+                re.Pattern = "<div\b[^>]*warp_center[^>]*>"
+                Set m = re.Execute(strHtml)
+                If m.Count = 0 Then Exit Function
+            End If
+            blnIs3dm = True
+        End If
         posStart = m(0).FirstIndex + m(0).Length + 1
         posEnd = Len(strHtml)
         ' 逐个截尾锚点：保留到最早出现者之前
-        posTry = InStr(posStart, strHtml, "share-container", vbTextCompare)
-        If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
-        posTry = InStr(posStart, strHtml, "hidden-table", vbTextCompare)
-        If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
-        posTry = InStr(posStart, strHtml, "newsbbs", vbTextCompare)
-        If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
-        posTry = InStr(posStart, strHtml, "gl_r", vbTextCompare)
-        If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
-        posTry = InStr(posStart, strHtml, ChrW(&H63A8) & ChrW(&H8350) & ChrW(&H9605) & ChrW(&H8BFB))  ' 推荐阅读
-        If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
+        If blnIs3dm Then
+            posTry = InStr(posStart, strHtml, "floating-button-container", vbTextCompare)
+            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
+            posTry = InStr(posStart, strHtml, "warp_b", vbTextCompare)
+            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
+            posTry = InStr(posStart, strHtml, "warp_c", vbTextCompare)
+            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
+            posTry = InStr(posStart, strHtml, "related_cont", vbTextCompare)
+            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
+            posTry = InStr(posStart, strHtml, "comm-title", vbTextCompare)
+            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
+            posTry = InStr(posStart, strHtml, "sy-tuijian", vbTextCompare)
+            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
+        Else
+            posTry = InStr(posStart, strHtml, "share-container", vbTextCompare)
+            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
+            posTry = InStr(posStart, strHtml, "hidden-table", vbTextCompare)
+            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
+            posTry = InStr(posStart, strHtml, "newsbbs", vbTextCompare)
+            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
+            posTry = InStr(posStart, strHtml, "gl_r", vbTextCompare)
+            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
+            posTry = InStr(posStart, strHtml, ChrW(&H63A8) & ChrW(&H8350) & ChrW(&H9605) & ChrW(&H8BFB))  ' 推荐阅读
+            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
+        End If
         ' 结束语“以上就是……”：保留到其段落结束（含神器小结自然收尾）
         posJ = InStr(posStart, strHtml, ChrW(&H4EE5) & ChrW(&H4E0A) & ChrW(&H5C31) & ChrW(&H662F))
         If posJ > 0 Then
             posP = InStr(posJ, strHtml, "</p>", vbTextCompare)
             If posP > 0 And posP + 3 < posEnd Then posEnd = posP + 3
         End If
+        ' 截尾点可能落在容器起始标签内部（锚点命中的是类名/ID 子串，如 <div class="warp_b 中的 warp_b），
+        ' 残留的半截标签会显示为 <div class="——回退到该标签的 '<' 之前（'<' 后须为字母/斜杠/感叹号才算标签，防正文裸 '<' 误伤）
+        Do
+            posLt = InStrRev(strHtml, "<", posEnd)
+            If posLt = 0 Then Exit Do
+            posGt = InStr(posLt, strHtml, ">")
+            If posGt > 0 And posGt <= posEnd Then Exit Do
+            intCh = Asc(Mid(strHtml, posLt + 1, 1))
+            If (intCh >= 97 And intCh <= 122) Or (intCh >= 65 And intCh <= 90) Or intCh = 47 Or intCh = 33 Then
+                posEnd = posLt - 1
+            Else
+                Exit Do
+            End If
+        Loop
         If posEnd <= posStart Then Exit Function
         strBody = Mid(strHtml, posStart, posEnd - posStart + 1)
         ' 正文中偶发的脚本与事件属性同样剥离，旧 IE 引擎执行会报脚本错误
@@ -1533,7 +1730,7 @@
     <div class="input-bar">
         <div>
             <label>🏯 修炼类型：</label>
-            <select id="selXiuType"><option value="attack" selected>攻击修炼</option><option value="magic">法术修炼</option><option value="defend">防御修炼</option><option value="resist">抗法修炼</option><option value="hunt">猎术修炼</option></select>
+            <select id="selXiuType" onchange="OnXiuTypeChange"><option value="attack" selected>攻击修炼</option><option value="magic">法术修炼</option><option value="defend">防御修炼</option><option value="resist">抗法修炼</option><option value="hunt">猎术修炼</option><option value="pet">召唤兽修炼</option></select>
             <button id="btnCalcXiu" onclick="CalcXiulian">计算修炼消耗</button>
         </div>
         <div>
@@ -1544,7 +1741,65 @@
             <label>目标修炼等级：</label><input type="text" id="txtXiuTgtLv" onkeydown="CheckEnterXiu"><span class="tip">必填 0-25</span>
             <label style="width: auto; margin-left: 10px;">目标经验：</label><input type="text" id="txtXiuTgtExp" onkeydown="CheckEnterXiu"><span class="tip">选填 默认0</span>
         </div>
+        <div id="divXiuJiu">
+            <label>💊 金丹每品质价格：</label><input type="text" id="txtJiuPrice" onkeydown="CheckEnterXiu"><span class="tip" style="display: inline-block; width: 66px;">选填 梦幻币</span>
+            <label style="width: auto; margin-left: 2px;">金丹品质：</label><input type="text" id="txtJiuQuality" onkeydown="CheckEnterXiu"><span class="tip">选填 不填只算总品质</span>
+        </div>
+        <div id="divXiuGuo" style="display: none;">
+            <label>🍎 修炼果价格（万）：</label><input type="text" id="txtGuoPrice" onkeydown="CheckEnterXiu"><span class="tip">选填 万/颗</span>
+        </div>
         <div id="xiuResult"></div>
+    </div>
+    <div class="input-bar">
+        <div style="cursor: pointer;" onclick="TogglePetSection"><label style="width: auto; text-align: left;">🐾 宠环任务（召唤兽修炼任务）：</label><span class="sq-toggle" id="petToggleHint">▼ 展开</span><span class="tip">积分规则与高级书铁奖励对照表</span></div>
+        <div id="petSection" style="display: none;">
+            <div class="pet-block-title">【召唤兽修炼任务积分规则】</div>
+            <table>
+                <tr><th width="25%">任务内容</th><th width="10%">任务积分</th><th width="15%">次数</th><th width="25%">任务内容</th><th width="10%">任务积分</th><th width="15%">次数</th></tr>
+                <tr><td class="lv">找人</td><td class="num">1</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="PetSub 0">-</button> <span id="petCnt0">0</span> <button class="pet-cnt-btn" onclick="PetAdd 0">+</button></td><td class="lv">乐器</td><td class="num">4</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="PetSub 1">-</button> <span id="petCnt1">0</span> <button class="pet-cnt-btn" onclick="PetAdd 1">+</button></td></tr>
+                <tr class="alt"><td class="lv">60级装备</td><td class="num">2</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="PetSub 2">-</button> <span id="petCnt2">0</span> <button class="pet-cnt-btn" onclick="PetAdd 2">+</button></td><td class="lv">花</td><td class="num">4</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="PetSub 3">-</button> <span id="petCnt3">0</span> <button class="pet-cnt-btn" onclick="PetAdd 3">+</button></td></tr>
+                <tr><td class="lv">1级家具</td><td class="num">2</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="PetSub 4">-</button> <span id="petCnt4">0</span> <button class="pet-cnt-btn" onclick="PetAdd 4">+</button></td><td class="lv">80级装备</td><td class="num">5</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="PetSub 5">-</button> <span id="petCnt5">0</span> <button class="pet-cnt-btn" onclick="PetAdd 5">+</button></td></tr>
+                <tr class="alt"><td class="lv">三级药</td><td class="num">2</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="PetSub 6">-</button> <span id="petCnt6">0</span> <button class="pet-cnt-btn" onclick="PetAdd 6">+</button></td><td class="lv">2级家具</td><td class="num">5</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="PetSub 7">-</button> <span id="petCnt7">0</span> <button class="pet-cnt-btn" onclick="PetAdd 7">+</button></td></tr>
+                <tr><td class="lv">烹饪</td><td class="num">2</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="PetSub 8">-</button> <span id="petCnt8">0</span> <button class="pet-cnt-btn" onclick="PetAdd 8">+</button></td><td class="lv">非指定变异召唤兽</td><td class="num">5</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="PetSub 9">-</button> <span id="petCnt9">0</span> <button class="pet-cnt-btn" onclick="PetAdd 9">+</button></td></tr>
+                <tr class="alt"><td class="lv">70级装备</td><td class="num">3</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="PetSub 10">-</button> <span id="petCnt10">0</span> <button class="pet-cnt-btn" onclick="PetAdd 10">+</button></td><td class="lv">指定变异召唤兽</td><td class="num">10</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="PetSub 11">-</button> <span id="petCnt11">0</span> <button class="pet-cnt-btn" onclick="PetAdd 11">+</button></td></tr>
+                <tr><td class="lv">上交非变异召唤兽</td><td class="num">-15</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="PetSub 12">-</button> <span id="petCnt12">0</span> <button class="pet-cnt-btn" onclick="PetAdd 12">+</button></td><td class="lv"></td><td class="num"></td><td class="pet-cnt"></td></tr>
+            </table>
+            <div style="margin-top: 8px;"><button onclick="PetCountReset">清零计数</button></div>
+            <div class="pet-note">★上交烹饪、三药品质不满足要求，会扣除一定任务积分，修炼经验/修炼点不受影响<br>★烹饪三药扣分规则：（应交品质-实际品质）/2，积分向下取整<br>★实际积分：（应交品质-实际品质）/2+2，积分向下取整<br>例如需上交63品质的珍露酒，实际上交58品质的，相差5品，扣除2分加上本身应得2分（上交三级药/烹饪获得2分），实际不扣分（即-2分+2分）</div>
+            <div class="pet-block-title">【召唤兽修炼任务积分奖励】</div>
+            <div class="pet-note">奖励说明：高级书铁奖励与宠环总积分和人物等级相关。各个奖励所需宠环总积分如下：</div>
+            <table>
+                <tr><th>书铁等级＼角色等级</th><th>69</th><th>89</th><th>109</th><th>129</th><th>145</th><th>155</th></tr>
+                <tr><td class="lv">70</td><td class="num">147</td><td class="num">141</td><td class="num">134</td><td class="num">127</td><td class="num">122</td><td class="num">119</td></tr>
+                <tr class="alt"><td class="lv">2个70</td><td class="num">157</td><td class="num">151</td><td class="num">144</td><td class="num">137</td><td class="num">132</td><td class="num">129</td></tr>
+                <tr><td class="lv">80</td><td class="num">167</td><td class="num">161</td><td class="num">154</td><td class="num">147</td><td class="num">142</td><td class="num">139</td></tr>
+                <tr class="alt"><td class="lv">2个80</td><td class="num">177</td><td class="num">171</td><td class="num">164</td><td class="num">157</td><td class="num">152</td><td class="num">149</td></tr>
+                <tr><td class="lv">3个80</td><td class="num">187</td><td class="num">181</td><td class="num">174</td><td class="num">167</td><td class="num">162</td><td class="num">159</td></tr>
+                <tr class="alt"><td class="lv">90</td><td class="num">197</td><td class="num">191</td><td class="num">184</td><td class="num">177</td><td class="num">172</td><td class="num">169</td></tr>
+                <tr><td class="lv">100</td><td class="num">207</td><td class="num">201</td><td class="num">194</td><td class="num">187</td><td class="num">182</td><td class="num">179</td></tr>
+                <tr class="alt"><td class="lv">110</td><td class="num">217</td><td class="num">211</td><td class="num">204</td><td class="num">197</td><td class="num">192</td><td class="num">189</td></tr>
+                <tr><td class="lv">120</td><td class="num">227</td><td class="num">221</td><td class="num">214</td><td class="num">207</td><td class="num">202</td><td class="num">199</td></tr>
+                <tr class="alt"><td class="lv">130</td><td class="num">237</td><td class="num">231</td><td class="num">224</td><td class="num">217</td><td class="num">212</td><td class="num">209</td></tr>
+                <tr><td class="lv">140</td><td class="num">247</td><td class="num">241</td><td class="num">234</td><td class="num">227</td><td class="num">222</td><td class="num">219</td></tr>
+            </table>
+            <div class="pet-block-title">【召唤兽修炼任务积分奖励·最终得分】</div>
+            <div class="pet-note">奖励说明：高级书铁奖励根据最终得分获得，最终得分=宠环总积分+人物等级/3（向下取整）</div>
+            <table class="pet-score-table">
+                <tr><th width="30%">最终得分</th><th width="70%">奖励</th></tr>
+                <tr><td class="num">170</td><td>70级制造指南书/百炼精铁</td></tr>
+                <tr class="alt"><td class="num">180</td><td>2个70级制造指南书/百炼精铁</td></tr>
+                <tr><td class="num">190</td><td>80级制造指南书/百炼精铁</td></tr>
+                <tr class="alt"><td class="num">200</td><td>2个80级制造指南书/百炼精铁</td></tr>
+                <tr><td class="num">210</td><td>3个80级制造指南书/百炼精铁</td></tr>
+                <tr class="alt"><td class="num">220</td><td>90级制造指南书/百炼精铁</td></tr>
+                <tr><td class="num">230</td><td>100级制造指南书/百炼精铁</td></tr>
+                <tr class="alt"><td class="num">240</td><td>110级制造指南书/百炼精铁</td></tr>
+                <tr><td class="num">250</td><td>120级制造指南书/百炼精铁</td></tr>
+                <tr class="alt"><td class="num">260</td><td>130级制造指南书/百炼精铁</td></tr>
+                <tr><td class="num">270</td><td>140级制造指南书/百炼精铁</td></tr>
+                <tr class="alt"><td class="num">280</td><td>140级制造指南书/百炼精铁</td></tr>
+            </table>
+        </div>
     </div>
     <div class="input-bar">
         <div style="cursor: pointer;" onclick="ToggleSqSection"><label style="width: auto; text-align: left;">⚔️ 神器任务攻略（序章/起/转/合）：</label><span class="sq-toggle" id="sqToggleHint">▼ 展开</span><span class="tip">点击任务名弹窗查看攻略（内容加载自网络）</span></div>
