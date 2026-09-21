@@ -74,10 +74,11 @@
         background-color: #eceef1;
         border: 2px solid; border-color: #9aa2ac #ffffff #ffffff #9aa2ac;
     }
-    /* 宝石成本多选：选择模式下“单个成本”单元格可点击，选中高亮 */
+    /* 宝石成本多选：选择模式下“单个成本”单元格可点击，选中高亮并可填写个数 */
     #resultArea.pick td.cost { cursor: pointer; }
     td.picked { background-color: #ffd76e; font-weight: bold; }
     body.dark td.picked { background-color: #6b5210; }
+    td.cost input.gem-qty { width: 56px; height: 22px; padding: 0 4px; text-align: center; font-size: 13px; font-weight: normal; vertical-align: middle; }
     #gemSumResult { margin-top: 10px; font-size: 13px; color: #70787f; }
     #gemSumResult b { color: #c0392b; }
     body.dark #gemSumResult { color: #7c828a; }
@@ -338,13 +339,12 @@
 </style>
 <script language="VBScript">
     Sub Window_OnLoad
-        Dim winW, winH
+        Dim winW, maxH, winH, chromeH
         winW = 1100
-        winH = 1430
+        maxH = Int(screen.availHeight * 0.95)
         If winW > Int(screen.availWidth * 0.95) Then winW = Int(screen.availWidth * 0.95)
-        If winH > Int(screen.availHeight * 0.95) Then winH = Int(screen.availHeight * 0.95)
-        window.resizeTo winW, winH
-        window.moveTo (screen.availWidth - winW) \ 2, (screen.availHeight - winH) \ 2
+        ' 先按目标宽度调整窗口，待初始化完成后按实际内容高度贴合窗口，避免底部留白
+        window.resizeTo winW, 600
         ' 主窗口尺寸变化时同步调整攻略弹窗；窗口失去焦点时结束未完成的拖拽
         On Error Resume Next
         window.onresize = GetRef("Window_OnResize")
@@ -352,6 +352,14 @@
         On Error GoTo 0
         FillRemindMinutes
         RenderShenqiLinks
+        ' 标题栏/边框补偿 = 临时窗口高 - 客户区高（quirks 模式下 documentElement.clientHeight 恒为 0，须用 body.clientHeight 读取视口高）；窗口高 = 内容高 + 补偿 + 少量余量
+        chromeH = 600 - document.body.clientHeight
+        If chromeH < 0 Or chromeH > 200 Then chromeH = 72
+        winH = document.body.scrollHeight + chromeH + 4
+        If winH > maxH Then winH = maxH
+        If winH < 400 Then winH = 400
+        window.resizeTo winW, winH
+        window.moveTo (screen.availWidth - winW) \ 2, (screen.availHeight - winH) \ 2
         document.getElementById("txtPrice").focus
     End Sub
     Sub Window_OnUnload
@@ -418,10 +426,12 @@
         strHtml = strHtml & "</table>"
         document.getElementById("goldResult").innerHTML = strHtml
     End Sub
-    ' 宝石成本多选合计：gemCosts(i) 为 i 级单个成本；gemPicked 记录选中行（键=等级）
-    Dim gemSelectOn, gemPicked, gemCosts(15)
+    ' 宝石成本多选合计：gemCosts(i) 为 i 级单个成本；gemPicked 记录选中等级；各等级个数填在 gemQty{等级} 输入框中（空=1个）
+    ' gemResultOn：结果区展开状态（默认折叠，生成表格或点击切换时展开）
+    Dim gemSelectOn, gemResultOn, gemPicked, gemCosts(15)
     Set gemPicked = CreateObject("Scripting.Dictionary")
     gemSelectOn = False
+    gemResultOn = False
     Sub Calculate
         Dim strVal, dblPrice, i, lngNeed, lngCum, dblCost, dblCumCost, strHtml, strCls
         strVal = document.getElementById("txtPrice").value
@@ -447,9 +457,33 @@
             strHtml = strHtml & "<tr" & strCls & "><td class=""lv"">" & i & "级</td><td class=""num"">" & lngNeed & "</td><td class=""num"">" & lngCum & "</td><td class=""cost"" onclick=""ToggleGemPick " & i & """>" & FormatNumber(dblCost, 2) & "</td><td>" & FormatNumber(dblCumCost, 2) & "</td></tr>"
         Next
         document.getElementById("resultArea").innerHTML = strHtml & "</table>"
-        ' 表格重新生成后重置多选与合计结果
+        ' 表格重新生成后重置多选与合计结果，并自动展开结果区
         gemPicked.RemoveAll
         document.getElementById("gemSumResult").innerHTML = ""
+        SetGemResultVisible True
+    End Sub
+    ' 设置宝石结果区显示状态（同步切换提示文本与状态变量）
+    Sub SetGemResultVisible(bOn)
+        gemResultOn = bOn
+        If bOn Then
+            document.getElementById("resultArea").style.display = "block"
+            document.getElementById("gemResultToggleHint").innerText = "▲ 收起"
+        Else
+            document.getElementById("resultArea").style.display = "none"
+            document.getElementById("gemResultToggleHint").innerText = "▼ 展开"
+        End If
+    End Sub
+    ' 结果区默认折叠，点击标题行展开/收起（与神器攻略一致）
+    Sub ToggleGemResult
+        If Not gemResultOn Then
+            If document.getElementById("resultArea").innerHTML = "" Then
+                MsgBox "请先输入宝石单价并点击“确认换算”生成表格！", vbExclamation, "提示"
+                Exit Sub
+            End If
+            SetGemResultVisible True
+        Else
+            SetGemResultVisible False
+        End If
     End Sub
     ' 进入/退出宝石成本多选模式
     Sub ToggleGemSelect
@@ -459,9 +493,10 @@
                 Exit Sub
             End If
             gemSelectOn = True
+            SetGemResultVisible True
             document.getElementById("btnGemSelect").innerText = "退出选择"
             document.getElementById("resultArea").className = "pick"
-            document.getElementById("gemSumResult").innerHTML = "选择模式：点击表格中“单个成本(万)”列的金额进行多选，选好后点击“计算”按钮合计。"
+            document.getElementById("gemSumResult").innerHTML = "选择模式：点击表格中“单个成本(万)”列的金额选中该等级，在出现的输入框中填写宝石个数（不填默认1个），选好后点击“计算”按钮合计。"
         Else
             gemSelectOn = False
             document.getElementById("btnGemSelect").innerText = "选择"
@@ -469,32 +504,63 @@
             document.getElementById("gemSumResult").innerHTML = ""
         End If
     End Sub
-    ' 点击“单个成本”单元格切换选中状态（仅选择模式下生效）
+    ' 点击“单个成本”单元格切换选中状态（仅选择模式下生效）；选中后单元格内出现个数输入框
     Sub ToggleGemPick(idx)
-        Dim objTd
+        Dim objSrc, objTd, objInputs
         If Not gemSelectOn Then Exit Sub
         If idx < 1 Or idx > 15 Then Exit Sub
-        Set objTd = window.event.srcElement
+        Set objSrc = window.event.srcElement
+        ' 点击个数输入框内部时不改变选中状态
+        If UCase(objSrc.tagName) = "INPUT" Then Exit Sub
+        Set objTd = objSrc
         If gemPicked.Exists(idx) Then
             gemPicked.Remove idx
             objTd.className = "cost"
+            objTd.innerHTML = FormatNumber(gemCosts(idx), 2)
         Else
             gemPicked(idx) = True
             objTd.className = "cost picked"
+            objTd.innerHTML = FormatNumber(gemCosts(idx), 2) & " <input type=""text"" class=""gem-qty"" id=""gemQty" & idx & """ value="""" placeholder=""1"" title=""该等级宝石个数，不填默认1个"" />"
+            Set objInputs = objTd.getElementsByTagName("INPUT")
+            If objInputs.length > 0 Then objInputs(0).focus
         End If
     End Sub
-    ' 合计已选的单个成本
+    ' 合计已选成本（个数取自各等级输入框，不填默认1）
     Sub CalcGemSum
-        Dim k, dblSum
+        Dim k, dblSum, dblQty, objInp, strVal, strDetail
         If gemPicked.Count = 0 Then
             MsgBox "尚未选择任何宝石成本！请先点击“选择”按钮进入选择模式，再点击表格中的金额多选。", vbExclamation, "提示"
             Exit Sub
         End If
         dblSum = 0
+        strDetail = ""
         For Each k In gemPicked.Keys
-            dblSum = dblSum + gemCosts(k)
+            Set objInp = document.getElementById("gemQty" & k)
+            strVal = ""
+            If Not objInp Is Nothing Then strVal = Trim(objInp.value)
+            If strVal = "" Then
+                dblQty = 1
+            Else
+                If IsNumeric(strVal) Then
+                    If CDbl(strVal) >= 1 And CDbl(strVal) = Fix(CDbl(strVal)) Then
+                        dblQty = CDbl(strVal)
+                    Else
+                        dblQty = 0
+                    End If
+                Else
+                    dblQty = 0
+                End If
+                If dblQty = 0 Then
+                    MsgBox "“" & k & "级”宝石的个数须为大于等于1的整数（不填默认1）！", vbExclamation, "输入错误"
+                    If Not objInp Is Nothing Then objInp.focus
+                    Exit Sub
+                End If
+            End If
+            dblSum = dblSum + gemCosts(k) * dblQty
+            If strDetail <> "" Then strDetail = strDetail & "、"
+            strDetail = strDetail & k & "级×" & dblQty
         Next
-        document.getElementById("gemSumResult").innerHTML = "已选 <b>" & gemPicked.Count & "</b> 项单个成本合计：<b>" & FormatNumber(dblSum, 2) & "</b> 万梦幻币"
+        document.getElementById("gemSumResult").innerHTML = "已选 <b>" & gemPicked.Count & "</b> 项（" & strDetail & "），合计：<b>" & FormatNumber(dblSum, 2) & "</b> 万梦幻币"
     End Sub
     Dim arrHistory, historyCount, lastDesc, lastResult
     ReDim arrHistory(0)
@@ -1497,8 +1563,9 @@
     <div class="input-bar">
         <label>1级宝石单价（万）：</label><input type="text" id="txtPrice" onkeydown="CheckEnter"><button id="btnCalculate" onclick="Calculate">确认换算</button><button id="btnGemSelect" onclick="ToggleGemSelect">选择</button><button id="btnGemSum" onclick="CalcGemSum">计算</button><span class="tip">合成规则：2个N级宝石 = 1个(N+1)级宝石</span>
         <div id="gemSumResult"></div>
+        <div style="cursor: pointer;" onclick="ToggleGemResult"><label style="width: auto; text-align: left;">💎 成本计算结果：</label><span class="sq-toggle" id="gemResultToggleHint">▼ 展开</span></div>
     </div>
-    <div id="resultArea"></div>
+    <div id="resultArea" style="display: none;"></div>
     <div id="sqOverlay" onclick="CloseSq"></div>
     <div id="sqDialog">
         <div class="sq-dialog-head" onmousedown="StartSqMove" title="按住可拖动弹窗">
