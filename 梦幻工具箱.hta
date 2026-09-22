@@ -122,6 +122,15 @@
     .pet-cost-total { margin-left: 12px; font-size: 13px; color: #3d444d; }
     .pet-cost-total b { color: #c0392b; }
     .pet-empty { text-align: center; color: #70787f; }
+    /* 多号切换页签：当前号高亮为主题渐变紫，其余为浅色小按钮。带 .input-bar 前缀提权，压过全局 .input-bar button 规则（同 .pet-cnt-btn 惯例） */
+    .input-bar .pet-char-btn { width: 36px; height: 22px; padding: 0; font-size: 12px; font-weight: bold; line-height: 1; text-align: center; cursor: pointer; margin-left: 0; margin-right: 4px; background-color: #e8eaee; color: #3d444d; border: 2px solid; border-color: #f8fafc #a2a8b2 #a2a8b2 #f8fafc; }
+    .input-bar .pet-char-btn-on { width: 36px; height: 22px; padding: 0; font-size: 12px; font-weight: bold; line-height: 1; text-align: center; cursor: pointer; margin-left: 0; margin-right: 4px; color: #ffffff; background-color: #7b43f5; border: 2px solid; border-color: #7b43f5 #4895ef #4895ef #7b43f5; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7B43F5', endColorstr='#FF4895EF'); }
+    td.pet-char-cell { text-align: center; font-weight: bold; color: #7b43f5; background-color: #e6e0fb; }
+    /* 汇总分层层级：号名行浅紫底 / 小计行浅黄底 / 全部号合计行紫底白字（与表头呼应） */
+    td.pet-subtotal { text-align: center; font-weight: bold; background-color: #fff3d6; }
+    td.pet-grand { text-align: center; font-weight: bold; color: #ffffff; background-color: #6764f3; }
+    /* 明细表固定高度滚动区：超出约 5 条后内部滚动，避免掉长页面影响其他功能 */
+    .pet-detail-scroll { max-height: 210px; overflow-y: auto; }
     /* 宠环成本录入弹窗：点击 + 时弹出，登记本次成本（万梦幻币，非必填），样式沿用攻略弹窗 */
     #petCostOverlay { position: absolute; left: 0; top: 0; z-index: 960; display: none; background-color: #000000; filter: progid:DXImageTransform.Microsoft.Alpha(opacity=40); }
     #petCostDialog {
@@ -225,6 +234,11 @@
     body.dark .pet-cost-total { color: #aeb4bc; }
     body.dark .pet-cost-total b { color: #f0a050; }
     body.dark .pet-empty { color: #7c828a; }
+    body.dark .input-bar .pet-char-btn { background-color: #292d33; color: #d2d6da; border-color: #4a5058 #0e1013 #0e1013 #4a5058; }
+    body.dark .input-bar .pet-char-btn-on { color: #ffffff; background-color: #7b43f5; border-color: #8b5cf6 #5ba8f5 #5ba8f5 #8b5cf6; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF8B5CF6', endColorstr='#FF5BA8F5'); }
+    body.dark td.pet-char-cell { color: #8b5cf6; background-color: #37324d; }
+    body.dark td.pet-subtotal { background-color: #453a1e; }
+    body.dark td.pet-grand { color: #ffffff; background-color: #787af6; }
     body.dark #petCostOverlay { filter: progid:DXImageTransform.Microsoft.Alpha(opacity=55); }
     body.dark #petCostDialog {
         background-color: #2b2f35;
@@ -1205,13 +1219,22 @@
     End Sub
     ' 宠环跑环计数：+ 时弹录入框登记本次成本（万梦幻币，非必填按 0），- 撤销该任务最近一次记录（次数-1 并同步扣回其成本）
     ' “是否计算成本”选“否”时 + 不弹框，直接按 0 成本记账（仅计次数）；- 仍按撤销逻辑（无成本记录时仅减次数）
-    ' 每项任务的成本历史存 petCostHist(idx)（逗号分隔、按录入先后顺序）；petCostTotal 为累计成本（万）
-    ' petDetailList 为全局录入顺序明细（格式 "任务序号:成本" 逗号分隔），供成本明细表展示，与各任务成本栈同步增删
-    Dim petCostHist(12), petCostTotal, petCostIdx, petCostSavedScrollTop
-    Dim petDetailList
-    petCostTotal = 0
+    ' 多号统计（1~5 号）：数据全部按号存两维——petCostHist(号,任务) 成本栈、petCounts(号,任务) 次数、petCostTotal(号) 累计成本、
+    ' petDetailList(号) 录入顺序明细（格式 "任务序号:成本" 逗号分隔）；petCurChar 为当前号（0-4），DOM 只展示当前号视图，切号整体换装
+    ' “是否计算成本”全局共享不分号；清零只清当前号；全部号合计为跨号只读汇总
+    Dim petCostHist(4, 12), petCounts(4, 12), petCostTotal(4), petDetailList(4)
+    Dim petCostIdx, petCostSavedScrollTop, petCurChar
+    Dim pcI, pcJ
+    For pcI = 0 To 4
+        petCostTotal(pcI) = 0
+        petDetailList(pcI) = ""
+        For pcJ = 0 To 12
+            petCostHist(pcI, pcJ) = ""
+            petCounts(pcI, pcJ) = 0
+        Next
+    Next
     petCostIdx = -1
-    petDetailList = ""
+    petCurChar = 0
     Sub PetAdd(idx)
         Dim objSel, lngIdx
         Set objSel = document.getElementById("selPetCostMode")
@@ -1227,40 +1250,70 @@
     Sub PetSub(idx)
         PetUndoOne idx
     End Sub
+    ' 号名（1~5 号）
+    Function PetCharName(c)
+        PetCharName = (CLng(c) + 1) & "号"
+    End Function
+    ' 次数变更：数据层 petCounts(当前号,任务) 与 DOM 同步更新（两处始终一致，切号时直接按数据换装视图）
     Sub PetChange(idx, delta)
         Dim objCnt, lngN
         Set objCnt = document.getElementById("petCnt" & idx)
         If objCnt Is Nothing Then Exit Sub
-        lngN = CLng(objCnt.innerText) + CLng(delta)
+        lngN = petCounts(petCurChar, idx) + CLng(delta)
         If lngN < 0 Then lngN = 0
+        petCounts(petCurChar, idx) = lngN
         objCnt.innerText = CStr(lngN)
     End Sub
-    ' 撤销最近一次记录：次数-1；该任务有成本记录时同步扣回（成本>0 先弹确认框告知金额）
+    ' 切换当前号：页签高亮、次数换装、累计成本与明细重绘（成本弹窗开着时有遮罩挡住页签，无需防护）
+    Sub PetSwitchChar(c)
+        Dim i, objBtn, objCnt
+        c = CLng(c)
+        If c < 0 Or c > 4 Then Exit Sub
+        If c = petCurChar Then Exit Sub
+        petCurChar = c
+        For i = 0 To 4
+            Set objBtn = document.getElementById("petCharBtn" & i)
+            If Not objBtn Is Nothing Then
+                If i = c Then
+                    objBtn.className = "pet-char-btn-on"
+                Else
+                    objBtn.className = "pet-char-btn"
+                End If
+            End If
+        Next
+        For i = 0 To 12
+            Set objCnt = document.getElementById("petCnt" & i)
+            If Not objCnt Is Nothing Then objCnt.innerText = CStr(petCounts(c, i))
+        Next
+        RefreshPetCostTotal
+        RefreshPetDetail
+    End Sub
+    ' 撤销最近一次记录（当前号）：次数-1；该任务有成本记录时同步扣回（成本>0 先弹确认框告知金额）
     Sub PetUndoOne(idx)
         Dim objCnt, lngN, dblCost
         idx = CLng(idx)
         Set objCnt = document.getElementById("petCnt" & idx)
         If objCnt Is Nothing Then Exit Sub
-        lngN = CLng(objCnt.innerText)
+        lngN = petCounts(petCurChar, idx)
         If lngN <= 0 Then Exit Sub
-        If petCostHist(idx) <> "" Then
+        If petCostHist(petCurChar, idx) <> "" Then
             dblCost = PetCostPeek(idx)
             If dblCost > 0 Then
-                If MsgBox("将撤销「" & PetTaskName(idx) & "」最近一次记录：次数 -1，并从累计成本中扣回 " & PetFmtCost(dblCost) & " 万梦幻币。是否继续？", vbYesNo + vbQuestion, "撤销确认") <> vbYes Then Exit Sub
+                If MsgBox("将撤销「" & PetCharName(petCurChar) & " · " & PetTaskName(idx) & "」最近一次记录：次数 -1，并从累计成本中扣回 " & PetFmtCost(dblCost) & " 万梦幻币。是否继续？", vbYesNo + vbQuestion, "撤销确认") <> vbYes Then Exit Sub
             End If
-            petCostTotal = petCostTotal - PetCostPop(idx)
-            If petCostTotal < 0 Then petCostTotal = 0
+            petCostTotal(petCurChar) = petCostTotal(petCurChar) - PetCostPop(idx)
+            If petCostTotal(petCurChar) < 0 Then petCostTotal(petCurChar) = 0
             PetDetailRemoveLast idx
             RefreshPetCostTotal
         End If
         PetChange idx, -1
         RefreshPetDetail
     End Sub
-    ' 读取该任务最近一次录入的成本（不出栈）
+    ' 读取当前号该任务最近一次录入的成本（不出栈）
     Function PetCostPeek(idx)
         Dim strS, lngP
         PetCostPeek = 0
-        strS = petCostHist(idx)
+        strS = petCostHist(petCurChar, idx)
         If strS = "" Then Exit Function
         lngP = InStrRev(strS, ",")
         If lngP = 0 Then
@@ -1269,19 +1322,19 @@
             PetCostPeek = CDbl(Mid(strS, lngP + 1))
         End If
     End Function
-    ' 弹出并返回该任务最近一次录入的成本（从历史中移除）
+    ' 弹出并返回当前号该任务最近一次录入的成本（从历史中移除）
     Function PetCostPop(idx)
         Dim strS, lngP
         PetCostPop = 0
-        strS = petCostHist(idx)
+        strS = petCostHist(petCurChar, idx)
         If strS = "" Then Exit Function
         lngP = InStrRev(strS, ",")
         If lngP = 0 Then
             PetCostPop = CDbl(strS)
-            petCostHist(idx) = ""
+            petCostHist(petCurChar, idx) = ""
         Else
             PetCostPop = CDbl(Mid(strS, lngP + 1))
-            petCostHist(idx) = Left(strS, lngP - 1)
+            petCostHist(petCurChar, idx) = Left(strS, lngP - 1)
         End If
     End Function
     ' 成本格式化：最多保留2位小数，去掉末尾无意义的 0 与小数点
@@ -1311,7 +1364,7 @@
     Sub OpenPetCostDlg(idx)
         Dim objDlg, objInp, vw, vh
         petCostIdx = CLng(idx)
-        document.getElementById("petCostTitle").innerText = "录入「" & PetTaskName(petCostIdx) & "」本次成本"
+        document.getElementById("petCostTitle").innerText = "录入「" & PetCharName(petCurChar) & " · " & PetTaskName(petCostIdx) & "」本次成本"
         Set objInp = document.getElementById("petCostInput")
         objInp.value = ""
         petCostSavedScrollTop = document.body.scrollTop
@@ -1354,21 +1407,21 @@
         PetRecordCost petCostIdx, dblCost
         ClosePetCostDlg
     End Sub
-    ' 登记一笔成本（可为 0）并计数 +1：成本入栈、明细追加、累计与表格同步刷新
+    ' 登记一笔成本（可为 0）并计数 +1（当前号）：成本入栈、明细追加、累计与表格同步刷新
     Sub PetRecordCost(ByVal idx, ByVal dblCost)
         idx = CLng(idx)
         dblCost = CDbl(dblCost)
-        If petCostHist(idx) = "" Then
-            petCostHist(idx) = CStr(dblCost)
+        If petCostHist(petCurChar, idx) = "" Then
+            petCostHist(petCurChar, idx) = CStr(dblCost)
         Else
-            petCostHist(idx) = petCostHist(idx) & "," & CStr(dblCost)
+            petCostHist(petCurChar, idx) = petCostHist(petCurChar, idx) & "," & CStr(dblCost)
         End If
-        If petDetailList = "" Then
-            petDetailList = idx & ":" & CStr(dblCost)
+        If petDetailList(petCurChar) = "" Then
+            petDetailList(petCurChar) = idx & ":" & CStr(dblCost)
         Else
-            petDetailList = petDetailList & "," & idx & ":" & CStr(dblCost)
+            petDetailList(petCurChar) = petDetailList(petCurChar) & "," & idx & ":" & CStr(dblCost)
         End If
-        petCostTotal = petCostTotal + dblCost
+        petCostTotal(petCurChar) = petCostTotal(petCurChar) + dblCost
         RefreshPetCostTotal
         PetChange idx, 1
         RefreshPetDetail
@@ -1383,8 +1436,15 @@
         document.body.scrollTop = petCostSavedScrollTop
         petCostIdx = -1
     End Sub
+    ' 刷新累计成本：当前号 + 全部号合计两个数字
     Sub RefreshPetCostTotal
-        document.getElementById("petTotalCost").innerText = PetFmtCost(petCostTotal)
+        Dim n, dblAll
+        dblAll = 0
+        For n = 0 To 4
+            dblAll = dblAll + petCostTotal(n)
+        Next
+        document.getElementById("petTotalCost").innerText = PetFmtCost(petCostTotal(petCurChar))
+        document.getElementById("petAllCost").innerText = PetFmtCost(dblAll)
     End Sub
     ' 展示/收起累计成本明细（展开时先刷新内容）
     Sub TogglePetDetail
@@ -1400,22 +1460,47 @@
             objHint.innerText = "▼ 展开"
         End If
     End Sub
-    ' 某任务成本合计（万）
-    Function PetTaskSum(idx)
+    ' 积分奖励矩阵表与最终得分表默认折叠，点击标题行展开/收起（纯静态表，无内容刷新）
+    Sub TogglePetReward
+        Dim objSec, objHint
+        Set objSec = document.getElementById("petRewardSection")
+        Set objHint = document.getElementById("petRewardToggleHint")
+        If objSec.style.display = "none" Then
+            objSec.style.display = "block"
+            objHint.innerText = "▲ 收起"
+        Else
+            objSec.style.display = "none"
+            objHint.innerText = "▼ 展开"
+        End If
+    End Sub
+    Sub TogglePetScore
+        Dim objSec, objHint
+        Set objSec = document.getElementById("petScoreSection")
+        Set objHint = document.getElementById("petScoreToggleHint")
+        If objSec.style.display = "none" Then
+            objSec.style.display = "block"
+            objHint.innerText = "▲ 收起"
+        Else
+            objSec.style.display = "none"
+            objHint.innerText = "▼ 展开"
+        End If
+    End Sub
+    ' 某号某任务成本合计（万）
+    Function PetTaskSum(c, idx)
         Dim arrCost, n, dblS
         PetTaskSum = 0
-        If petCostHist(idx) = "" Then Exit Function
-        arrCost = Split(petCostHist(idx), ",")
+        If petCostHist(c, idx) = "" Then Exit Function
+        arrCost = Split(petCostHist(c, idx), ",")
         For n = 0 To UBound(arrCost)
             If IsNumeric(arrCost(n)) Then dblS = dblS + CDbl(arrCost(n))
         Next
         PetTaskSum = dblS
     End Function
-    ' 从全局明细中移除指定任务最近一笔（与各任务成本栈弹出保持同步）
+    ' 从当前号全局明细中移除指定任务最近一笔（与该号成本栈弹出保持同步）
     Sub PetDetailRemoveLast(idx)
         Dim arrAll, arrItem, n, lngFound, strOut
-        If petDetailList = "" Then Exit Sub
-        arrAll = Split(petDetailList, ",")
+        If petDetailList(petCurChar) = "" Then Exit Sub
+        arrAll = Split(petDetailList(petCurChar), ",")
         lngFound = -1
         For n = UBound(arrAll) To 0 Step -1
             arrItem = Split(arrAll(n), ":")
@@ -1435,42 +1520,54 @@
                 End If
             End If
         Next
-        petDetailList = strOut
+        petDetailList(petCurChar) = strOut
     End Sub
-    ' 重绘成本汇总与明细表（汇总只列有记录的任务；明细最新在上，序号为录入顺序）
+    ' 重绘成本汇总与明细表：汇总按号分组（每号小节+小计，末行全部号合计）；明细只显示当前号（最新在上，序号为录入顺序）
     Sub RefreshPetDetail
-        Dim objWrap, arrAll, arrItem, n, strH, strCls, lngCnt, dblSum, lngAllCnt, dblAllSum, lngRows
+        Dim objWrap, arrAll, arrItem, n, c, strH, strCls, lngCnt, dblSum, lngAllCnt, dblAllSum, lngRows, blnAny
         Set objWrap = document.getElementById("petDetailSection")
         If objWrap Is Nothing Then Exit Sub
         strH = "<div class=""pet-block-title"">【成本汇总】</div>"
         strH = strH & "<table><tr><th width=""55%"">任务内容</th><th width=""20%"">次数</th><th width=""25%"">合计成本（万）</th></tr>"
         lngAllCnt = 0
         dblAllSum = 0
-        lngRows = 0
-        For n = 0 To 12
-            If petCostHist(n) <> "" Then
-                lngRows = lngRows + 1
-                lngCnt = CLng(document.getElementById("petCnt" & n).innerText)
-                dblSum = PetTaskSum(n)
+        blnAny = False
+        For c = 0 To 4
+            lngRows = 0
+            lngCnt = 0
+            dblSum = 0
+            For n = 0 To 12
+                If petCostHist(c, n) <> "" Then
+                    If lngRows = 0 Then
+                        strH = strH & "<tr><td class=""pet-char-cell"" colspan=""3"">" & PetCharName(c) & "</td></tr>"
+                        blnAny = True
+                    End If
+                    lngRows = lngRows + 1
+                    lngCnt = lngCnt + petCounts(c, n)
+                    dblSum = dblSum + PetTaskSum(c, n)
+                    strCls = ""
+                    If lngRows Mod 2 = 0 Then strCls = " class=""alt"""
+                    strH = strH & "<tr" & strCls & "><td class=""lv"">" & PetTaskName(n) & "</td><td class=""num"">" & petCounts(c, n) & "</td><td class=""num"">" & PetFmtCost(PetTaskSum(c, n)) & "</td></tr>"
+                End If
+            Next
+            If lngRows > 0 Then
+                strH = strH & "<tr><td class=""pet-subtotal"">" & PetCharName(c) & " 小计</td><td class=""pet-subtotal""><b>" & lngCnt & "</b></td><td class=""pet-subtotal""><b>" & PetFmtCost(dblSum) & "</b></td></tr>"
                 lngAllCnt = lngAllCnt + lngCnt
                 dblAllSum = dblAllSum + dblSum
-                strCls = ""
-                If lngRows Mod 2 = 0 Then strCls = " class=""alt"""
-                strH = strH & "<tr" & strCls & "><td class=""lv"">" & PetTaskName(n) & "</td><td class=""num"">" & lngCnt & "</td><td class=""num"">" & PetFmtCost(dblSum) & "</td></tr>"
             End If
         Next
-        If lngRows = 0 Then
+        If Not blnAny Then
             strH = strH & "<tr><td class=""pet-empty"" colspan=""3"">暂无成本记录</td></tr>"
         Else
-            strH = strH & "<tr><td class=""lv"">总计</td><td class=""num""><b>" & lngAllCnt & "</b></td><td class=""num""><b>" & PetFmtCost(dblAllSum) & "</b></td></tr>"
+            strH = strH & "<tr><td class=""pet-grand"">全部号合计</td><td class=""pet-grand""><b>" & lngAllCnt & "</b></td><td class=""pet-grand""><b>" & PetFmtCost(dblAllSum) & "</b></td></tr>"
         End If
         strH = strH & "</table>"
-        strH = strH & "<div class=""pet-block-title"">【成本明细（最新在上）】</div>"
-        strH = strH & "<table><tr><th width=""15%"">序号</th><th width=""55%"">任务内容</th><th width=""30%"">成本（万）</th></tr>"
-        If petDetailList = "" Then
+        strH = strH & "<div class=""pet-block-title"">【成本明细 · " & PetCharName(petCurChar) & "（最新在上）】</div>"
+        strH = strH & "<div class=""pet-detail-scroll""><table><tr><th width=""15%"">序号</th><th width=""55%"">任务内容</th><th width=""30%"">成本（万）</th></tr>"
+        If petDetailList(petCurChar) = "" Then
             strH = strH & "<tr><td class=""pet-empty"" colspan=""3"">暂无成本记录</td></tr>"
         Else
-            arrAll = Split(petDetailList, ",")
+            arrAll = Split(petDetailList(petCurChar), ",")
             For n = UBound(arrAll) To 0 Step -1
                 arrItem = Split(arrAll(n), ":")
                 strCls = ""
@@ -1478,29 +1575,27 @@
                 strH = strH & "<tr" & strCls & "><td class=""num"">" & (n + 1) & "</td><td class=""lv"">" & PetTaskName(CLng(arrItem(0))) & "</td><td class=""num"">" & PetFmtCost(CDbl(arrItem(1))) & "</td></tr>"
             Next
         End If
-        strH = strH & "</table>"
+        strH = strH & "</table></div>"
         objWrap.innerHTML = strH
     End Sub
-    ' 清零计数与累计成本（有记录时先确认）
+    ' 清零当前号的次数与累计成本（有记录时先确认；其他号不受影响）
     Sub PetCountReset
         Dim i, objCnt, blnHasData
         blnHasData = False
         For i = 0 To 12
-            Set objCnt = document.getElementById("petCnt" & i)
-            If Not objCnt Is Nothing Then
-                If CLng(objCnt.innerText) > 0 Then blnHasData = True
-            End If
+            If petCounts(petCurChar, i) > 0 Then blnHasData = True
         Next
-        If blnHasData Or petCostTotal > 0 Then
-            If MsgBox("将清空全部次数与累计成本（当前 " & PetFmtCost(petCostTotal) & " 万梦幻币），是否继续？", vbYesNo + vbQuestion, "清零确认") <> vbYes Then Exit Sub
+        If blnHasData Or petCostTotal(petCurChar) > 0 Then
+            If MsgBox("将清空 " & PetCharName(petCurChar) & " 的全部次数与累计成本（当前 " & PetFmtCost(petCostTotal(petCurChar)) & " 万梦幻币），其他号不受影响。是否继续？", vbYesNo + vbQuestion, "清零确认") <> vbYes Then Exit Sub
         End If
         For i = 0 To 12
+            petCounts(petCurChar, i) = 0
             Set objCnt = document.getElementById("petCnt" & i)
             If Not objCnt Is Nothing Then objCnt.innerText = "0"
-            petCostHist(i) = ""
+            petCostHist(petCurChar, i) = ""
         Next
-        petCostTotal = 0
-        petDetailList = ""
+        petCostTotal(petCurChar) = 0
+        petDetailList(petCurChar) = ""
         RefreshPetCostTotal
         RefreshPetDetail
     End Sub
@@ -2072,6 +2167,7 @@
         <div id="petSection" style="display: none;">
             <div class="pet-block-title">【召唤兽修炼任务积分规则】</div>
             <div style="margin-top: 6px;"><label style="width: auto;">是否计算成本：</label><select id="selPetCostMode"><option value="1" selected>是</option><option value="0">否</option></select><span class="tip">“是”：点 + 时填成本；“否”：只记次数</span></div>
+            <div style="margin-top: 6px;"><label style="width: auto;">当前号：</label><button id="petCharBtn0" class="pet-char-btn-on" onclick="PetSwitchChar 0">1号</button><button id="petCharBtn1" class="pet-char-btn" onclick="PetSwitchChar 1">2号</button><button id="petCharBtn2" class="pet-char-btn" onclick="PetSwitchChar 2">3号</button><button id="petCharBtn3" class="pet-char-btn" onclick="PetSwitchChar 3">4号</button><button id="petCharBtn4" class="pet-char-btn" onclick="PetSwitchChar 4">5号</button><span class="tip">各号独立计数，全部号合计跨号累加</span></div>
             <table>
                 <tr><th width="25%">任务内容</th><th width="10%">任务积分</th><th width="15%">次数</th><th width="25%">任务内容</th><th width="10%">任务积分</th><th width="15%">次数</th></tr>
                 <tr><td class="lv">找人</td><td class="num">1</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="PetSub 0">-</button> <span id="petCnt0">0</span> <button class="pet-cnt-btn" onclick="PetAdd 0">+</button></td><td class="lv">乐器</td><td class="num">4</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="PetSub 1">-</button> <span id="petCnt1">0</span> <button class="pet-cnt-btn" onclick="PetAdd 1">+</button></td></tr>
@@ -2082,12 +2178,13 @@
                 <tr class="alt"><td class="lv">70级装备</td><td class="num">3</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="PetSub 10">-</button> <span id="petCnt10">0</span> <button class="pet-cnt-btn" onclick="PetAdd 10">+</button></td><td class="lv">指定变异召唤兽</td><td class="num">10</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="PetSub 11">-</button> <span id="petCnt11">0</span> <button class="pet-cnt-btn" onclick="PetAdd 11">+</button></td></tr>
                 <tr><td class="lv">上交非变异召唤兽</td><td class="num">-15</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="PetSub 12">-</button> <span id="petCnt12">0</span> <button class="pet-cnt-btn" onclick="PetAdd 12">+</button></td><td class="lv"></td><td class="num"></td><td class="pet-cnt"></td></tr>
             </table>
-            <div style="margin-top: 8px;"><button onclick="PetCountReset">清零计数</button><span class="pet-cost-total">累计成本：<b id="petTotalCost">0</b> 万梦幻币</span></div>
+            <div style="margin-top: 8px;"><button onclick="PetCountReset">清零计数</button><span class="pet-cost-total">累计成本：<b id="petTotalCost">0</b> 万梦幻币</span><span class="pet-cost-total">全部号合计：<b id="petAllCost">0</b> 万梦幻币</span></div>
             <div style="cursor: pointer; margin-top: 8px;" onclick="TogglePetDetail"><label style="width: auto; text-align: left;">📋 累计成本明细：</label><span class="sq-toggle" id="petDetailToggleHint">▼ 展开</span></div>
             <div id="petDetailSection" style="display: none;"></div>
-            <div class="pet-note">★点击 “+” 记录一次任务，可登记本次成本（万梦幻币，非必填，不填按 0 计入；取消则不计数）；点击 “-” 撤销最近一次记录，并同步从累计成本中扣回该次成本</div>
+            <div class="pet-note">★点击 “+” 记录一次任务，可登记本次成本（万梦幻币，非必填，不填按 0 计入；取消则不计数）；点击 “-” 撤销最近一次记录，并同步从累计成本中扣回该次成本<br>★切换“当前号”页签可分别为 1~5 号计数，各号次数、成本互相独立；“清零计数”只清当前号，其他号不受影响</div>
             <div class="pet-note">★上交烹饪、三药品质不满足要求，会扣除一定任务积分，修炼经验/修炼点不受影响<br>★烹饪三药扣分规则：（应交品质-实际品质）/2，积分向下取整<br>★实际积分：（应交品质-实际品质）/2+2，积分向下取整<br>例如需上交63品质的珍露酒，实际上交58品质的，相差5品，扣除2分加上本身应得2分（上交三级药/烹饪获得2分），实际不扣分（即-2分+2分）</div>
-            <div class="pet-block-title">【召唤兽修炼任务积分奖励】</div>
+            <div class="pet-block-title" style="cursor: pointer;" onclick="TogglePetReward">【召唤兽修炼任务积分奖励】<span class="sq-toggle" id="petRewardToggleHint">▼ 展开</span></div>
+            <div id="petRewardSection" style="display: none;">
             <div class="pet-note">奖励说明：高级书铁奖励与宠环总积分和人物等级相关。各个奖励所需宠环总积分如下：</div>
             <table>
                 <tr><th>书铁等级＼角色等级</th><th>69</th><th>89</th><th>109</th><th>129</th><th>145</th><th>155</th></tr>
@@ -2103,7 +2200,9 @@
                 <tr class="alt"><td class="lv">130</td><td class="num">237</td><td class="num">231</td><td class="num">224</td><td class="num">217</td><td class="num">212</td><td class="num">209</td></tr>
                 <tr><td class="lv">140</td><td class="num">247</td><td class="num">241</td><td class="num">234</td><td class="num">227</td><td class="num">222</td><td class="num">219</td></tr>
             </table>
-            <div class="pet-block-title">【召唤兽修炼任务积分奖励·最终得分】</div>
+            </div>
+            <div class="pet-block-title" style="cursor: pointer;" onclick="TogglePetScore">【召唤兽修炼任务积分奖励·最终得分】<span class="sq-toggle" id="petScoreToggleHint">▼ 展开</span></div>
+            <div id="petScoreSection" style="display: none;">
             <div class="pet-note">奖励说明：高级书铁奖励根据最终得分获得，最终得分=宠环总积分+人物等级/3（向下取整）</div>
             <table class="pet-score-table">
                 <tr><th width="30%">最终得分</th><th width="70%">奖励</th></tr>
@@ -2120,6 +2219,7 @@
                 <tr><td class="num">270</td><td>140级制造指南书/百炼精铁</td></tr>
                 <tr class="alt"><td class="num">280</td><td>140级制造指南书/百炼精铁</td></tr>
             </table>
+            </div>
         </div>
     </div>
     <div class="input-bar">
