@@ -92,6 +92,22 @@
     td.pet-grand { text-align: center; font-weight: bold; color: #fff; background: linear-gradient(90deg, #7b43f5, #4895ef); }
     /* 明细表固定高度滚动区：超出约 5 条后内部滚动，避免掉长页面影响其他功能 */
     .pet-detail-scroll { max-height: 210px; overflow-y: auto; }
+    /* 历史记录日历：有记录日期紫底白字可点，今天紫字标出 */
+    .pet-hist-cal { min-width: 0; }
+    .pet-hist-cal th { padding: 4px 2px; }
+    .pet-hist-cal td { padding: 4px 2px; text-align: center; font-size: 13px; }
+    .pet-hist-cal td.pet-hist-today { font-weight: bold; color: #7b43f5; }
+    .pet-hist-cal td.pet-hist-has { font-weight: bold; color: #fff; background: linear-gradient(90deg, #7b43f5, #4895ef); cursor: pointer; }
+    /* 历史记录查看弹窗：点击日历日期弹出该日汇总与明细 */
+    #petHistOverlay { position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.45); z-index: 1000; display: none; }
+    #petHistDialog {
+        position: fixed; left: 50%; top: 10%; transform: translateX(-50%);
+        width: 88%; max-width: 360px; z-index: 1001; display: none; box-sizing: border-box;
+        background: #fff; border: 1px solid #d9dce3; border-radius: 8px; padding: 14px;
+        box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+    }
+    #petHistTitle { font-weight: bold; font-size: 15px; color: #333; margin-bottom: 8px; }
+    #petHistBody { max-height: 50vh; overflow-y: auto; }
     /* 宠环成本录入弹窗：点击 + 时弹出，登记本次成本（万梦幻币，非必填） */
     #petCostOverlay { position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.45); z-index: 1000; display: none; }
     #petCostDialog {
@@ -102,6 +118,20 @@
     }
     #petCostTitle { font-weight: bold; font-size: 15px; color: #333; margin-bottom: 8px; }
     .pet-cost-note { margin-top: 4px; font-size: 12px; color: #888; }
+    /* 历史记录导入/导出弹窗：与工具箱通用的行格式文本交换介质 */
+    #petIoOverlay { position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.45); z-index: 1000; display: none; }
+    #petIoDialog {
+        position: fixed; left: 50%; top: 8%; transform: translateX(-50%);
+        width: 92%; max-width: 380px; z-index: 1001; display: none; box-sizing: border-box;
+        background: #fff; border: 1px solid #d9dce3; border-radius: 8px; padding: 14px;
+        box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+    }
+    #petIoTitle { font-weight: bold; font-size: 15px; color: #333; margin-bottom: 4px; }
+    #petIoText { width: 100%; height: 180px; margin-top: 6px; font-size: 12px; font-family: Consolas, "Courier New", monospace; border: 1px solid #b0b6c3; border-radius: 4px; box-sizing: border-box; padding: 6px; background: #f6f7f9; color: #333; }
+    body.dark #petIoOverlay { background: rgba(0,0,0,0.6); }
+    body.dark #petIoDialog { background: #2b2f35; border-color: #3c424a; }
+    body.dark #petIoTitle { color: #aeb4bc; }
+    body.dark #petIoText { background: #292d33; border-color: #3c424a; color: #d2d6da; }
     .pet-cost-btns { display: flex; gap: 8px; margin-top: 12px; }
     /* 宝石成本多选：选择模式下“单个成本”单元格可点击，选中高亮并可填写个数 */
     .pick-mode td.cost { cursor: pointer; }
@@ -196,6 +226,11 @@
     body.dark td.pet-char-cell { color: #8b5cf6; background: #37324d; }
     body.dark td.pet-subtotal { background: #453a1e; }
     body.dark td.pet-grand { background: linear-gradient(90deg, #8b5cf6, #5ba8f5); }
+    body.dark .pet-hist-cal td.pet-hist-today { color: #8b5cf6; }
+    body.dark .pet-hist-cal td.pet-hist-has { background: linear-gradient(90deg, #8b5cf6, #5ba8f5); }
+    body.dark #petHistOverlay { background: rgba(0,0,0,0.6); }
+    body.dark #petHistDialog { background: #2b2f35; border-color: #3c424a; }
+    body.dark #petHistTitle { color: #aeb4bc; }
     body.dark #petCostOverlay { background: rgba(0,0,0,0.6); }
     body.dark #petCostDialog { background: #2b2f35; border-color: #3c424a; }
     body.dark #petCostTitle { color: #aeb4bc; }
@@ -351,10 +386,12 @@
                     <tr class="alt"><td class="lv">70级装备</td><td class="num">3</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="petSub(10)">-</button> <span id="petCnt10">0</span> <button class="pet-cnt-btn" onclick="petAdd(10)">+</button></td><td class="lv">指定变异召唤兽</td><td class="num">10</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="petSub(11)">-</button> <span id="petCnt11">0</span> <button class="pet-cnt-btn" onclick="petAdd(11)">+</button></td></tr>
                     <tr><td class="lv">上交非变异召唤兽</td><td class="num">-15</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="petSub(12)">-</button> <span id="petCnt12">0</span> <button class="pet-cnt-btn" onclick="petAdd(12)">+</button></td><td class="lv"></td><td class="num"></td><td class="pet-cnt"></td></tr>
                 </table>
-                <div style="margin-top: 8px;"><button class="btn" onclick="petCountReset()">清零计数</button><span class="pet-cost-total">累计成本：<b id="petTotalCost">0</b> 万梦幻币</span><span class="pet-cost-total">全部号合计：<b id="petAllCost">0</b> 万梦幻币</span></div>
+                <div style="margin-top: 8px;"><button class="btn" onclick="petCountReset()">清零计数</button><button class="btn" onclick="savePetHistory()">保存当天记录</button><span class="pet-cost-total">累计成本：<b id="petTotalCost">0</b> 万梦幻币</span><span class="pet-cost-total">全部号合计：<b id="petAllCost">0</b> 万梦幻币</span></div>
             </div>
             <div class="gem-result-toggle" onclick="togglePetDetail()"><span>📋 累计成本明细</span><span class="sq-toggle" id="petDetailToggleHint">▼</span></div>
             <div id="petDetailSection" style="display:none"></div>
+            <div class="gem-result-toggle" onclick="togglePetHist()"><span>📅 历史记录查询</span><span style="display:flex;align-items:center;gap:6px;"><button class="btn-clear-hist" onclick="event.stopPropagation();histExport()">导出</button><button class="btn-clear-hist" onclick="event.stopPropagation();histImport()">导入</button><span class="sq-toggle" id="petHistToggleHint">▼</span></span></div>
+            <div id="petHistSection" style="display:none"></div>
             <div class="pet-note">★点击 “+” 记录一次任务，可登记本次成本（万梦幻币，非必填，不填按 0 计入；取消则不计数）；点击 “-” 撤销最近一次记录，并同步从累计成本中扣回该次成本<br>★切换“当前号”页签可分别为 1~5 号计数，各号次数、成本互相独立；“清零计数”只清当前号，其他号不受影响</div>
             <div class="pet-note">★上交烹饪、三药品质不满足要求，会扣除一定任务积分，修炼经验/修炼点不受影响<br>★烹饪三药扣分规则：（应交品质-实际品质）/2，积分向下取整<br>★实际积分：（应交品质-实际品质）/2+2，积分向下取整<br>例如需上交63品质的珍露酒，实际上交58品质的，相差5品，扣除2分加上本身应得2分（上交三级药/烹饪获得2分），实际不扣分（即-2分+2分）</div>
             <div class="pet-block-title" style="cursor: pointer;" onclick="togglePetReward()">【召唤兽修炼任务积分奖励】<span class="sq-toggle" id="petRewardToggleHint">▼</span></div>
@@ -439,6 +476,20 @@
         <div class="form-group"><label>本次成本（万梦幻币）</label><input type="number" step="any" min="0" id="petCostInput" placeholder="非必填，不填按 0 计入" onkeydown="onEnter(event,petCostOk)"></div>
         <div class="pet-cost-note">非必填，不填按 0 计入；金额可带小数</div>
         <div class="pet-cost-btns"><button class="btn" onclick="petCostOk()">确定</button><button class="btn" onclick="petCostCancel()">取消</button></div>
+    </div>
+    <div id="petHistOverlay" onclick="closePetHist()"></div>
+    <div id="petHistDialog">
+        <div id="petHistTitle"></div>
+        <div id="petHistBody"></div>
+        <div class="pet-cost-btns"><button class="btn" onclick="closePetHist()">✕ 关闭</button></div>
+    </div>
+    <div id="petIoOverlay" onclick="closeHistIo()"></div>
+    <div id="petIoDialog">
+        <div id="petIoTitle"></div>
+        <div class="pet-cost-note" id="petIoNote"></div>
+        <textarea id="petIoText" placeholder="粘贴或经“选文件”导入记录文本"></textarea>
+        <div class="pet-cost-btns" style="flex-wrap:wrap;"><button class="btn" id="petIoOkBtn" onclick="histIoOk()">导入</button><button class="btn" id="petIoFileBtn" onclick="histPickFile()">选文件</button><button class="btn" id="petIoCopyBtn" onclick="histCopyAll()">复制</button><button class="btn" id="petIoDlBtn" onclick="downloadHistFile()">下载</button><button class="btn" onclick="closeHistIo()">✕ 关闭</button></div>
+        <input type="file" id="petIoFile" accept=".txt,text/plain" style="display:none" onchange="histFilePicked()">
     </div>
     <div id="sqOverlay" onclick="closeSq()"></div>
     <div id="sqDialog">
@@ -743,6 +794,9 @@ function togglePetSection() {
 var petCostHist = [], petCounts = [], petDetailList = [], petCostTotal = [];
 var petCurChar = 0;
 var petCostIdx = -1;
+// 历史记录：petDirty 当天有未保存变更（关闭/刷新前提醒）；petHistYear/Month 当前显示月（-1 未初始化，展开时设为当月）
+var petDirty = false, petHistYear = -1, petHistMonth = -1, petHistSavedScroll = 0;
+var PET_HIST_KEY = 'petCostHistory';
 for (var pcI = 0; pcI < 5; pcI++) {
     petCostHist[pcI] = [[], [], [], [], [], [], [], [], [], [], [], [], []];
     petCounts[pcI] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -821,6 +875,7 @@ function petRecordCost(idx, c) {
     petCountChange(idx, 1);
     refreshPetCostTotal();
     refreshPetDetail();
+    petDirty = true;
 }
 function petCostCancel() { closePetCost(); }
 function closePetCost() {
@@ -917,13 +972,16 @@ function petUndoOne(idx) {
     }
     petCountChange(idx, -1);
     refreshPetDetail();
+    petDirty = true;
 }
-// 清零当前号的次数与累计成本（有记录时先确认；其他号不受影响）
+// 清零当前号的次数与累计成本（有未保存变更先提醒保存；有记录时再确认；其他号不受影响）
 function petCountReset() {
     var hasData = petCostTotal[petCurChar] > 0, i, el;
     for (i = 0; i <= 12 && !hasData; i++) {
         if (petCounts[petCurChar][i] > 0) hasData = true;
     }
+    // 清零前保存提醒：确定=先保存再清零，取消=不保存直接清零（是否清零由下方确认框决定）
+    if (petDirty && confirm('当天宠环成本记录有未保存的变更，清零前先保存吗？\n\n【确定】先保存再清零    【取消】不保存直接清零')) savePetHistory();
     if (hasData && !confirm('将清空 ' + petCharName(petCurChar) + ' 的全部次数与累计成本（当前 ' + fmtPetCost(petCostTotal[petCurChar]) + ' 万梦幻币），其他号不受影响。是否继续？')) return;
     for (i = 0; i <= 12; i++) {
         petCounts[petCurChar][i] = 0;
@@ -935,7 +993,280 @@ function petCountReset() {
     petCostTotal[petCurChar] = 0;
     refreshPetCostTotal();
     refreshPetDetail();
+    petDirty = true;
 }
+// ================== 宠环成本历史记录（localStorage 快照，同一天多次保存覆盖当天） ==================
+function petToday() { var d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+function loadPetHist() {
+    try { return JSON.parse(localStorage.getItem(PET_HIST_KEY)) || {}; } catch (e) { return {}; }
+}
+// 保存当天全部有数据号的快照（counts 明细 detail 为 "t:c,..." 字符串，与 HTA 端文件行格式同构）；
+// 核心层 savePetHistoryCore 返回是否保存成功（无数据/写失败返回 false），提示层 savePetHistory 供按钮与清零前保存调用
+function savePetHistoryCore() {
+    var today = petToday(), arr = [], i, n, has, d, k;
+    for (i = 0; i < 5; i++) {
+        has = false;
+        for (n = 0; n <= 12; n++) { if (petCounts[i][n] > 0 || petCostHist[i][n].length) { has = true; break; } }
+        if (!has) continue;
+        d = [];
+        for (k = 0; k < petDetailList[i].length; k++) d.push(petDetailList[i][k].t + ':' + petDetailList[i][k].c);
+        arr.push({ c: i, counts: petCounts[i].slice(), detail: d.join(','), total: Math.round(petCostTotal[i] * 100) / 100 });
+    }
+    if (!arr.length) return false;
+    var obj = loadPetHist();
+    obj[today] = arr;
+    try { localStorage.setItem(PET_HIST_KEY, JSON.stringify(obj)); }
+    catch (e) { alert('保存失败：' + e.message); return false; }
+    petDirty = false;
+    return true;
+}
+function savePetHistory() {
+    if (!savePetHistoryCore()) { alert('当天暂无可保存的宠环成本记录。'); return; }
+    alert('已保存 ' + petToday() + ' 的宠环成本记录（可在“历史记录查询”中查看）。');
+    if (document.getElementById('petHistSection').style.display !== 'none') renderPetHistCal();
+}
+// 展开/收起历史查询（展开时渲染日历）
+function togglePetHist() {
+    var b = document.getElementById('petHistSection'), h = document.getElementById('petHistToggleHint');
+    if (b.style.display === 'none') { renderPetHistCal(); b.style.display = ''; h.textContent = '▲'; }
+    else { b.style.display = 'none'; h.textContent = '▼'; }
+}
+// 渲染日历：周日起头；有记录日期紫底白字可点；今天紫字
+function renderPetHistCal() {
+    var sec = document.getElementById('petHistSection');
+    if (!sec) return;
+    var hist = loadPetHist();
+    if (petHistYear < 0) { var now = new Date(); petHistYear = now.getFullYear(); petHistMonth = now.getMonth(); }
+    var h = '<div style="margin-top: 6px; text-align: center;"><button class="pet-char-btn" style="width: 30px;" onclick="shiftPetHistMonth(-1)">&lt;</button><b style="margin: 0 10px; font-size: 14px;">' + petHistYear + '年' + (petHistMonth + 1) + '月</b><button class="pet-char-btn" style="width: 30px;" onclick="shiftPetHistMonth(1)">&gt;</button></div><div style="margin-top: 4px;"><span class="tip">高亮日期有记录，点击查看</span></div>';
+    h += '<table class="pet-hist-cal"><tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr>';
+    var first = new Date(petHistYear, petHistMonth, 1).getDay();
+    var days = new Date(petHistYear, petHistMonth + 1, 0).getDate();
+    var today = petToday();
+    var d = 1 - first, ds, cls, c2;
+    while (d <= days) {
+        h += '<tr>';
+        for (c2 = 0; c2 < 7; c2++, d++) {
+            if (d >= 1 && d <= days) {
+                ds = petHistYear + '-' + pad2(petHistMonth + 1) + '-' + pad2(d);
+                cls = 'pet-hist-day';
+                if (ds === today) cls += ' pet-hist-today';
+                if (hist[ds] && hist[ds].length) h += '<td class="' + cls + ' pet-hist-has" onclick="showPetHist(\'' + ds + '\')">' + d + '</td>';
+                else h += '<td class="' + cls + '">' + d + '</td>';
+            } else h += '<td></td>';
+        }
+        h += '</tr>';
+    }
+    h += '</table>';
+    sec.innerHTML = h;
+}
+function shiftPetHistMonth(delta) {
+    petHistMonth += delta;
+    if (petHistMonth < 0) { petHistMonth = 11; petHistYear--; }
+    if (petHistMonth > 11) { petHistMonth = 0; petHistYear++; }
+    renderPetHistCal();
+}
+// 点击日期：弹窗展示该日成本汇总（按号分组）与逐笔明细（最新在上）
+function showPetHist(ds) {
+    var hist = loadPetHist();
+    var arr = hist[ds] || [];
+    if (!arr.length) return;
+    var i, k, m, rec, items, pr, t, rows, cnt, sum, cls, allCnt = 0, allSum = 0, any = false, anyDet = false, rn;
+    var h = '<div class="pet-block-title" style="margin-top: 0;">【成本汇总】</div><div class="table-wrap"><table><tr><th width="55%">任务内容</th><th width="20%">次数</th><th width="25%">合计成本（万）</th></tr>';
+    for (i = 0; i < arr.length; i++) {
+        rec = arr[i];
+        items = rec.detail ? rec.detail.split(',') : [];
+        var taskHas = {}, taskSum = {};
+        for (k = 0; k < items.length; k++) {
+            pr = items[k].split(':');
+            t = parseInt(pr[0], 10);
+            taskHas[t] = true;
+            taskSum[t] = (taskSum[t] || 0) + parseFloat(pr[1]);
+        }
+        rows = 0; cnt = 0; sum = 0;
+        for (t = 0; t <= 12; t++) {
+            if (!taskHas[t]) continue;
+            if (rows === 0) { h += '<tr><td class="pet-char-cell" colspan="3">' + petCharName(rec.c) + '</td></tr>'; any = true; }
+            rows++;
+            cnt += rec.counts[t];
+            sum += taskSum[t];
+            cls = (rows % 2 === 0) ? ' class="alt"' : '';
+            h += '<tr' + cls + '><td class="lv">' + petTaskName(t) + '</td><td class="num">' + rec.counts[t] + '</td><td class="num">' + fmtPetCost(taskSum[t]) + '</td></tr>';
+        }
+        if (rows) {
+            h += '<tr><td class="pet-subtotal">' + petCharName(rec.c) + ' 小计</td><td class="pet-subtotal"><b>' + cnt + '</b></td><td class="pet-subtotal"><b>' + fmtPetCost(sum) + '</b></td></tr>';
+            allCnt += cnt; allSum += sum;
+        }
+    }
+    if (!any) h += '<tr><td class="pet-empty" colspan="3">暂无成本记录</td></tr>';
+    else h += '<tr><td class="pet-grand">全部号合计</td><td class="pet-grand"><b>' + allCnt + '</b></td><td class="pet-grand"><b>' + fmtPetCost(allSum) + '</b></td></tr>';
+    h += '</table></div><div class="pet-block-title">【成本明细】</div><div class="pet-detail-scroll"><table><tr><th width="15%">序号</th><th width="55%">任务内容</th><th width="30%">成本（万）</th></tr>';
+    for (i = 0; i < arr.length; i++) {
+        rec = arr[i];
+        items = rec.detail ? rec.detail.split(',') : [];
+        if (!items.length) continue;
+        h += '<tr><td class="pet-char-cell" colspan="3">' + petCharName(rec.c) + '</td></tr>';
+        anyDet = true;
+        rn = 0;
+        for (m = items.length - 1; m >= 0; m--) {
+            pr = items[m].split(':');
+            rn++;
+            cls = (rn % 2 === 0) ? ' class="alt"' : '';
+            h += '<tr' + cls + '><td class="num">' + (m + 1) + '</td><td class="lv">' + petTaskName(parseInt(pr[0], 10)) + '</td><td class="num">' + fmtPetCost(parseFloat(pr[1])) + '</td></tr>';
+        }
+    }
+    if (!anyDet) h += '<tr><td class="pet-empty" colspan="3">暂无成本记录</td></tr>';
+    h += '</table></div>';
+    openPetHistDlg(ds, h);
+}
+function openPetHistDlg(ds, html) {
+    petHistSavedScroll = window.pageYOffset || document.documentElement.scrollTop || 0;
+    document.body.style.overflow = 'hidden';
+    document.getElementById('petHistTitle').textContent = '📅 ' + ds + ' 宠环成本记录';
+    document.getElementById('petHistBody').innerHTML = html;
+    document.getElementById('petHistOverlay').style.display = 'block';
+    document.getElementById('petHistDialog').style.display = 'block';
+}
+function closePetHist() {
+    document.getElementById('petHistDialog').style.display = 'none';
+    document.getElementById('petHistOverlay').style.display = 'none';
+    document.body.style.overflow = '';
+    window.scrollTo(0, petHistSavedScroll);
+}
+// ================== 历史记录跨端导入/导出（交换格式与 HTA 文件行格式通用：日期|号|次数CSV|明细CSV|累计成本） ==================
+// localStorage 对象 → 行文本（每号一行，total 无千分位），日期升序
+function petHistToLines() {
+    var obj = loadPetHist(), days = Object.keys(obj).sort(), lines = [], d, i, rec, counts, n;
+    for (d = 0; d < days.length; d++) {
+        var arr = obj[days[d]] || [];
+        for (i = 0; i < arr.length; i++) {
+            rec = arr[i];
+            counts = [];
+            for (n = 0; n <= 12; n++) counts.push(rec.counts && rec.counts.length > n ? rec.counts[n] : 0);
+            lines.push(days[d] + '|' + rec.c + '|' + counts.join(',') + '|' + (rec.detail || '') + '|' + (Math.round((rec.total || 0) * 100) / 100));
+        }
+    }
+    return lines;
+}
+// 行文本 → 校验解析：返回 { lines: 规范化行数组, days: 日期数, count: 行数 }；非法时 throw {msg}
+// （total 容忍千分位：HTA 旧版文件可能写过，规范化时去掉；次数须为非负整数；明细任务序号 0~12）
+function parsePetHistLines(text) {
+    var rows = String(text).replace(/\r\n?/g, '\n').split('\n');
+    var out = [], days = {}, cnt = 0, i, m;
+    for (i = 0; i < rows.length; i++) {
+        var s = rows[i].replace(/^\s+|\s+$/g, '');
+        if (!s) continue;
+        cnt++;
+        var f = s.split('|');
+        if (f.length !== 5) throw { msg: '第 ' + cnt + ' 行不是 5 个竖线分隔的字段：' + s.slice(0, 60) };
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(f[0]) || isNaN(new Date(f[0]).getTime())) throw { msg: '第 ' + cnt + ' 行日期不是 yyyy-mm-dd 格式：' + s.slice(0, 60) };
+        if (!/^\d+$/.test(f[1]) || parseInt(f[1], 10) > 4) throw { msg: '第 ' + cnt + ' 行号字段须为 0~4：' + s.slice(0, 60) };
+        var cs = f[2].split(',');
+        if (cs.length !== 13) throw { msg: '第 ' + cnt + ' 行次数字段须为逗号分隔的 13 项：' + s.slice(0, 60) };
+        for (m = 0; m < 13; m++) if (!/^\d+$/.test(cs[m])) throw { msg: '第 ' + cnt + ' 行次数须为非负整数：' + s.slice(0, 60) };
+        if (f[3] !== '') {
+            var ds = f[3].split(',');
+            for (m = 0; m < ds.length; m++) {
+                var pr = ds[m].split(':');
+                if (pr.length !== 2 || !/^\d+$/.test(pr[0]) || isNaN(parseFloat(pr[1].replace(/,/g, '')))) throw { msg: '第 ' + cnt + ' 行明细须为“任务序号:成本”格式：' + s.slice(0, 60) };
+                if (parseInt(pr[0], 10) > 12) throw { msg: '第 ' + cnt + ' 行明细任务序号须为 0~12：' + s.slice(0, 60) };
+            }
+        }
+        if (isNaN(parseFloat(f[4].replace(/,/g, '')))) throw { msg: '第 ' + cnt + ' 行累计成本须为数字：' + s.slice(0, 60) };
+        days[f[0]] = true;
+        out.push(f[0] + '|' + f[1] + '|' + f[2] + '|' + f[3] + '|' + (Math.round(parseFloat(f[4].replace(/,/g, '')) * 100) / 100));
+    }
+    return { lines: out, days: Object.keys(days).length, count: out.length };
+}
+// 导出：全部已保存历史行填入文本框，可复制或下载文件（到工具箱“导入”粘贴/选文件）
+function histExport() {
+    var lines = petHistToLines();
+    if (!lines.length) { alert('暂无已保存的历史记录（先点“保存当天记录”或从工具箱导入）。'); return; }
+    document.getElementById('petIoTitle').textContent = '导出历史记录（与工具箱通用）';
+    document.getElementById('petIoNote').textContent = '共 ' + lines.length + ' 行。点“复制”复制全部文本，或“下载”生成文件发送到电脑，再到工具箱“历史记录查询”的“导入”粘贴。';
+    document.getElementById('petIoText').value = lines.join('\n');
+    document.getElementById('petIoOkBtn').style.display = 'none';
+    document.getElementById('petIoFileBtn').style.display = 'none';
+    document.getElementById('petIoCopyBtn').style.display = '';
+    document.getElementById('petIoDlBtn').style.display = '';
+    document.getElementById('petIoOverlay').style.display = 'block';
+    document.getElementById('petIoDialog').style.display = 'block';
+}
+// 导入：粘贴工具箱导出的行文本或选择 .txt 文件，确认后与本地合并（同日期覆盖、其他保留）
+function histImport() {
+    document.getElementById('petIoTitle').textContent = '导入历史记录（与工具箱通用）';
+    document.getElementById('petIoNote').textContent = '粘贴工具箱导出的记录文本，或点“选文件”读取 .txt 文件后点“导入”。导入日期将覆盖本机同日期记录，其他日期保留；不影响当前计数。';
+    document.getElementById('petIoText').value = '';
+    document.getElementById('petIoOkBtn').style.display = '';
+    document.getElementById('petIoFileBtn').style.display = '';
+    document.getElementById('petIoCopyBtn').style.display = 'none';
+    document.getElementById('petIoDlBtn').style.display = 'none';
+    document.getElementById('petIoOverlay').style.display = 'block';
+    document.getElementById('petIoDialog').style.display = 'block';
+}
+// 导入确认：校验解析 → 合并写 localStorage（导入日期覆盖本地同日期，其他保留；计数器与 petDirty 不受影响）
+function histIoOk() {
+    var res;
+    try { res = parsePetHistLines(document.getElementById('petIoText').value); }
+    catch (e) { alert(e.msg); return; }
+    if (!res.count) { alert('请先粘贴或选择历史记录文本！'); return; }
+    var obj = loadPetHist(), keep = {}, newObj = {}, i, d, f, cs, n;
+    for (i = 0; i < res.lines.length; i++) keep[res.lines[i].split('|')[0]] = true;
+    for (d in obj) if (obj.hasOwnProperty(d) && !keep[d]) newObj[d] = obj[d];
+    for (i = 0; i < res.lines.length; i++) {
+        f = res.lines[i].split('|');
+        cs = f[2].split(',');
+        for (n = 0; n < 13; n++) cs[n] = parseInt(cs[n], 10);
+        if (!newObj[f[0]]) newObj[f[0]] = [];
+        newObj[f[0]].push({ c: parseInt(f[1], 10), counts: cs, detail: f[3], total: parseFloat(f[4]) });
+    }
+    try { localStorage.setItem(PET_HIST_KEY, JSON.stringify(newObj)); }
+    catch (e) { alert('导入失败：' + e.message); return; }
+    closeHistIo();
+    alert('导入成功：共 ' + res.count + ' 行（' + res.days + ' 天），导入日期已覆盖本机同日期记录，其他日期保留。');
+    if (document.getElementById('petHistSection').style.display !== 'none') renderPetHistCal();
+}
+// 复制文本框内容（长按复制兜底提示）
+function histCopyAll() {
+    var t = document.getElementById('petIoText');
+    t.focus();
+    t.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    alert(ok ? '已复制到剪贴板，到工具箱“导入”粘贴即可。' : '已全选文本，请长按文本手动复制（或改用“下载”）。');
+}
+// 下载为 .txt 文件（手机端可经分享/保存发送到电脑；不支持时提示改用复制）
+function downloadHistFile() {
+    try {
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([document.getElementById('petIoText').value], { type: 'text/plain' }));
+        a.download = 'pet_cost_history_' + petToday() + '.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    } catch (e) { alert('当前浏览器不支持下载文件，请改用“复制”。'); }
+}
+// 选择 .txt 文件读入文本框（UTF-8 读取；HTA 导出文件为纯 ASCII 兼容）
+function histPickFile() { document.getElementById('petIoFile').click(); }
+function histFilePicked() {
+    var fi = document.getElementById('petIoFile'), f = fi.files && fi.files[0];
+    if (!f) return;
+    var r = new FileReader();
+    r.onload = function () { document.getElementById('petIoText').value = String(r.result || ''); };
+    r.readAsText(f, 'utf-8');
+    fi.value = '';
+}
+function closeHistIo() {
+    document.getElementById('petIoDialog').style.display = 'none';
+    document.getElementById('petIoOverlay').style.display = 'none';
+    document.body.style.overflow = '';
+}
+// 关闭/刷新页面前：当天数据有未保存变更则触发浏览器原生离开确认（手机浏览器可能不提示，属平台限制）
+window.addEventListener('beforeunload', function (e) {
+    if (petDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
 function sqLoaded() {
     if (sqCurrent >= 0) document.getElementById('sqDialogTitle').textContent = SQ_TASKS[sqCurrent][0];
 }
