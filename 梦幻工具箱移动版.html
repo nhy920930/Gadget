@@ -80,6 +80,19 @@
     .pet-cnt { text-align: center; white-space: nowrap; }
     .pet-cnt-btn { width: 26px; height: 26px; padding: 0; font-size: 15px; font-weight: bold; line-height: 1; border: 1px solid #b0b6c3; border-radius: 4px; background: #f2f4f6; color: #3d444d; vertical-align: middle; }
     body.dark .pet-cnt-btn { background: #292d33; border-color: #3c424a; color: #d2d6da; }
+    .pet-cost-total { margin-left: 10px; font-size: 13px; color: #555; }
+    .pet-cost-total b { color: #c0392b; }
+    /* 宠环成本录入弹窗：点击 + 时弹出，登记本次成本（万梦幻币，非必填） */
+    #petCostOverlay { position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.45); z-index: 1000; display: none; }
+    #petCostDialog {
+        position: fixed; left: 50%; top: 28%; transform: translateX(-50%);
+        width: 88%; max-width: 360px; z-index: 1001; display: none; box-sizing: border-box;
+        background: #fff; border: 1px solid #d9dce3; border-radius: 8px; padding: 14px;
+        box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+    }
+    #petCostTitle { font-weight: bold; font-size: 15px; color: #333; margin-bottom: 8px; }
+    .pet-cost-note { margin-top: 4px; font-size: 12px; color: #888; }
+    .pet-cost-btns { display: flex; gap: 8px; margin-top: 12px; }
     /* 宝石成本多选：选择模式下“单个成本”单元格可点击，选中高亮并可填写个数 */
     .pick-mode td.cost { cursor: pointer; }
     td.cost.picked { background: #ffd76e; font-weight: bold; }
@@ -165,6 +178,12 @@
     body.dark tr.alt { background-color: #2c3038; }
     body.dark .pet-block-title { color: #aeb4bc; }
     body.dark .pet-note { color: #7c828a; }
+    body.dark .pet-cost-total { color: #aeb4bc; }
+    body.dark .pet-cost-total b { color: #f0a050; }
+    body.dark #petCostOverlay { background: rgba(0,0,0,0.6); }
+    body.dark #petCostDialog { background: #2b2f35; border-color: #3c424a; }
+    body.dark #petCostTitle { color: #aeb4bc; }
+    body.dark .pet-cost-note { color: #7c828a; }
     body.dark .history-header { color: #aeb4bc; }
     body.dark .history-table tr.row-current { background-color: #453a1e; }
     body.dark .history-table td.hist-time { color: #7c828a; }
@@ -314,8 +333,9 @@
                     <tr class="alt"><td class="lv">70级装备</td><td class="num">3</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="petSub(10)">-</button> <span id="petCnt10">0</span> <button class="pet-cnt-btn" onclick="petAdd(10)">+</button></td><td class="lv">指定变异召唤兽</td><td class="num">10</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="petSub(11)">-</button> <span id="petCnt11">0</span> <button class="pet-cnt-btn" onclick="petAdd(11)">+</button></td></tr>
                     <tr><td class="lv">上交非变异召唤兽</td><td class="num">-15</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="petSub(12)">-</button> <span id="petCnt12">0</span> <button class="pet-cnt-btn" onclick="petAdd(12)">+</button></td><td class="lv"></td><td class="num"></td><td class="pet-cnt"></td></tr>
                 </table>
-                <div style="margin-top: 8px;"><button class="btn" onclick="petCountReset()">清零计数</button></div>
+                <div style="margin-top: 8px;"><button class="btn" onclick="petCountReset()">清零计数</button><span class="pet-cost-total">累计成本：<b id="petTotalCost">0</b> 万梦幻币</span></div>
             </div>
+            <div class="pet-note">★点击 “+” 记录一次任务，可登记本次成本（万梦幻币，非必填，不填按 0 计入；取消则不计数）；点击 “-” 撤销最近一次记录，并同步从累计成本中扣回该次成本</div>
             <div class="pet-note">★上交烹饪、三药品质不满足要求，会扣除一定任务积分，修炼经验/修炼点不受影响<br>★烹饪三药扣分规则：（应交品质-实际品质）/2，积分向下取整<br>★实际积分：（应交品质-实际品质）/2+2，积分向下取整<br>例如需上交63品质的珍露酒，实际上交58品质的，相差5品，扣除2分加上本身应得2分（上交三级药/烹饪获得2分），实际不扣分（即-2分+2分）</div>
             <div class="pet-block-title">【召唤兽修炼任务积分奖励】</div>
             <div class="pet-note">奖励说明：高级书铁奖励与宠环总积分和人物等级相关。各个奖励所需宠环总积分如下：</div>
@@ -389,6 +409,13 @@
         <div class="table-wrap" id="resultArea" style="display:none"></div>
     </div>
 
+    <div id="petCostOverlay" onclick="petCostCancel()"></div>
+    <div id="petCostDialog">
+        <div id="petCostTitle"></div>
+        <div class="form-group"><label>本次成本（万梦幻币）</label><input type="number" step="any" min="0" id="petCostInput" placeholder="非必填，不填按 0 计入" onkeydown="onEnter(event,petCostOk)"></div>
+        <div class="pet-cost-note">非必填，不填按 0 计入；金额可带小数</div>
+        <div class="pet-cost-btns"><button class="btn" onclick="petCostOk()">确定</button><button class="btn" onclick="petCostCancel()">取消</button></div>
+    </div>
     <div id="sqOverlay" onclick="closeSq()"></div>
     <div id="sqDialog">
         <div class="sq-dialog-head">
@@ -685,7 +712,11 @@ function togglePetSection() {
     if (b.style.display === 'none') { b.style.display = ''; h.textContent = '▲'; }
     else { b.style.display = 'none'; h.textContent = '▼'; }
 }
-// 宠环跑环计数：+/- 按钮统计各项任务出现次数，状态存 DOM（不减到负数）
+// 宠环跑环计数：+ 时弹录入框登记本次成本（万梦幻币，非必填按0），- 撤销该任务最近一次记录（次数-1 并同步扣回其成本）
+// 每项任务的成本历史存 petCostHist[idx] 数组；petCostTotal 为累计成本（万）
+var petCostHist = [[], [], [], [], [], [], [], [], [], [], [], [], []];
+var petCostTotal = 0;
+var petCostIdx = -1;
 function petCountChange(idx, delta) {
     var el = document.getElementById('petCnt' + idx);
     if (!el) return;
@@ -693,13 +724,83 @@ function petCountChange(idx, delta) {
     if (isNaN(n) || n < 0) n = 0;
     el.textContent = n;
 }
-function petAdd(idx) { petCountChange(idx, 1); }
-function petSub(idx) { petCountChange(idx, -1); }
-function petCountReset() {
-    for (var i = 0; i <= 12; i++) {
-        var el = document.getElementById('petCnt' + i);
-        if (el) el.textContent = '0';
+function petAdd(idx) { openPetCost(idx); }
+// 任务名取自计数单元格所在行（次数列前两列为任务名）；异常时回退为序号
+function petTaskName(idx) {
+    var el = document.getElementById('petCnt' + idx);
+    if (!el) return '第' + (idx + 1) + '项';
+    var td = el.parentNode, row = td.parentNode, nameTd = row.cells[td.cellIndex - 2];
+    return nameTd && nameTd.textContent ? nameTd.textContent : '第' + (idx + 1) + '项';
+}
+// 打开成本录入弹窗：锁定背景滚动，输入框留空（留空按 0 计入）
+function openPetCost(idx) {
+    petCostIdx = idx;
+    document.getElementById('petCostTitle').textContent = '录入「' + petTaskName(idx) + '」本次成本';
+    var inp = document.getElementById('petCostInput');
+    inp.value = '';
+    document.getElementById('petCostOverlay').style.display = 'block';
+    document.getElementById('petCostDialog').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    inp.focus();
+}
+// 确定：留空按 0 计入；非法输入保持弹窗待修正；成功则次数+1 并累计成本
+function petCostOk() {
+    if (petCostIdx < 0) return;
+    var inp = document.getElementById('petCostInput');
+    var v = inp.value.replace(/\s/g, ''), c = 0;
+    if (v !== '') {
+        if (!isNum(v) || parseFloat(v) < 0) { alert('成本必须为非负数字（单位：万梦幻币），不填按 0 计入！'); inp.focus(); return; }
+        c = Math.round(parseFloat(v) * 100) / 100;
     }
+    petCostHist[petCostIdx].push(c);
+    petCostTotal += c;
+    petCountChange(petCostIdx, 1);
+    refreshPetCostTotal();
+    closePetCost();
+}
+function petCostCancel() { closePetCost(); }
+function closePetCost() {
+    document.getElementById('petCostDialog').style.display = 'none';
+    document.getElementById('petCostOverlay').style.display = 'none';
+    document.body.style.overflow = '';
+    petCostIdx = -1;
+}
+function refreshPetCostTotal() { document.getElementById('petTotalCost').textContent = fmtPetCost(petCostTotal); }
+// 成本显示最多保留2位小数，去掉末尾无意义的0
+function fmtPetCost(v) { return String(Math.round(v * 100) / 100); }
+// 撤销最近一次记录：次数-1；有成本记录时同步扣回（该次成本>0 先确认）
+function petSub(idx) { petUndoOne(idx); }
+function petUndoOne(idx) {
+    var el = document.getElementById('petCnt' + idx);
+    if (!el) return;
+    var n = parseInt(el.textContent, 10);
+    if (isNaN(n) || n <= 0) return;
+    var hist = petCostHist[idx];
+    if (hist.length) {
+        var c = hist[hist.length - 1];
+        if (c > 0 && !confirm('将撤销「' + petTaskName(idx) + '」最近一次记录：次数 -1，并从累计成本中扣回 ' + fmtPetCost(c) + ' 万梦幻币。是否继续？')) return;
+        hist.pop();
+        petCostTotal -= c;
+        if (petCostTotal < 0) petCostTotal = 0;
+        refreshPetCostTotal();
+    }
+    petCountChange(idx, -1);
+}
+// 清零计数与累计成本（有记录时先确认）
+function petCountReset() {
+    var hasData = petCostTotal > 0, i, el;
+    for (i = 0; i <= 12 && !hasData; i++) {
+        el = document.getElementById('petCnt' + i);
+        if (el && parseInt(el.textContent, 10) > 0) hasData = true;
+    }
+    if (hasData && !confirm('将清空全部次数与累计成本（当前 ' + fmtPetCost(petCostTotal) + ' 万梦幻币），是否继续？')) return;
+    for (i = 0; i <= 12; i++) {
+        el = document.getElementById('petCnt' + i);
+        if (el) el.textContent = '0';
+        petCostHist[i] = [];
+    }
+    petCostTotal = 0;
+    refreshPetCostTotal();
 }
 function sqLoaded() {
     if (sqCurrent >= 0) document.getElementById('sqDialogTitle').textContent = SQ_TASKS[sqCurrent][0];

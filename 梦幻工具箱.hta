@@ -119,6 +119,26 @@
     .pet-score-table td { text-align: center; }
     .pet-cnt { text-align: center; white-space: nowrap; }
     .input-bar .pet-cnt-btn { width: 22px; height: 22px; padding: 0; font-size: 13px; font-weight: bold; line-height: 1; }
+    .pet-cost-total { margin-left: 12px; font-size: 13px; color: #3d444d; }
+    .pet-cost-total b { color: #c0392b; }
+    /* 宠环成本录入弹窗：点击 + 时弹出，登记本次成本（万梦幻币，非必填），样式沿用攻略弹窗 */
+    #petCostOverlay { position: absolute; left: 0; top: 0; z-index: 960; display: none; background-color: #000000; filter: progid:DXImageTransform.Microsoft.Alpha(opacity=40); }
+    #petCostDialog {
+        position: absolute; z-index: 961; display: none; width: 340px; padding: 12px 14px;
+        background-color: #e8eaee;
+        border: 2px solid; border-color: #f8fafc #a2a8b2 #a2a8b2 #f8fafc;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#F2FFFFFF', endColorstr='#D8D8DCE4');
+    }
+    #petCostTitle { font-weight: bold; font-size: 13px; color: #3d444d; margin-bottom: 8px; }
+    #petCostDialog label { font-weight: bold; color: #3d444d; vertical-align: middle; }
+    #petCostDialog input {
+        width: 120px; height: 28px; padding: 0 8px; font-size: 14px; vertical-align: middle;
+        background-color: #eef0f3; color: #2f353c;
+        border: 2px solid; border-color: #9aa2ac #ffffff #ffffff #9aa2ac;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#E8FFFFFF', endColorstr='#D8E4E8EE');
+    }
+    .pet-cost-note { margin-top: 6px; font-size: 12px; color: #70787f; }
+    .pet-cost-btns { margin-top: 10px; text-align: right; }
     .history-header { margin-top: 14px; font-weight: bold; font-size: 14px; color: #3d444d; padding-bottom: 6px; }
     .history-table td.hist-time { text-align: center; white-space: nowrap; font-size: 12px; color: #70787f; }
     .history-table td.hist-info { text-align: left; font-size: 13px; }
@@ -201,6 +221,22 @@
     body.dark tr.alt { background-color: #2c3038; }
     body.dark .pet-block-title { color: #aeb4bc; }
     body.dark .pet-note { color: #7c828a; }
+    body.dark .pet-cost-total { color: #aeb4bc; }
+    body.dark .pet-cost-total b { color: #f0a050; }
+    body.dark #petCostOverlay { filter: progid:DXImageTransform.Microsoft.Alpha(opacity=55); }
+    body.dark #petCostDialog {
+        background-color: #2b2f35;
+        border-color: #4a5058 #0e1013 #0e1013 #4a5058;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#C8333740', endColorstr='#B0252930');
+    }
+    body.dark #petCostTitle { color: #aeb4bc; }
+    body.dark #petCostDialog label { color: #aeb4bc; }
+    body.dark #petCostDialog input {
+        background-color: #292d33; color: #d2d6da;
+        border-color: #0e1013 #4a5058 #4a5058 #0e1013;
+        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#C8292D33', endColorstr='#B022252B');
+    }
+    body.dark .pet-cost-note { color: #7c828a; }
     body.dark .history-header { color: #aeb4bc; }
     body.dark .history-table td.hist-time { color: #7c828a; }
     body.dark .history-table td.hist-info { color: #a6adb4; }
@@ -1165,12 +1201,16 @@
             objHint.innerText = "▼ 展开"
         End If
     End Sub
-    ' 宠环跑环计数：+/- 按钮统计各项任务出现次数，状态存 DOM（初始 0，不减到负数）
+    ' 宠环跑环计数：+ 时弹录入框登记本次成本（万梦幻币，非必填按 0），- 撤销该任务最近一次记录（次数-1 并同步扣回其成本）
+    ' 每项任务的成本历史存 petCostHist(idx)（逗号分隔、按录入先后顺序）；petCostTotal 为累计成本（万）
+    Dim petCostHist(12), petCostTotal, petCostIdx, petCostSavedScrollTop
+    petCostTotal = 0
+    petCostIdx = -1
     Sub PetAdd(idx)
-        PetChange idx, 1
+        OpenPetCostDlg idx
     End Sub
     Sub PetSub(idx)
-        PetChange idx, -1
+        PetUndoOne idx
     End Sub
     Sub PetChange(idx, delta)
         Dim objCnt, lngN
@@ -1180,12 +1220,163 @@
         If lngN < 0 Then lngN = 0
         objCnt.innerText = CStr(lngN)
     End Sub
+    ' 撤销最近一次记录：次数-1；该任务有成本记录时同步扣回（成本>0 先弹确认框告知金额）
+    Sub PetUndoOne(idx)
+        Dim objCnt, lngN, dblCost
+        idx = CLng(idx)
+        Set objCnt = document.getElementById("petCnt" & idx)
+        If objCnt Is Nothing Then Exit Sub
+        lngN = CLng(objCnt.innerText)
+        If lngN <= 0 Then Exit Sub
+        If petCostHist(idx) <> "" Then
+            dblCost = PetCostPeek(idx)
+            If dblCost > 0 Then
+                If MsgBox("将撤销「" & PetTaskName(idx) & "」最近一次记录：次数 -1，并从累计成本中扣回 " & PetFmtCost(dblCost) & " 万梦幻币。是否继续？", vbYesNo + vbQuestion, "撤销确认") <> vbYes Then Exit Sub
+            End If
+            petCostTotal = petCostTotal - PetCostPop(idx)
+            If petCostTotal < 0 Then petCostTotal = 0
+            RefreshPetCostTotal
+        End If
+        PetChange idx, -1
+    End Sub
+    ' 读取该任务最近一次录入的成本（不出栈）
+    Function PetCostPeek(idx)
+        Dim strS, lngP
+        PetCostPeek = 0
+        strS = petCostHist(idx)
+        If strS = "" Then Exit Function
+        lngP = InStrRev(strS, ",")
+        If lngP = 0 Then
+            PetCostPeek = CDbl(strS)
+        Else
+            PetCostPeek = CDbl(Mid(strS, lngP + 1))
+        End If
+    End Function
+    ' 弹出并返回该任务最近一次录入的成本（从历史中移除）
+    Function PetCostPop(idx)
+        Dim strS, lngP
+        PetCostPop = 0
+        strS = petCostHist(idx)
+        If strS = "" Then Exit Function
+        lngP = InStrRev(strS, ",")
+        If lngP = 0 Then
+            PetCostPop = CDbl(strS)
+            petCostHist(idx) = ""
+        Else
+            PetCostPop = CDbl(Mid(strS, lngP + 1))
+            petCostHist(idx) = Left(strS, lngP - 1)
+        End If
+    End Function
+    ' 成本格式化：最多保留2位小数，去掉末尾无意义的 0 与小数点
+    Function PetFmtCost(v)
+        Dim strS
+        strS = FormatNumber(v, 2)
+        If InStr(strS, ".") > 0 Then
+            Do While Right(strS, 1) = "0"
+                strS = Left(strS, Len(strS) - 1)
+            Loop
+            If Right(strS, 1) = "." Then strS = Left(strS, Len(strS) - 1)
+        End If
+        PetFmtCost = strS
+    End Function
+    ' 取计数单元格所在行的任务名（次数列前两列为任务名）；异常时回退为序号
+    Function PetTaskName(idx)
+        Dim objCell, strName
+        strName = ""
+        On Error Resume Next
+        Set objCell = document.getElementById("petCnt" & idx).parentNode
+        strName = objCell.parentNode.cells(objCell.cellIndex - 2).innerText
+        On Error GoTo 0
+        If strName = "" Then strName = "第" & (idx + 1) & "项"
+        PetTaskName = strName
+    End Function
+    ' 打开成本录入弹窗：锁定背景滚动，弹窗定位到视口中央，输入框留空（留空按 0 计入）
+    Sub OpenPetCostDlg(idx)
+        Dim objDlg, objInp, vw, vh
+        petCostIdx = CLng(idx)
+        document.getElementById("petCostTitle").innerText = "录入「" & PetTaskName(petCostIdx) & "」本次成本"
+        Set objInp = document.getElementById("petCostInput")
+        objInp.value = ""
+        petCostSavedScrollTop = document.body.scrollTop
+        document.body.style.overflow = "hidden"
+        document.body.scrollTop = petCostSavedScrollTop
+        Set objDlg = document.getElementById("petCostDialog")
+        objDlg.style.display = "block"
+        document.getElementById("petCostOverlay").style.display = "block"
+        document.getElementById("petCostOverlay").style.pixelWidth = document.body.scrollWidth
+        document.getElementById("petCostOverlay").style.pixelHeight = document.body.scrollHeight
+        vw = document.body.clientWidth
+        vh = document.body.clientHeight
+        objDlg.style.pixelLeft = Int((vw - objDlg.offsetWidth) / 2) + document.body.scrollLeft
+        objDlg.style.pixelTop = Int((vh - objDlg.offsetHeight) / 2) + document.body.scrollTop
+        objInp.focus
+    End Sub
+    Sub PetCostKeyDown
+        If window.event.keyCode = 13 Then PetCostOk
+    End Sub
+    ' 确定：留空按 0 计入；非法输入保持弹窗待修正；成功则次数+1 并累计成本
+    Sub PetCostOk
+        Dim strVal, dblCost
+        If petCostIdx < 0 Then Exit Sub
+        strVal = Trim(document.getElementById("petCostInput").value)
+        dblCost = 0
+        If strVal <> "" Then
+            If Not IsNumeric(strVal) Then
+                MsgBox "成本必须为数字（单位：万梦幻币），不填按 0 计入！", vbExclamation, "输入错误"
+                document.getElementById("petCostInput").focus
+                Exit Sub
+            End If
+            dblCost = CDbl(strVal)
+            If dblCost < 0 Then
+                MsgBox "成本不能为负数（单位：万梦幻币），不填按 0 计入！", vbExclamation, "输入错误"
+                document.getElementById("petCostInput").focus
+                Exit Sub
+            End If
+            dblCost = Int(dblCost * 100 + 0.5) / 100
+        End If
+        If petCostHist(petCostIdx) = "" Then
+            petCostHist(petCostIdx) = CStr(dblCost)
+        Else
+            petCostHist(petCostIdx) = petCostHist(petCostIdx) & "," & CStr(dblCost)
+        End If
+        petCostTotal = petCostTotal + dblCost
+        RefreshPetCostTotal
+        PetChange petCostIdx, 1
+        ClosePetCostDlg
+    End Sub
+    Sub PetCostCancel
+        ClosePetCostDlg
+    End Sub
+    Sub ClosePetCostDlg
+        document.getElementById("petCostDialog").style.display = "none"
+        document.getElementById("petCostOverlay").style.display = "none"
+        document.body.style.overflow = ""
+        document.body.scrollTop = petCostSavedScrollTop
+        petCostIdx = -1
+    End Sub
+    Sub RefreshPetCostTotal
+        document.getElementById("petTotalCost").innerText = PetFmtCost(petCostTotal)
+    End Sub
+    ' 清零计数与累计成本（有记录时先确认）
     Sub PetCountReset
-        Dim i, objCnt
+        Dim i, objCnt, blnHasData
+        blnHasData = False
+        For i = 0 To 12
+            Set objCnt = document.getElementById("petCnt" & i)
+            If Not objCnt Is Nothing Then
+                If CLng(objCnt.innerText) > 0 Then blnHasData = True
+            End If
+        Next
+        If blnHasData Or petCostTotal > 0 Then
+            If MsgBox("将清空全部次数与累计成本（当前 " & PetFmtCost(petCostTotal) & " 万梦幻币），是否继续？", vbYesNo + vbQuestion, "清零确认") <> vbYes Then Exit Sub
+        End If
         For i = 0 To 12
             Set objCnt = document.getElementById("petCnt" & i)
             If Not objCnt Is Nothing Then objCnt.innerText = "0"
+            petCostHist(i) = ""
         Next
+        petCostTotal = 0
+        RefreshPetCostTotal
     End Sub
     Sub ShowShenqi(idx)
         sqCurrentIdx = CInt(idx)
@@ -1764,7 +1955,8 @@
                 <tr class="alt"><td class="lv">70级装备</td><td class="num">3</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="PetSub 10">-</button> <span id="petCnt10">0</span> <button class="pet-cnt-btn" onclick="PetAdd 10">+</button></td><td class="lv">指定变异召唤兽</td><td class="num">10</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="PetSub 11">-</button> <span id="petCnt11">0</span> <button class="pet-cnt-btn" onclick="PetAdd 11">+</button></td></tr>
                 <tr><td class="lv">上交非变异召唤兽</td><td class="num">-15</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="PetSub 12">-</button> <span id="petCnt12">0</span> <button class="pet-cnt-btn" onclick="PetAdd 12">+</button></td><td class="lv"></td><td class="num"></td><td class="pet-cnt"></td></tr>
             </table>
-            <div style="margin-top: 8px;"><button onclick="PetCountReset">清零计数</button></div>
+            <div style="margin-top: 8px;"><button onclick="PetCountReset">清零计数</button><span class="pet-cost-total">累计成本：<b id="petTotalCost">0</b> 万梦幻币</span></div>
+            <div class="pet-note">★点击 “+” 记录一次任务，可登记本次成本（万梦幻币，非必填，不填按 0 计入；取消则不计数）；点击 “-” 撤销最近一次记录，并同步从累计成本中扣回该次成本</div>
             <div class="pet-note">★上交烹饪、三药品质不满足要求，会扣除一定任务积分，修炼经验/修炼点不受影响<br>★烹饪三药扣分规则：（应交品质-实际品质）/2，积分向下取整<br>★实际积分：（应交品质-实际品质）/2+2，积分向下取整<br>例如需上交63品质的珍露酒，实际上交58品质的，相差5品，扣除2分加上本身应得2分（上交三级药/烹饪获得2分），实际不扣分（即-2分+2分）</div>
             <div class="pet-block-title">【召唤兽修炼任务积分奖励】</div>
             <div class="pet-note">奖励说明：高级书铁奖励与宠环总积分和人物等级相关。各个奖励所需宠环总积分如下：</div>
@@ -1821,6 +2013,13 @@
         <div style="cursor: pointer;" onclick="ToggleGemResult"><label style="width: auto; text-align: left;">💎 成本计算结果：</label><span class="sq-toggle" id="gemResultToggleHint">▼ 展开</span></div>
     </div>
     <div id="resultArea" style="display: none;"></div>
+    <div id="petCostOverlay" onclick="PetCostCancel"></div>
+    <div id="petCostDialog">
+        <div id="petCostTitle"></div>
+        <div><label>本次成本（万梦幻币）：</label><input type="text" id="petCostInput" onkeydown="PetCostKeyDown"></div>
+        <div class="pet-cost-note">非必填，不填按 0 计入；金额可带小数</div>
+        <div class="pet-cost-btns"><button class="sq-dialog-btn" onclick="PetCostOk">确定</button><button class="sq-dialog-btn" onclick="PetCostCancel">取消</button></div>
+    </div>
     <div id="sqOverlay" onclick="CloseSq"></div>
     <div id="sqDialog">
         <div class="sq-dialog-head" onmousedown="StartSqMove" title="按住可拖动弹窗">
