@@ -82,6 +82,7 @@
     body.dark .pet-cnt-btn { background: #292d33; border-color: #3c424a; color: #d2d6da; }
     .pet-cost-total { margin-left: 10px; font-size: 13px; color: #555; }
     .pet-cost-total b { color: #c0392b; }
+    .pet-empty { text-align: center; color: #888; }
     /* 宠环成本录入弹窗：点击 + 时弹出，登记本次成本（万梦幻币，非必填） */
     #petCostOverlay { position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.45); z-index: 1000; display: none; }
     #petCostDialog {
@@ -180,6 +181,7 @@
     body.dark .pet-note { color: #7c828a; }
     body.dark .pet-cost-total { color: #aeb4bc; }
     body.dark .pet-cost-total b { color: #f0a050; }
+    body.dark .pet-empty { color: #7c828a; }
     body.dark #petCostOverlay { background: rgba(0,0,0,0.6); }
     body.dark #petCostDialog { background: #2b2f35; border-color: #3c424a; }
     body.dark #petCostTitle { color: #aeb4bc; }
@@ -322,6 +324,7 @@
         <div class="card-title sq-card-toggle" onclick="togglePetSection()">🐾 宠环任务（召唤兽修炼任务）<span class="sq-toggle" id="petToggleHint">▼</span></div>
         <div id="petSection" style="display:none">
             <div class="pet-block-title">【召唤兽修炼任务积分规则】</div>
+            <div class="form-group" style="margin-top: 6px;"><label>是否计算成本</label><select id="selPetCostMode"><option value="1" selected>是</option><option value="0">否</option></select><span class="tip">“是”：点 + 时填成本；“否”：只记次数</span></div>
             <div class="table-wrap">
                 <table>
                     <tr><th width="25%">任务内容</th><th width="10%">任务积分</th><th width="15%">次数</th><th width="25%">任务内容</th><th width="10%">任务积分</th><th width="15%">次数</th></tr>
@@ -335,6 +338,8 @@
                 </table>
                 <div style="margin-top: 8px;"><button class="btn" onclick="petCountReset()">清零计数</button><span class="pet-cost-total">累计成本：<b id="petTotalCost">0</b> 万梦幻币</span></div>
             </div>
+            <div class="gem-result-toggle" onclick="togglePetDetail()"><span>📋 累计成本明细</span><span class="sq-toggle" id="petDetailToggleHint">▼</span></div>
+            <div id="petDetailSection" style="display:none"></div>
             <div class="pet-note">★点击 “+” 记录一次任务，可登记本次成本（万梦幻币，非必填，不填按 0 计入；取消则不计数）；点击 “-” 撤销最近一次记录，并同步从累计成本中扣回该次成本</div>
             <div class="pet-note">★上交烹饪、三药品质不满足要求，会扣除一定任务积分，修炼经验/修炼点不受影响<br>★烹饪三药扣分规则：（应交品质-实际品质）/2，积分向下取整<br>★实际积分：（应交品质-实际品质）/2+2，积分向下取整<br>例如需上交63品质的珍露酒，实际上交58品质的，相差5品，扣除2分加上本身应得2分（上交三级药/烹饪获得2分），实际不扣分（即-2分+2分）</div>
             <div class="pet-block-title">【召唤兽修炼任务积分奖励】</div>
@@ -713,8 +718,9 @@ function togglePetSection() {
     else { b.style.display = 'none'; h.textContent = '▼'; }
 }
 // 宠环跑环计数：+ 时弹录入框登记本次成本（万梦幻币，非必填按0），- 撤销该任务最近一次记录（次数-1 并同步扣回其成本）
-// 每项任务的成本历史存 petCostHist[idx] 数组；petCostTotal 为累计成本（万）
+// 每项任务的成本历史存 petCostHist[idx] 数组；petCostTotal 为累计成本（万）；petDetailList 为全局录入顺序明细（{t:任务序号, c:成本}）
 var petCostHist = [[], [], [], [], [], [], [], [], [], [], [], [], []];
+var petDetailList = [];
 var petCostTotal = 0;
 var petCostIdx = -1;
 function petCountChange(idx, delta) {
@@ -724,7 +730,12 @@ function petCountChange(idx, delta) {
     if (isNaN(n) || n < 0) n = 0;
     el.textContent = n;
 }
-function petAdd(idx) { openPetCost(idx); }
+// 计数 +1：开启成本统计时弹录入框登记成本；“否”模式直接按 0 成本记账（仅计次数，不弹框）
+function petAdd(idx) {
+    var sel = document.getElementById('selPetCostMode');
+    if (sel && sel.value === '0') { petRecordCost(idx, 0); return; }
+    openPetCost(idx);
+}
 // 任务名取自计数单元格所在行（次数列前两列为任务名）；异常时回退为序号
 function petTaskName(idx) {
     var el = document.getElementById('petCnt' + idx);
@@ -752,11 +763,17 @@ function petCostOk() {
         if (!isNum(v) || parseFloat(v) < 0) { alert('成本必须为非负数字（单位：万梦幻币），不填按 0 计入！'); inp.focus(); return; }
         c = Math.round(parseFloat(v) * 100) / 100;
     }
-    petCostHist[petCostIdx].push(c);
-    petCostTotal += c;
-    petCountChange(petCostIdx, 1);
-    refreshPetCostTotal();
+    petRecordCost(petCostIdx, c);
     closePetCost();
+}
+// 登记一笔成本（可为 0）并计数 +1：成本入栈、明细追加、累计与表格同步刷新
+function petRecordCost(idx, c) {
+    petCostHist[idx].push(c);
+    petDetailList.push({ t: idx, c: c });
+    petCostTotal += c;
+    petCountChange(idx, 1);
+    refreshPetCostTotal();
+    refreshPetDetail();
 }
 function petCostCancel() { closePetCost(); }
 function closePetCost() {
@@ -768,6 +785,45 @@ function closePetCost() {
 function refreshPetCostTotal() { document.getElementById('petTotalCost').textContent = fmtPetCost(petCostTotal); }
 // 成本显示最多保留2位小数，去掉末尾无意义的0
 function fmtPetCost(v) { return String(Math.round(v * 100) / 100); }
+// 展示/收起累计成本明细（展开时先刷新内容）
+function togglePetDetail() {
+    var b = document.getElementById('petDetailSection'), h = document.getElementById('petDetailToggleHint');
+    if (b.style.display === 'none') { refreshPetDetail(); b.style.display = ''; h.textContent = '▲'; }
+    else { b.style.display = 'none'; h.textContent = '▼'; }
+}
+// 某任务成本合计（万）
+function petTaskSum(idx) {
+    var hist = petCostHist[idx], s = 0;
+    for (var i = 0; i < hist.length; i++) s += hist[i];
+    return s;
+}
+// 重绘成本汇总与明细表（汇总只列有记录的任务；明细最新在上，序号为录入顺序）
+function refreshPetDetail() {
+    var wrap = document.getElementById('petDetailSection');
+    if (!wrap) return;
+    var i, j, it, h, cnt, sum, cls, rows = 0, allCnt = 0, allSum = 0;
+    h = '<div class="pet-block-title">【成本汇总】</div><div class="table-wrap"><table><tr><th width="55%">任务内容</th><th width="20%">次数</th><th width="25%">合计成本（万）</th></tr>';
+    for (i = 0; i <= 12; i++) {
+        if (!petCostHist[i].length) continue;
+        rows++;
+        cnt = parseInt(document.getElementById('petCnt' + i).textContent, 10) || 0;
+        sum = petTaskSum(i);
+        allCnt += cnt; allSum += sum;
+        cls = (rows % 2 === 0) ? ' class="alt"' : '';
+        h += '<tr' + cls + '><td class="lv">' + petTaskName(i) + '</td><td class="num">' + cnt + '</td><td class="num">' + fmtPetCost(sum) + '</td></tr>';
+    }
+    if (!rows) h += '<tr><td class="pet-empty" colspan="3">暂无成本记录</td></tr>';
+    else h += '<tr><td class="lv">总计</td><td class="num"><b>' + allCnt + '</b></td><td class="num"><b>' + fmtPetCost(allSum) + '</b></td></tr>';
+    h += '</table></div><div class="pet-block-title">【成本明细（最新在上）】</div><div class="table-wrap"><table><tr><th width="15%">序号</th><th width="55%">任务内容</th><th width="30%">成本（万）</th></tr>';
+    if (!petDetailList.length) h += '<tr><td class="pet-empty" colspan="3">暂无成本记录</td></tr>';
+    for (j = petDetailList.length - 1; j >= 0; j--) {
+        it = petDetailList[j];
+        cls = ((petDetailList.length - j) % 2 === 0) ? ' class="alt"' : '';
+        h += '<tr' + cls + '><td class="num">' + (j + 1) + '</td><td class="lv">' + petTaskName(it.t) + '</td><td class="num">' + fmtPetCost(it.c) + '</td></tr>';
+    }
+    h += '</table></div>';
+    wrap.innerHTML = h;
+}
 // 撤销最近一次记录：次数-1；有成本记录时同步扣回（该次成本>0 先确认）
 function petSub(idx) { petUndoOne(idx); }
 function petUndoOne(idx) {
@@ -782,9 +838,13 @@ function petUndoOne(idx) {
         hist.pop();
         petCostTotal -= c;
         if (petCostTotal < 0) petCostTotal = 0;
+        for (var k = petDetailList.length - 1; k >= 0; k--) {
+            if (petDetailList[k].t === idx) { petDetailList.splice(k, 1); break; }
+        }
         refreshPetCostTotal();
     }
     petCountChange(idx, -1);
+    refreshPetDetail();
 }
 // 清零计数与累计成本（有记录时先确认）
 function petCountReset() {
@@ -799,8 +859,10 @@ function petCountReset() {
         if (el) el.textContent = '0';
         petCostHist[i] = [];
     }
+    petDetailList = [];
     petCostTotal = 0;
     refreshPetCostTotal();
+    refreshPetDetail();
 }
 function sqLoaded() {
     if (sqCurrent >= 0) document.getElementById('sqDialogTitle').textContent = SQ_TASKS[sqCurrent][0];
