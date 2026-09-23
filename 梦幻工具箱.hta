@@ -221,6 +221,13 @@
         border: 2px solid; border-color: #7b43f5 #16181c #16181c #7b43f5;
     }
     body.dark .input-bar .btn-hist-io { background-color: #5ba8f5; }
+    .pet-hist-delete, .input-bar .pet-hist-delete {
+        height: 26px; padding: 0 10px; margin-left: 6px; cursor: pointer;
+        font-size: 12px; font-weight: bold; color: #ffffff; vertical-align: middle;
+        background-color: #b83a36; filter: none;
+        border: 2px solid; border-color: #dc726d #762421 #762421 #dc726d;
+    }
+    body.dark .pet-hist-delete, body.dark .input-bar .pet-hist-delete { background-color: #b83a36; color: #ffffff; filter: none; }
     body.dark { background-color: #22262b; color: #c6cad0; }
     body.dark .input-bar {
         background-color: #2b2f35;
@@ -1368,6 +1375,8 @@
     ' petHistData 文件加载的 日期→记录行（vbLf 连接）；petHistDateList 日期索引（日历点击传参用）；petHistYear/Month 当前显示月（-1 未初始化，展开时设为当月）；petIoSavedScrollTop 导入/导出弹窗打开前的滚动位置
     Dim petDirty, petExiting, petHistYear, petHistMonth, petHistSavedScrollTop, petIoSavedScrollTop
     Dim petHistDateList(), petHistData
+    Dim petHistSelectedDate
+    petHistSelectedDate = ""
     Set petHistData = CreateObject("Scripting.Dictionary")
     petDirty = False
     petExiting = False
@@ -1784,7 +1793,8 @@
         Set fso = CreateObject("Scripting.FileSystemObject")
         If fso.FileExists(PetHistFile) Then
             Set f = fso.OpenTextFile(PetHistFile, 1)
-            strAll = f.ReadAll
+            ' 清空或删除最后一天后文件为零字节，直接 ReadAll 会触发错误 62（输入超出了文件尾）。
+            If Not f.AtEndOfStream Then strAll = f.ReadAll
             f.Close
         End If
         If strAll = "" Then
@@ -2064,6 +2074,7 @@
     ' 打开历史弹窗：遮罩 + 视口居中 + 锁背景滚动（内容超高时顶部对齐）
     Sub OpenPetHistDlg(strDate, strHtml)
         Dim objDlg, vw, vh
+        petHistSelectedDate = strDate
         petHistSavedScrollTop = document.body.scrollTop
         document.body.style.overflow = "hidden"
         document.body.scrollTop = petHistSavedScrollTop
@@ -2084,10 +2095,110 @@
         objDlg.style.pixelLeft = Int((vw - objDlg.offsetWidth) / 2) + document.body.scrollLeft
     End Sub
     Sub ClosePetHist
+        petHistSelectedDate = ""
         document.getElementById("petHistDialog").style.display = "none"
         document.getElementById("petHistOverlay").style.display = "none"
         document.body.style.overflow = ""
         document.body.scrollTop = petHistSavedScrollTop
+    End Sub
+    ' 删除仅处理已保存快照，不改当前计数、成本和 petDirty；空日期仅由全部清空入口传入。
+    Sub PetDeleteHistDay
+        If petHistSelectedDate <> "" Then PetRemoveHistory petHistSelectedDate
+    End Sub
+    Sub PetClearHistory
+        window.event.cancelBubble = True
+        PetRemoveHistory ""
+    End Sub
+    Sub PetRemoveHistory(ByVal strDate)
+        Dim arrOld, arrCheck, n, d, dicDates, lngRows, strOut, strScope, strToken, strAnswer, strNote, fso, f
+        On Error Resume Next
+        Err.Clear
+        arrOld = PetReadHistLines
+        If Err.Number <> 0 Then
+            Err.Clear
+            On Error GoTo 0
+            MsgBox "读取历史记录失败，未执行删除，请检查文件访问权限。", vbExclamation, "删除历史记录"
+            Exit Sub
+        End If
+        On Error GoTo 0
+        Set dicDates = CreateObject("Scripting.Dictionary")
+        lngRows = 0
+        strOut = ""
+        For n = 0 To UBound(arrOld)
+            If arrOld(n) <> "" Then
+                d = Split(arrOld(n), "|")(0)
+                If Not dicDates.Exists(d) Then dicDates.Add d, True
+                If strDate = "" Or d = strDate Then
+                    lngRows = lngRows + 1
+                Else
+                    strOut = strOut & arrOld(n) & vbCrLf
+                End If
+            End If
+        Next
+        If lngRows = 0 Then
+            If strDate = "" Then
+                MsgBox "暂无可清空的历史记录。", vbInformation, "清空历史记录"
+            Else
+                MsgBox strDate & " 已无历史记录。", vbInformation, "删除该日记录"
+            End If
+            If petHistSelectedDate <> "" Then ClosePetHist
+            RefreshPetHist
+            Exit Sub
+        End If
+        strNote = ""
+        If strDate = "" Then
+            strScope = "全部 " & dicDates.Count & " 个日期、全部号的历史记录"
+            strToken = "清空全部历史记录"
+        Else
+            strScope = strDate & " 的全部号历史记录"
+            strToken = strDate
+            strNote = vbCrLf & "其他日期记录保留。"
+        End If
+        If MsgBox("即将永久删除" & strScope & "。" & strNote & vbCrLf & vbCrLf & "此操作不可撤销，建议先取消并导出备份。" & vbCrLf & "当前计数和成本不受影响；再次保存当天记录会重新生成当天历史。" & vbCrLf & vbCrLf & "是否继续？", vbYesNo + vbExclamation + vbDefaultButton2, "删除历史记录 · 确认范围") <> vbYes Then Exit Sub
+        If strDate = "" Then
+            If MsgBox("再次确认：将清空所有日期的宠环历史记录，不只是当前月份或当前号！" & vbCrLf & "没有导出备份的记录将无法恢复。" & vbCrLf & vbCrLf & "确定继续清空吗？", vbYesNo + vbExclamation + vbDefaultButton2, "清空全部历史记录 · 二次确认") <> vbYes Then Exit Sub
+        End If
+        strAnswer = InputBox("最后确认：请输入“" & strToken & "”以删除" & strScope & "。" & vbCrLf & "输入不一致或取消均不会删除。", "删除历史记录 · 输入确认", "")
+        If strAnswer = "" Then Exit Sub
+        If strAnswer <> strToken Then
+            MsgBox "输入不一致，已取消删除，历史记录未改动。", vbInformation, "已取消删除"
+            Exit Sub
+        End If
+        ' 确认期间若其他窗口保存或导入了记录，拒绝用旧快照覆盖。
+        On Error Resume Next
+        Err.Clear
+        arrCheck = PetReadHistLines
+        If Err.Number <> 0 Then
+            Err.Clear
+            On Error GoTo 0
+            MsgBox "重新读取历史记录失败，未执行删除。", vbExclamation, "删除失败"
+            Exit Sub
+        End If
+        On Error GoTo 0
+        If Join(arrCheck, vbCrLf) <> Join(arrOld, vbCrLf) Then
+            MsgBox "确认期间历史记录发生变化，已取消删除，请重新查看后操作。", vbExclamation, "已取消删除"
+            Exit Sub
+        End If
+        On Error Resume Next
+        Err.Clear
+        Set fso = CreateObject("Scripting.FileSystemObject")
+        Set f = fso.CreateTextFile(PetHistFile, True)
+        f.Write strOut
+        f.Close
+        If Err.Number <> 0 Then
+            Err.Clear
+            On Error GoTo 0
+            MsgBox "删除失败：无法写入历史记录文件，请检查文件访问权限或磁盘空间。", vbExclamation, "删除失败"
+            Exit Sub
+        End If
+        On Error GoTo 0
+        If petHistSelectedDate <> "" Then ClosePetHist
+        RefreshPetHist
+        If strDate = "" Then
+            MsgBox "已清空全部宠环历史记录。", vbInformation, "清空完成"
+        Else
+            MsgBox "已删除 " & strDate & " 的全部号历史记录，其他日期保留。", vbInformation, "删除完成"
+        End If
     End Sub
     ' ===================== 历史记录跨端导入/导出（交换格式即文件行格式，与移动版通用） =====================
     ' 导出：全部已保存历史行填入文本框，全选待复制（到移动版“导入”粘贴）
@@ -2861,7 +2972,7 @@
             <div style="margin-top: 8px;"><button onclick="PetCountReset">清零计数</button><button onclick="PetSaveHistory">保存当天记录</button><span class="pet-cost-total">累计成本：<b id="petTotalCost">0</b> 万梦幻币</span><span class="pet-cost-total">全部号合计：<b id="petAllCost">0</b> 万梦幻币</span></div>
             <div style="cursor: pointer; margin-top: 8px;" onclick="TogglePetDetail"><label style="width: auto; text-align: left;">📋 累计成本明细：</label><span class="sq-toggle" id="petDetailToggleHint">▼ 展开</span></div>
             <div id="petDetailSection" style="display: none;"></div>
-            <div style="cursor: pointer; margin-top: 8px;" onclick="TogglePetHist"><label style="width: auto; text-align: left;">📅 历史记录查询：</label><span class="sq-toggle" id="petHistToggleHint">▼ 展开</span><button class="btn-hist-io" onclick="PetHistExport">导出</button><button class="btn-hist-io" onclick="PetHistImport">导入</button><span class="tip">按日历查看每天保存的成本记录，导入/导出与移动版通用</span></div>
+            <div style="cursor: pointer; margin-top: 8px;" onclick="TogglePetHist"><label style="width: auto; text-align: left;">📅 历史记录查询：</label><span class="sq-toggle" id="petHistToggleHint">▼ 展开</span><button class="btn-hist-io" onclick="PetHistExport">导出</button><button class="btn-hist-io" onclick="PetHistImport">导入</button><button class="pet-hist-delete" onclick="PetClearHistory">清空历史记录</button><span class="tip">按日历查看每天保存的成本记录，导入/导出与移动版通用</span></div>
             <div id="petHistSection" style="display: none;"></div>
             <div class="pet-note">★点击 “+” 记录一次任务，可登记本次成本（万梦幻币，非必填，不填按 0 计入；取消则不计数）；点击 “-” 撤销最近一次记录，并同步从累计成本中扣回该次成本<br>★切换“当前号”页签可分别为 1~5 号计数，各号次数、成本互相独立；“清零计数”只清当前号，其他号不受影响</div>
             <div class="pet-note">★上交烹饪、三药品质不满足要求，会扣除一定任务积分，修炼经验/修炼点不受影响<br>★烹饪三药扣分规则：（应交品质-实际品质）/2，积分向下取整<br>★实际积分：（应交品质-实际品质）/2+2，积分向下取整<br>例如需上交63品质的珍露酒，实际上交58品质的，相差5品，扣除2分加上本身应得2分（上交三级药/烹饪获得2分），实际不扣分（即-2分+2分）</div>
@@ -2935,7 +3046,7 @@
     <div id="petHistDialog">
         <div id="petHistTitle"></div>
         <div id="petHistBody"></div>
-        <div class="pet-cost-btns"><button class="sq-dialog-btn" onclick="ClosePetHist">✕ 关闭</button></div>
+        <div class="pet-cost-btns"><button class="pet-hist-delete" onclick="PetDeleteHistDay">删除该日记录</button><button class="sq-dialog-btn" onclick="ClosePetHist">✕ 关闭</button></div>
     </div>
     <div id="petIoOverlay" onclick="PetIoClose"></div>
     <div id="petIoDialog">

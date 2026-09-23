@@ -108,6 +108,10 @@
     }
     #petHistTitle { font-weight: bold; font-size: 15px; color: #333; margin-bottom: 8px; }
     #petHistBody { max-height: 50vh; overflow-y: auto; }
+    .pet-hist-header { flex-wrap: wrap; gap: 8px; }
+    .pet-hist-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+    .btn.pet-hist-danger, .btn-clear-hist.pet-hist-danger, body.dark .btn.pet-hist-danger, body.dark .btn-clear-hist.pet-hist-danger { background: #b83a36; color: #fff; }
+    .btn.pet-hist-danger:active, .btn-clear-hist.pet-hist-danger:active { background: #922d2a; }
     /* 宠环成本录入弹窗：点击 + 时弹出，登记本次成本（万梦幻币，非必填） */
     #petCostOverlay { position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.45); z-index: 1000; display: none; }
     #petCostDialog {
@@ -390,7 +394,7 @@
             </div>
             <div class="gem-result-toggle" onclick="togglePetDetail()"><span>📋 累计成本明细</span><span class="sq-toggle" id="petDetailToggleHint">▼</span></div>
             <div id="petDetailSection" style="display:none"></div>
-            <div class="gem-result-toggle" onclick="togglePetHist()"><span>📅 历史记录查询</span><span style="display:flex;align-items:center;gap:6px;"><button class="btn-clear-hist" onclick="event.stopPropagation();histExport()">导出</button><button class="btn-clear-hist" onclick="event.stopPropagation();histImport()">导入</button><span class="sq-toggle" id="petHistToggleHint">▼</span></span></div>
+            <div class="gem-result-toggle pet-hist-header" onclick="togglePetHist()"><span>📅 历史记录查询</span><span class="pet-hist-actions"><button class="btn-clear-hist" onclick="event.stopPropagation();histExport()">导出</button><button class="btn-clear-hist" onclick="event.stopPropagation();histImport()">导入</button><button class="btn-clear-hist pet-hist-danger" onclick="event.stopPropagation();clearPetHistory()">清空历史记录</button><span class="sq-toggle" id="petHistToggleHint">▼</span></span></div>
             <div id="petHistSection" style="display:none"></div>
             <div class="pet-note">★点击 “+” 记录一次任务，可登记本次成本（万梦幻币，非必填，不填按 0 计入；取消则不计数）；点击 “-” 撤销最近一次记录，并同步从累计成本中扣回该次成本<br>★切换“当前号”页签可分别为 1~5 号计数，各号次数、成本互相独立；“清零计数”只清当前号，其他号不受影响</div>
             <div class="pet-note">★上交烹饪、三药品质不满足要求，会扣除一定任务积分，修炼经验/修炼点不受影响<br>★烹饪三药扣分规则：（应交品质-实际品质）/2，积分向下取整<br>★实际积分：（应交品质-实际品质）/2+2，积分向下取整<br>例如需上交63品质的珍露酒，实际上交58品质的，相差5品，扣除2分加上本身应得2分（上交三级药/烹饪获得2分），实际不扣分（即-2分+2分）</div>
@@ -481,7 +485,7 @@
     <div id="petHistDialog">
         <div id="petHistTitle"></div>
         <div id="petHistBody"></div>
-        <div class="pet-cost-btns"><button class="btn" onclick="closePetHist()">✕ 关闭</button></div>
+        <div class="pet-cost-btns" style="flex-wrap:wrap;"><button class="btn pet-hist-danger" onclick="deletePetHistDay()">删除该日记录</button><button class="btn" onclick="closePetHist()">✕ 关闭</button></div>
     </div>
     <div id="petIoOverlay" onclick="closeHistIo()"></div>
     <div id="petIoDialog">
@@ -797,6 +801,7 @@ var petCostIdx = -1;
 // 历史记录：petDirty 当天有未保存变更（关闭/刷新前提醒）；petHistYear/Month 当前显示月（-1 未初始化，展开时设为当月）
 var petDirty = false, petHistYear = -1, petHistMonth = -1, petHistSavedScroll = 0;
 var PET_HIST_KEY = 'petCostHistory';
+var petHistSelectedDate = ''; // 绑定当前详情日期，关闭时清除，避免误删上次查看的日期
 for (var pcI = 0; pcI < 5; pcI++) {
     petCostHist[pcI] = [[], [], [], [], [], [], [], [], [], [], [], [], []];
     petCounts[pcI] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -1119,6 +1124,7 @@ function showPetHist(ds) {
     openPetHistDlg(ds, h);
 }
 function openPetHistDlg(ds, html) {
+    petHistSelectedDate = ds;
     petHistSavedScroll = window.pageYOffset || document.documentElement.scrollTop || 0;
     document.body.style.overflow = 'hidden';
     document.getElementById('petHistTitle').textContent = '📅 ' + ds + ' 宠环成本记录';
@@ -1127,10 +1133,51 @@ function openPetHistDlg(ds, html) {
     document.getElementById('petHistDialog').style.display = 'block';
 }
 function closePetHist() {
+    petHistSelectedDate = '';
     document.getElementById('petHistDialog').style.display = 'none';
     document.getElementById('petHistOverlay').style.display = 'none';
     document.body.style.overflow = '';
     window.scrollTo(0, petHistSavedScroll);
+}
+// 删除只处理已保存快照，不改当前计数、成本和 petDirty；确认期间历史变化则中止，避免覆盖其他页面的新记录。
+function deletePetHistDay() {
+    if (petHistSelectedDate) removePetHistory(petHistSelectedDate);
+}
+function clearPetHistory() { removePetHistory(''); }
+function removePetHistory(ds) {
+    var raw, hist, days, scope, token, answer;
+    try {
+        raw = localStorage.getItem(PET_HIST_KEY);
+        hist = raw === null ? {} : JSON.parse(raw);
+        if (!hist || typeof hist !== 'object' || Array.isArray(hist)) throw new Error('历史记录格式异常，请先导出备份并检查。');
+        days = Object.keys(hist);
+    } catch (e) { alert('读取历史记录失败，未执行删除：' + e.message); return; }
+    if (!days.length || (ds && !Object.prototype.hasOwnProperty.call(hist, ds))) {
+        alert(ds ? ds + ' 已无历史记录。' : '暂无可清空的历史记录。');
+        if (petHistSelectedDate) closePetHist();
+        renderPetHistCal();
+        return;
+    }
+    scope = ds ? ds + ' 的全部号历史记录' : '全部 ' + days.length + ' 个日期、全部号的历史记录';
+    if (!confirm('即将永久删除' + scope + '。' + (ds ? '\n其他日期记录保留。' : '') + '\n\n此操作不可撤销，建议先取消并导出备份。\n当前计数和成本不受影响；再次保存当天记录会重新生成当天历史。\n\n是否继续？')) return;
+    if (!ds && !confirm('再次确认：将清空所有日期的宠环历史记录，不只是当前月份或当前号！\n没有导出备份的记录将无法恢复。\n\n确定继续清空吗？')) return;
+    token = ds || '清空全部历史记录';
+    answer = prompt('最后确认：请输入“' + token + '”以删除' + scope + '。\n输入不一致或取消均不会删除。', '');
+    if (answer === null || answer === '') return;
+    if (answer !== token) { alert('输入不一致，已取消删除，历史记录未改动。'); return; }
+    try {
+        if (localStorage.getItem(PET_HIST_KEY) !== raw) {
+            alert('确认期间历史记录发生变化，已取消删除，请重新查看后操作。');
+            return;
+        }
+        if (ds) {
+            delete hist[ds];
+            localStorage.setItem(PET_HIST_KEY, JSON.stringify(hist));
+        } else localStorage.removeItem(PET_HIST_KEY);
+    } catch (e) { alert('删除失败：' + e.message); return; }
+    if (petHistSelectedDate) closePetHist();
+    renderPetHistCal();
+    alert(ds ? '已删除 ' + ds + ' 的全部号历史记录，其他日期保留。' : '已清空全部宠环历史记录。');
 }
 // ================== 历史记录跨端导入/导出（交换格式与 HTA 文件行格式通用：日期|号|次数CSV|明细CSV|累计成本） ==================
 // localStorage 对象 → 行文本（每号一行，total 无千分位），日期升序
