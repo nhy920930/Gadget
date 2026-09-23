@@ -109,8 +109,27 @@
     }
     #petHistTitle, #petCostTitle, #petIoTitle { font-weight: bold; font-size: 15px; color: #333; margin-bottom: 8px; }
     #petHistBody { max-height: 50vh; overflow-y: auto; }
-    .pet-hist-header { flex-wrap: wrap; gap: 8px; }
-    .pet-hist-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+    /* 常用操作常显，撤销与记录管理按需展开。 */
+    .pet-undo-btn { display: none; }
+    .pet-action-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .pet-action-bar .btn { flex: none; }
+    .pet-secondary-btn { min-height: 36px; padding: 6px 12px; border: 1px solid #b0b6c3; border-radius: 4px; background: #f2f4f6; color: #3d444d; font-size: 13px; cursor: pointer; }
+    .pet-secondary-btn:active { background: #e6e9ed; }
+    .pet-tools { margin-top: 8px; padding: 10px; border: 1px solid #d9dce3; border-radius: 6px; background: #f9fafc; }
+    .pet-tool-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .pet-tool-row + .pet-tool-row { margin-top: 10px; padding-top: 10px; border-top: 1px solid #d9dce3; }
+    .pet-tool-label { width: 100%; font-size: 12px; color: #70787f; }
+    .pet-undo-option { display: inline-flex; align-items: center; min-height: 36px; font-size: 13px; cursor: pointer; }
+    .pet-undo-option input { width: 16px; height: 16px; margin: 0 6px 0 0; }
+    .pet-tools .pet-danger-btn { color: #a52f2b; border-color: #d7a3a0; background: transparent; }
+    .pet-cost-summary { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; padding: 10px 0; border-bottom: 1px solid #eef1f8; }
+    .pet-cost-summary .pet-cost-total { margin-left: 0; }
+    body.dark .pet-secondary-btn { background: #292d33; border-color: #4a5058; color: #d2d6da; }
+    body.dark .pet-secondary-btn:active { background: #3c424a; }
+    body.dark .pet-tools { background: #292d33; border-color: #3c424a; }
+    body.dark .pet-tool-row + .pet-tool-row, body.dark .pet-cost-summary { border-color: #3c424a; }
+    body.dark .pet-tool-label { color: #aeb4bc; }
+    body.dark .pet-tools .pet-danger-btn { color: #f0a09b; border-color: #83534f; background: transparent; }
     .btn.pet-hist-danger, .btn-clear-hist.pet-hist-danger, body.dark .btn.pet-hist-danger, body.dark .btn-clear-hist.pet-hist-danger { background: #b83a36; color: #fff; }
     .btn.pet-hist-danger:active, .btn-clear-hist.pet-hist-danger:active { background: #922d2a; }
     /* 宠环成本录入弹窗：点击 + 时弹出，登记本次成本（万梦幻币，非必填） */
@@ -360,21 +379,38 @@
             <div class="table-wrap">
                 <table>
                     <tr><th width="25%">任务内容</th><th width="10%">任务积分</th><th width="15%">次数</th><th width="25%">任务内容</th><th width="10%">任务积分</th><th width="15%">次数</th></tr>
-                    <tr><td class="lv">找人</td><td class="num">1</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="petSub(0)">-</button> <span id="petCnt0">0</span> <button class="pet-cnt-btn" onclick="petAdd(0)">+</button></td><td class="lv">乐器</td><td class="num">4</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="petSub(1)">-</button> <span id="petCnt1">0</span> <button class="pet-cnt-btn" onclick="petAdd(1)">+</button></td></tr>
-                    <tr class="alt"><td class="lv">60级装备</td><td class="num">2</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="petSub(2)">-</button> <span id="petCnt2">0</span> <button class="pet-cnt-btn" onclick="petAdd(2)">+</button></td><td class="lv">花</td><td class="num">4</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="petSub(3)">-</button> <span id="petCnt3">0</span> <button class="pet-cnt-btn" onclick="petAdd(3)">+</button></td></tr>
-                    <tr><td class="lv">1级家具</td><td class="num">2</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="petSub(4)">-</button> <span id="petCnt4">0</span> <button class="pet-cnt-btn" onclick="petAdd(4)">+</button></td><td class="lv">80级装备</td><td class="num">5</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="petSub(5)">-</button> <span id="petCnt5">0</span> <button class="pet-cnt-btn" onclick="petAdd(5)">+</button></td></tr>
-                    <tr class="alt"><td class="lv">三级药</td><td class="num">2</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="petSub(6)">-</button> <span id="petCnt6">0</span> <button class="pet-cnt-btn" onclick="petAdd(6)">+</button></td><td class="lv">2级家具</td><td class="num">5</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="petSub(7)">-</button> <span id="petCnt7">0</span> <button class="pet-cnt-btn" onclick="petAdd(7)">+</button></td></tr>
-                    <tr><td class="lv">烹饪</td><td class="num">2</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="petSub(8)">-</button> <span id="petCnt8">0</span> <button class="pet-cnt-btn" onclick="petAdd(8)">+</button></td><td class="lv">非指定变异召唤兽</td><td class="num">5</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="petSub(9)">-</button> <span id="petCnt9">0</span> <button class="pet-cnt-btn" onclick="petAdd(9)">+</button></td></tr>
-                    <tr class="alt"><td class="lv">70级装备</td><td class="num">3</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="petSub(10)">-</button> <span id="petCnt10">0</span> <button class="pet-cnt-btn" onclick="petAdd(10)">+</button></td><td class="lv">指定变异召唤兽</td><td class="num">10</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="petSub(11)">-</button> <span id="petCnt11">0</span> <button class="pet-cnt-btn" onclick="petAdd(11)">+</button></td></tr>
-                    <tr><td class="lv">上交非变异召唤兽</td><td class="num">-15</td><td class="pet-cnt"><button class="pet-cnt-btn" onclick="petSub(12)">-</button> <span id="petCnt12">0</span> <button class="pet-cnt-btn" onclick="petAdd(12)">+</button></td><td class="lv"></td><td class="num"></td><td class="pet-cnt"></td></tr>
+                    <tr><td class="lv">找人</td><td class="num">1</td><td class="pet-cnt"><button class="pet-cnt-btn pet-undo-btn" onclick="petSub(0)">-</button> <span id="petCnt0">0</span> <button class="pet-cnt-btn" onclick="petAdd(0)">+</button></td><td class="lv">乐器</td><td class="num">4</td><td class="pet-cnt"><button class="pet-cnt-btn pet-undo-btn" onclick="petSub(1)">-</button> <span id="petCnt1">0</span> <button class="pet-cnt-btn" onclick="petAdd(1)">+</button></td></tr>
+                    <tr class="alt"><td class="lv">60级装备</td><td class="num">2</td><td class="pet-cnt"><button class="pet-cnt-btn pet-undo-btn" onclick="petSub(2)">-</button> <span id="petCnt2">0</span> <button class="pet-cnt-btn" onclick="petAdd(2)">+</button></td><td class="lv">花</td><td class="num">4</td><td class="pet-cnt"><button class="pet-cnt-btn pet-undo-btn" onclick="petSub(3)">-</button> <span id="petCnt3">0</span> <button class="pet-cnt-btn" onclick="petAdd(3)">+</button></td></tr>
+                    <tr><td class="lv">1级家具</td><td class="num">2</td><td class="pet-cnt"><button class="pet-cnt-btn pet-undo-btn" onclick="petSub(4)">-</button> <span id="petCnt4">0</span> <button class="pet-cnt-btn" onclick="petAdd(4)">+</button></td><td class="lv">80级装备</td><td class="num">5</td><td class="pet-cnt"><button class="pet-cnt-btn pet-undo-btn" onclick="petSub(5)">-</button> <span id="petCnt5">0</span> <button class="pet-cnt-btn" onclick="petAdd(5)">+</button></td></tr>
+                    <tr class="alt"><td class="lv">三级药</td><td class="num">2</td><td class="pet-cnt"><button class="pet-cnt-btn pet-undo-btn" onclick="petSub(6)">-</button> <span id="petCnt6">0</span> <button class="pet-cnt-btn" onclick="petAdd(6)">+</button></td><td class="lv">2级家具</td><td class="num">5</td><td class="pet-cnt"><button class="pet-cnt-btn pet-undo-btn" onclick="petSub(7)">-</button> <span id="petCnt7">0</span> <button class="pet-cnt-btn" onclick="petAdd(7)">+</button></td></tr>
+                    <tr><td class="lv">烹饪</td><td class="num">2</td><td class="pet-cnt"><button class="pet-cnt-btn pet-undo-btn" onclick="petSub(8)">-</button> <span id="petCnt8">0</span> <button class="pet-cnt-btn" onclick="petAdd(8)">+</button></td><td class="lv">非指定变异召唤兽</td><td class="num">5</td><td class="pet-cnt"><button class="pet-cnt-btn pet-undo-btn" onclick="petSub(9)">-</button> <span id="petCnt9">0</span> <button class="pet-cnt-btn" onclick="petAdd(9)">+</button></td></tr>
+                    <tr class="alt"><td class="lv">70级装备</td><td class="num">3</td><td class="pet-cnt"><button class="pet-cnt-btn pet-undo-btn" onclick="petSub(10)">-</button> <span id="petCnt10">0</span> <button class="pet-cnt-btn" onclick="petAdd(10)">+</button></td><td class="lv">指定变异召唤兽</td><td class="num">10</td><td class="pet-cnt"><button class="pet-cnt-btn pet-undo-btn" onclick="petSub(11)">-</button> <span id="petCnt11">0</span> <button class="pet-cnt-btn" onclick="petAdd(11)">+</button></td></tr>
+                    <tr><td class="lv">上交非变异召唤兽</td><td class="num">-15</td><td class="pet-cnt"><button class="pet-cnt-btn pet-undo-btn" onclick="petSub(12)">-</button> <span id="petCnt12">0</span> <button class="pet-cnt-btn" onclick="petAdd(12)">+</button></td><td class="lv"></td><td class="num"></td><td class="pet-cnt"></td></tr>
                 </table>
-                <div style="margin-top: 8px;"><button class="btn" onclick="petCountReset()">清零计数</button><button class="btn" onclick="savePetHistory()">保存当天记录</button><span class="pet-cost-total">累计成本：<b id="petTotalCost">0</b> 万梦幻币</span><span class="pet-cost-total">全部号合计：<b id="petAllCost">0</b> 万梦幻币</span></div>
+            </div>
+            <div class="pet-cost-summary"><span class="pet-cost-total">当前号成本：<b id="petTotalCost">0</b> 万梦幻币</span><span class="pet-cost-total">全部号合计：<b id="petAllCost">0</b> 万梦幻币</span></div>
+            <div class="pet-action-bar">
+                <button class="btn" onclick="savePetHistory()">保存当天记录</button>
+                <button class="pet-secondary-btn" id="btnPetTools" aria-expanded="false" aria-controls="petToolsSection" onclick="togglePetTools()">更多操作 <span id="petToolsToggleHint">▼</span></button>
+            </div>
+            <div class="pet-tools" id="petToolsSection" style="display:none">
+                <div class="pet-tool-row">
+                    <span class="pet-tool-label">当前号 · 次数调整</span>
+                    <label class="pet-undo-option"><input type="checkbox" id="chkPetUndo" onchange="updatePetUndoButtons()">显示撤销按钮（-）</label>
+                    <button class="pet-secondary-btn pet-danger-btn" onclick="petCountReset()">清零当前号</button>
+                </div>
+                <div class="pet-tool-row">
+                    <span class="pet-tool-label">已保存的历史记录 · 双端通用</span>
+                    <button class="pet-secondary-btn" onclick="histExport()">导出记录</button>
+                    <button class="pet-secondary-btn" onclick="histImport()">导入记录</button>
+                    <button class="pet-secondary-btn pet-danger-btn" onclick="clearPetHistory()">清空历史记录</button>
+                </div>
             </div>
             <div class="gem-result-toggle" onclick="togglePetDetail()"><span>📋 累计成本明细</span><span class="sq-toggle" id="petDetailToggleHint">▼</span></div>
             <div id="petDetailSection" style="display:none"></div>
-            <div class="gem-result-toggle pet-hist-header" onclick="togglePetHist()"><span>📅 历史记录查询</span><span class="pet-hist-actions"><button class="btn-clear-hist" onclick="event.stopPropagation();histExport()">导出</button><button class="btn-clear-hist" onclick="event.stopPropagation();histImport()">导入</button><button class="btn-clear-hist pet-hist-danger" onclick="event.stopPropagation();clearPetHistory()">清空历史记录</button><span class="sq-toggle" id="petHistToggleHint">▼</span></span></div>
+            <div class="gem-result-toggle" onclick="togglePetHist()"><span>📅 历史记录查询</span><span class="sq-toggle" id="petHistToggleHint">▼</span></div>
             <div id="petHistSection" style="display:none"></div>
-            <div class="pet-note">★点击 “+” 记录一次任务，可登记本次成本（万梦幻币，非必填，不填按 0 计入；取消则不计数）；点击 “-” 撤销最近一次记录，并同步从累计成本中扣回该次成本<br>★切换“当前号”页签可分别为 1~5 号计数，各号次数、成本互相独立；“清零计数”只清当前号，其他号不受影响</div>
+            <div class="pet-note">★点击 “+” 记录一次任务，成本可不填（按 0 计入），取消则不计数。需要改错时，在“更多操作”中勾选“显示撤销按钮”，再点对应任务的 “-” 撤销最近一笔并扣回成本。<br>★1~5 号独立计数；“保存当天记录”保存全部号，“更多操作”中的“清零当前号”不影响其他号。</div>
             <div class="pet-note">★上交烹饪、三药品质不满足要求，会扣除一定任务积分，修炼经验/修炼点不受影响<br>★烹饪三药扣分规则：（应交品质-实际品质）/2，积分向下取整<br>★实际积分：（应交品质-实际品质）/2+2，积分向下取整<br>例如需上交63品质的珍露酒，实际上交58品质的，相差5品，扣除2分加上本身应得2分（上交三级药/烹饪获得2分），实际不扣分（即-2分+2分）</div>
             <div class="pet-block-title" style="cursor: pointer;" onclick="togglePetReward()">【召唤兽修炼任务积分奖励】<span class="sq-toggle" id="petRewardToggleHint">▼</span></div>
             <div id="petRewardSection" style="display:none">
@@ -854,6 +890,17 @@ function toggleSqSection() {
 // 宠环任务区默认折叠，点击标题行展开/收起（规则同神器攻略）
 function togglePetSection() {
     toggleSection('petSection', 'petToggleHint');
+}
+function togglePetTools() {
+    toggleSection('petToolsSection', 'petToolsToggleHint');
+    var expanded = document.getElementById('petToolsSection').style.display !== 'none';
+    document.getElementById('btnPetTools').setAttribute('aria-expanded', String(expanded));
+}
+// 只切换撤销入口的可见性，不修改计数、成本和未保存标记。
+function updatePetUndoButtons() {
+    var display = document.getElementById('chkPetUndo').checked ? 'inline-block' : 'none';
+    var buttons = document.querySelectorAll('#petSection .pet-undo-btn');
+    for (var i = 0; i < buttons.length; i++) buttons[i].style.display = display;
 }
 // 宠环跑环计数：+ 时弹录入框登记本次成本（万梦幻币，非必填按0），- 撤销该任务最近一次记录（次数-1 并同步扣回其成本）
 // 多号统计（1~5号）：数据全部按号存两维——petCostHist[号][任务] 成本栈、petCounts[号][任务] 次数、petCostTotal[号] 累计成本、
@@ -1703,6 +1750,7 @@ window.addEventListener('beforeunload', function (e) {
     }
 });
 window.onload = function () {
+    updatePetUndoButtons();
     fillRemindOptions();
     renderSqLinks();
     if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
