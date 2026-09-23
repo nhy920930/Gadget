@@ -44,8 +44,8 @@
     }
     #btnCalcAttr, #btnCalcGold, #btnCalculate, #btnCalcXiu { width: 120px; padding: 0; }
     .tip { color: #70787f; margin-left: 10px; font-size: 13px; vertical-align: middle; }
-    #goldResult { margin-top: 10px; font-size: 13px; color: #70787f; }
-    #goldResult b { color: #c0392b; }
+    #goldResult, #xiuResult, #gemSumResult { margin-top: 10px; font-size: 13px; color: #70787f; }
+    #goldResult b, #xiuResult b, #gemSumResult b { color: #c0392b; }
     .hist-del-btn {
         background-color: #7b43f5; color: #ffffff; font-weight: bold;
         border: 2px solid; border-color: #7b43f5 #4895ef #4895ef #7b43f5;
@@ -65,8 +65,6 @@
     }
     #remindStatus { margin-top: 10px; margin-left: 226px; font-size: 13px; color: #70787f; }
     #remindStatus b { color: #2e8b57; }
-    #xiuResult { margin-top: 10px; font-size: 13px; color: #70787f; }
-    #xiuResult b { color: #c0392b; }
     .xiu-table td.xiu-item { text-align: left; font-weight: bold; color: #3d444d; }
     .xiu-table td.xiu-val { text-align: left; }
     th.x1 { background-color: #7b43f5; border-left-color: #7b43f5; border-right-color: #616cf2; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7B43F5', endColorstr='#FF616CF2'); }
@@ -81,10 +79,8 @@
     td.picked { background-color: #ffd76e; font-weight: bold; }
     body.dark td.picked { background-color: #6b5210; }
     td.cost input.gem-qty { width: 56px; height: 22px; padding: 0 4px; text-align: center; font-size: 13px; font-weight: normal; vertical-align: middle; }
-    #gemSumResult { margin-top: 10px; font-size: 13px; color: #70787f; }
-    #gemSumResult b { color: #c0392b; }
-    body.dark #gemSumResult { color: #7c828a; }
-    body.dark #gemSumResult b { color: #f0a050; }
+    body.dark #gemSumResult, body.dark #goldResult, body.dark #xiuResult { color: #7c828a; }
+    body.dark #gemSumResult b, body.dark #goldResult b, body.dark #xiuResult b { color: #f0a050; }
     table { border-collapse: collapse; width: 100%; background-color: transparent; }
     th, td { border: 1px solid #c2c8d0; padding: 8px 10px; font-size: 14px; }
     th {
@@ -140,24 +136,20 @@
     td.pet-hist-today { font-weight: bold; color: #7b43f5; }
     td.pet-hist-has { font-weight: bold; color: #ffffff; background-color: #7b43f5; cursor: pointer; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7B43F5', endColorstr='#FF4895EF'); }
     /* 历史记录查看弹窗：点击日历日期弹出该日汇总与明细 */
-    #petHistOverlay { position: absolute; left: 0; top: 0; z-index: 970; display: none; background-color: #000000; filter: progid:DXImageTransform.Microsoft.Alpha(opacity=40); }
-    #petHistDialog {
-        position: absolute; z-index: 971; display: none; width: 460px; padding: 12px 14px;
+    #petHistOverlay, #petCostOverlay, #petIoOverlay { position: absolute; left: 0; top: 0; display: none; background-color: #000000; filter: progid:DXImageTransform.Microsoft.Alpha(opacity=40); }
+    #petHistOverlay { z-index: 970; }
+    #petHistDialog { z-index: 971; width: 460px; }
+    #petHistDialog, #petCostDialog, #petIoDialog {
+        position: absolute; display: none; padding: 12px 14px;
         background-color: #e8eaee;
         border: 2px solid; border-color: #f8fafc #a2a8b2 #a2a8b2 #f8fafc;
         filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#F2FFFFFF', endColorstr='#D8D8DCE4');
     }
-    #petHistTitle { font-weight: bold; font-size: 13px; color: #3d444d; margin-bottom: 8px; }
+    #petHistTitle, #petCostTitle, #petIoTitle { font-weight: bold; font-size: 13px; color: #3d444d; margin-bottom: 8px; }
     #petHistBody { max-height: 380px; overflow-y: auto; }
     /* 宠环成本录入弹窗：点击 + 时弹出，登记本次成本（万梦幻币，非必填），样式沿用攻略弹窗 */
-    #petCostOverlay { position: absolute; left: 0; top: 0; z-index: 960; display: none; background-color: #000000; filter: progid:DXImageTransform.Microsoft.Alpha(opacity=40); }
-    #petCostDialog {
-        position: absolute; z-index: 961; display: none; width: 340px; padding: 12px 14px;
-        background-color: #e8eaee;
-        border: 2px solid; border-color: #f8fafc #a2a8b2 #a2a8b2 #f8fafc;
-        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#F2FFFFFF', endColorstr='#D8D8DCE4');
-    }
-    #petCostTitle { font-weight: bold; font-size: 13px; color: #3d444d; margin-bottom: 8px; }
+    #petCostOverlay { z-index: 960; }
+    #petCostDialog { z-index: 961; width: 340px; }
     #petCostDialog label { font-weight: bold; color: #3d444d; vertical-align: middle; }
     #petCostDialog input {
         width: 120px; height: 28px; padding: 0 8px; font-size: 14px; vertical-align: middle;
@@ -168,25 +160,20 @@
     .pet-cost-note { margin-top: 6px; font-size: 12px; color: #70787f; }
     .pet-cost-btns { margin-top: 10px; text-align: right; }
     /* 历史记录导入/导出弹窗：与移动版通用的行格式文本交换介质 */
-    #petIoOverlay { position: absolute; left: 0; top: 0; z-index: 980; display: none; background-color: #000000; filter: progid:DXImageTransform.Microsoft.Alpha(opacity=40); }
-    #petIoDialog {
-        position: absolute; z-index: 981; display: none; width: 480px; padding: 12px 14px;
-        background-color: #e8eaee;
-        border: 2px solid; border-color: #f8fafc #a2a8b2 #a2a8b2 #f8fafc;
-        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#F2FFFFFF', endColorstr='#D8D8DCE4');
-    }
-    #petIoTitle { font-weight: bold; font-size: 13px; color: #3d444d; margin-bottom: 4px; }
+    #petIoOverlay { z-index: 980; }
+    #petIoDialog { z-index: 981; width: 480px; }
+    #petIoTitle { margin-bottom: 4px; }
     #petIoText {
         width: 98%; height: 220px; margin-top: 6px; font-size: 12px; font-family: Consolas, "Courier New", monospace;
         background-color: #eef0f3; color: #2f353c;
         border: 2px solid; border-color: #9aa2ac #ffffff #ffffff #9aa2ac;
     }
-    body.dark #petIoDialog {
+    body.dark #petIoDialog, body.dark #petHistDialog, body.dark #petCostDialog {
         background-color: #2b2f35;
         border-color: #4a5058 #0e1013 #0e1013 #4a5058;
         filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#C8333740', endColorstr='#B0252930');
     }
-    body.dark #petIoTitle { color: #aeb4bc; }
+    body.dark #petIoTitle, body.dark #petHistTitle, body.dark #petCostTitle { color: #aeb4bc; }
     body.dark #petIoText {
         background-color: #292d33; color: #d2d6da;
         border-color: #0e1013 #3c424a #3c424a #0e1013;
@@ -257,8 +244,6 @@
         filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#3C4046', endColorstr='#2E3238');
     }
     body.dark .tip { color: #7c828a; }
-    body.dark #goldResult { color: #7c828a; }
-    body.dark #goldResult b { color: #f0a050; }
     body.dark table { background-color: transparent; }
     body.dark th {
         background-color: #787af6; color: #ffffff; border-color: #5a4a90;
@@ -299,20 +284,7 @@
     body.dark td.pet-hist-day { color: #b6bcc2; }
     body.dark td.pet-hist-today { color: #8b5cf6; }
     body.dark td.pet-hist-has { color: #ffffff; background-color: #8b5cf6; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF8B5CF6', endColorstr='#FF5BA8F5'); }
-    body.dark #petHistOverlay { filter: progid:DXImageTransform.Microsoft.Alpha(opacity=55); }
-    body.dark #petHistDialog {
-        background-color: #2b2f35;
-        border-color: #4a5058 #0e1013 #0e1013 #4a5058;
-        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#C8333740', endColorstr='#B0252930');
-    }
-    body.dark #petHistTitle { color: #aeb4bc; }
-    body.dark #petCostOverlay { filter: progid:DXImageTransform.Microsoft.Alpha(opacity=55); }
-    body.dark #petCostDialog {
-        background-color: #2b2f35;
-        border-color: #4a5058 #0e1013 #0e1013 #4a5058;
-        filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#C8333740', endColorstr='#B0252930');
-    }
-    body.dark #petCostTitle { color: #aeb4bc; }
+    body.dark #petHistOverlay, body.dark #petCostOverlay { filter: progid:DXImageTransform.Microsoft.Alpha(opacity=55); }
     body.dark #petCostDialog label { color: #aeb4bc; }
     body.dark #petCostDialog input {
         background-color: #292d33; color: #d2d6da;
@@ -328,8 +300,6 @@
     body.dark .history-table td.hist-tag { color: #7c828a; }
     body.dark #remindStatus { color: #7c828a; }
     body.dark #remindStatus b { color: #4ecca3; }
-    body.dark #xiuResult { color: #7c828a; }
-    body.dark #xiuResult b { color: #f0a050; }
     body.dark .xiu-table td.xiu-item { color: #aeb4bc; }
     body.dark th.x1 { background-color: #8b5cf6; border-left-color: #8b5cf6; border-right-color: #7382f5; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF8B5CF6', endColorstr='#FF7382F5'); }
     body.dark th.x2 { background-color: #7382f5; border-left-color: #7382f5; border-right-color: #5ba8f5; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7382F5', endColorstr='#FF5BA8F5'); }
@@ -485,168 +455,150 @@
     }
 </style>
 <script language="VBScript">
-    Sub Window_OnLoad
-        Dim winW, maxH, winH, chromeH
-        winW = 1100
-        maxH = Int(screen.availHeight * 0.95)
-        If winW > Int(screen.availWidth * 0.95) Then winW = Int(screen.availWidth * 0.95)
-        ' 先按目标宽度调整窗口，待初始化完成后按实际内容高度贴合窗口，避免底部留白
-        window.resizeTo winW, 600
-        ' 主窗口尺寸变化时同步调整攻略弹窗并钉住右上角按钮条；窗口失去焦点时结束未完成的拖拽
+    ' ===================== 公共数值、单位与结构化数据 =====================
+    Const GOLD_UNIT = 1000
+    Const COIN_PER_WAN = 10000
+    Const PET_CHAR_COUNT = 5
+    Const PET_TASK_COUNT = 13
+    Const XIU_FRUIT_EXP = 150
+    Const XIU_HUNDRED_RING_EXP = 760
+    Const XIU_PILL_EXP = 0.5
+    Function Pad2(n)
+        Pad2 = Right("0" & n, 2)
+    End Function
+    Function MakeRecord(keys, values)
+        Dim record, i
+        Set record = CreateObject("Scripting.Dictionary")
+        For i = 0 To UBound(keys)
+            record.Add keys(i), values(i)
+        Next
+        Set MakeRecord = record
+    End Function
+    Function TryNumber(value, ByRef number)
+        TryNumber = False
+        If IsNull(value) Or IsEmpty(value) Then Exit Function
+        If Not IsNumeric(value) Then Exit Function
         On Error Resume Next
-        window.onresize = GetRef("Window_OnResize")
-        window.onscroll = GetRef("Window_OnScroll")
-        window.onblur = GetRef("Window_OnBlur")
-        window.onbeforeunload = GetRef("Window_OnBeforeUnload")
+        Err.Clear
+        number = CDbl(value)
+        If Err.Number = 0 Then TryNumber = True
+        Err.Clear
         On Error GoTo 0
-        FillRemindMinutes
-        RenderShenqiLinks
-        ' 标题栏/边框补偿 = 临时窗口高 - 客户区高（quirks 模式下 documentElement.clientHeight 恒为 0，须用 body.clientHeight 读取视口高）；窗口高 = 内容高 + 补偿 + 少量余量
-        chromeH = 600 - document.body.clientHeight
-        If chromeH < 0 Or chromeH > 200 Then chromeH = 72
-        winH = document.body.scrollHeight + chromeH + 4
-        If winH > maxH Then winH = maxH
-        If winH < 400 Then winH = 400
-        window.resizeTo winW, winH
-        window.moveTo (screen.availWidth - winW) \ 2, (screen.availHeight - winH) \ 2
-        PinTopButtons
-        document.getElementById("txtPrice").focus
-    End Sub
-    Sub Window_OnUnload
-        StopRemindTimers
-    End Sub
-    ' 右上角按钮条（退出工具箱/主题切换）钉位：quirks 模式不支持 position:fixed（会随文档滚动漂移），
-    ' 改由脚本按视口重算 absolute 坐标（坐标系与攻略弹窗 PositionSqDialog 一致）；滚动/缩放/切主题时触发
-    Sub PinTopButtons
-        Dim objExit, objTheme, viewW, scrX, scrY
-        viewW = document.body.clientWidth
-        scrX = document.body.scrollLeft
-        scrY = document.body.scrollTop
-        Set objExit = document.getElementById("btnExitApp")
-        Set objTheme = document.getElementById("themeToggle")
-        ' 先清 CSS right 再量宽设 left：left/right 同时生效会把 absolute 元素宽度压成两者间距，
-        ' 内容被挤换行（日/夜文字串行的根因）；清掉后宽度恢复内容自然宽
-        objExit.style.right = "auto"
-        objTheme.style.right = "auto"
-        ' 退出按钮钉视口右上角（右缘内缩 20px，视觉上接替标题栏 X 的位置），主题切换排其左侧（间隔 12px）
-        objExit.style.pixelTop = scrY + 9
-        objExit.style.pixelLeft = viewW + scrX - objExit.offsetWidth - 20
-        objTheme.style.pixelTop = scrY + 10
-        objTheme.style.pixelLeft = viewW + scrX - objExit.offsetWidth - objTheme.offsetWidth - 32
-    End Sub
-    Sub Window_OnScroll
-        PinTopButtons
-    End Sub
-    ' “退出工具箱”按钮（X/Alt+F4 无法拦截，可取消的退出统一走此按钮）：有未保存变更时三选（保存后退出 / 不保存退出 / 留在工具箱），无变更直接退出
-    Sub PetExitApp
-        Dim r
-        If petDirty Then
-            r = MsgBox("宠环成本记录当天有未保存的变更，退出前是否保存？" & vbCrLf & vbCrLf & "【是】保存后退出    【否】不保存直接退出    【取消】留在工具箱", vbYesNoCancel + vbQuestion, "退出确认")
-            If r = vbCancel Then Exit Sub
-            If r = vbYes Then
-                If Not PetSaveHistoryCore Then
-                    ' 保存失败（已弹提示）且当天确有数据：留在工具箱待处理；当天无可保存数据：直接退出
-                    If UBound(PetBuildTodayLines) >= 0 Then Exit Sub
-                End If
+    End Function
+    Function ReadInputNumber(id, defaultValue, rule, maximum, message, ByRef number)
+        Dim text, valid
+        ReadInputNumber = False
+        text = Trim(document.getElementById(id).value)
+        If text = "" Then
+            If Not IsNull(defaultValue) Then
+                number = defaultValue
+                ReadInputNumber = True
+                Exit Function
             End If
         End If
-        petExiting = True
-        window.close
+        valid = TryNumber(text, number)
+        If valid Then
+            If rule = "positive" Then valid = (number > 0)
+            If rule = "nonnegative" Or rule = "integer" Then valid = (number >= 0)
+            If rule = "integer" Then valid = valid And (number = Fix(number))
+            If maximum >= 0 Then valid = valid And (number <= maximum)
+        End If
+        If valid Then
+            ReadInputNumber = True
+        Else
+            MsgBox message, vbExclamation, "输入错误"
+            document.getElementById(id).focus
+        End If
+    End Function
+    Function CoinToRmb(coin, gold)
+        CoinToRmb = coin / GOLD_UNIT * gold
+    End Function
+    Function RmbToCoin(rmb, gold)
+        RmbToCoin = rmb / gold * GOLD_UNIT
+    End Function
+    Function FmtAmount(value)
+        If value = Fix(value) Then FmtAmount = FormatNumber(value, 0) Else FmtAmount = FormatNumber(value, 1)
+    End Function
+    ' 公共折叠：同步内容显示与提示文字，展开前的数据刷新由业务入口负责。
+    Sub SetSectionVisible(sectionId, hintId, visible)
+        If visible Then
+            document.getElementById(sectionId).style.display = "block"
+            document.getElementById(hintId).innerText = "▲ 收起"
+        Else
+            document.getElementById(sectionId).style.display = "none"
+            document.getElementById(hintId).innerText = "▼ 展开"
+        End If
     End Sub
-    ' 兜底提醒：X/Alt+F4 等系统级关闭（HTA 受 IE 引擎限制无法取消，returnValue/取消键均拦不住）只能二选是否保存后退出；
-    ' 需要“留在工具箱”的可取消退出流程走右上角“退出工具箱”按钮
-    Sub Window_OnBeforeUnload
-        If petExiting Then Exit Sub
-        If Not petDirty Then Exit Sub
-        If MsgBox("宠环成本记录当天有未保存的变更，退出前是否保存？" & vbCrLf & vbCrLf & "【是】保存后退出    【否】不保存直接退出", vbYesNo + vbQuestion, "保存提醒") = vbYes Then PetSaveHistoryCore
+    Sub ToggleSection(sectionId, hintId)
+        SetSectionVisible sectionId, hintId, document.getElementById(sectionId).style.display = "none"
     End Sub
-    Sub CheckEnter
-        If window.event.keyCode = 13 Then Calculate
-    End Sub
+    ' ===================== 金价比例 =====================
     Sub CheckEnterGold
         If window.event.keyCode = 13 Then CalcGold
     End Sub
     Function GetGoldRatio()
-        Dim strVal
+        Dim value
         GetGoldRatio = 0
-        strVal = document.getElementById("txtGold").value
-        If Not IsNumeric(strVal) Then
-            MsgBox "请先在金价比例中输入大于0的有效数字！", vbExclamation, "输入错误"
-            document.getElementById("txtGold").focus
-            Exit Function
-        End If
-        If CDbl(strVal) <= 0 Then
-            MsgBox "请先在金价比例中输入大于0的有效数字！", vbExclamation, "输入错误"
-            document.getElementById("txtGold").focus
-            Exit Function
-        End If
-        GetGoldRatio = CDbl(strVal)
+        If ReadInputNumber("txtGold", Null, "positive", -1, "请先在金价比例中输入大于0的有效数字！", value) Then GetGoldRatio = value
     End Function
     Sub CalcGold
-        Dim dblGold, dblPerYuan, strVal, dblCoin, dblRmb, strHtml, strCls
+        Dim dblGold, dblCoin, dblRmb
         dblGold = GetGoldRatio()
         If dblGold = 0 Then Exit Sub
+        If Not ReadInputNumber("txtCoin", -1, "nonnegative", -1, "梦幻币必须为非负数字（不填默认不换算）！", dblCoin) Then Exit Sub
+        If Not ReadInputNumber("txtRmb", -1, "nonnegative", -1, "人民币必须为非负数字（不填默认不换算）！", dblRmb) Then Exit Sub
+        RenderGoldResult dblGold, dblCoin, dblRmb
+    End Sub
+    Sub RenderGoldResult(dblGold, dblCoin, dblRmb)
+        Dim dblPerYuan, strHtml, strCls
         ' 换算基准：金价比例 g 元 / 1000万梦幻币（1千万 = 1000万），万↔千万因子为 1000
-        dblPerYuan = 1000 / dblGold
-        dblCoin = -1
-        dblRmb = -1
-        strVal = document.getElementById("txtCoin").value
-        If strVal <> "" Then
-            If Not IsNumeric(strVal) Or CDbl(strVal) < 0 Then
-                MsgBox "梦幻币必须为非负数字（不填默认不换算）！", vbExclamation, "输入错误"
-                document.getElementById("txtCoin").focus
-                Exit Sub
-            End If
-            dblCoin = CDbl(strVal)
-        End If
-        strVal = document.getElementById("txtRmb").value
-        If strVal <> "" Then
-            If Not IsNumeric(strVal) Or CDbl(strVal) < 0 Then
-                MsgBox "人民币必须为非负数字（不填默认不换算）！", vbExclamation, "输入错误"
-                document.getElementById("txtRmb").focus
-                Exit Sub
-            End If
-            dblRmb = CDbl(strVal)
-        End If
+        dblPerYuan = RmbToCoin(1, dblGold)
         strHtml = "<table class=""xiu-table""><tr><th class=""x1"" width=""30%"">项目</th><th class=""x2"">结果</th></tr>"
         strHtml = strHtml & "<tr><td class=""xiu-item"">金价比例</td><td class=""xiu-val"">" & FormatNumber(dblGold, 2) & " 元 / 1000万梦幻币</td></tr>"
-        strHtml = strHtml & "<tr class=""alt""><td class=""xiu-item"">基准换算</td><td class=""xiu-val"">1 元 = " & FormatNumber(dblPerYuan, 2) & " 万梦幻币，1 万梦幻币 = " & FormatNumber(dblGold / 1000, 4) & " 元</td></tr>"
+        strHtml = strHtml & "<tr class=""alt""><td class=""xiu-item"">基准换算</td><td class=""xiu-val"">1 元 = " & FormatNumber(dblPerYuan, 2) & " 万梦幻币，1 万梦幻币 = " & FormatNumber(CoinToRmb(1, dblGold), 4) & " 元</td></tr>"
         If dblCoin >= 0 Then
-            strHtml = strHtml & "<tr><td class=""xiu-item"">梦幻币 → 人民币</td><td class=""xiu-val"">" & FormatNumber(dblCoin, 2) & " 万梦幻币 ≈ <b>" & FormatNumber(dblCoin / 1000 * dblGold, 2) & "</b> 元</td></tr>"
+            strHtml = strHtml & "<tr><td class=""xiu-item"">梦幻币 → 人民币</td><td class=""xiu-val"">" & FormatNumber(dblCoin, 2) & " 万梦幻币 ≈ <b>" & FormatNumber(CoinToRmb(dblCoin, dblGold), 2) & "</b> 元</td></tr>"
         End If
         If dblRmb >= 0 Then
             If dblCoin >= 0 Then strCls = " class=""alt""" Else strCls = ""
-            strHtml = strHtml & "<tr" & strCls & "><td class=""xiu-item"">人民币 → 梦幻币</td><td class=""xiu-val"">" & FormatNumber(dblRmb, 2) & " 元 ≈ <b>" & FormatNumber(dblRmb / dblGold * 1000, 2) & "</b> 万梦幻币</td></tr>"
+            strHtml = strHtml & "<tr" & strCls & "><td class=""xiu-item"">人民币 → 梦幻币</td><td class=""xiu-val"">" & FormatNumber(dblRmb, 2) & " 元 ≈ <b>" & FormatNumber(RmbToCoin(dblRmb, dblGold), 2) & "</b> 万梦幻币</td></tr>"
         End If
         strHtml = strHtml & "</table>"
         document.getElementById("goldResult").innerHTML = strHtml
     End Sub
+    ' ===================== 宝石成本 =====================
     ' 宝石成本多选合计：gemCosts(i) 为 i 级单个成本；gemPicked 记录选中等级；各等级个数填在 gemQty{等级} 输入框中（空=1个）
     ' gemResultOn：结果区展开状态（默认折叠，生成表格或点击切换时展开）
     Dim gemSelectOn, gemResultOn, gemPicked, gemCosts(15)
     Set gemPicked = CreateObject("Scripting.Dictionary")
     gemSelectOn = False
     gemResultOn = False
+    Sub CheckEnter
+        If window.event.keyCode = 13 Then Calculate
+    End Sub
+    Function CalculateGemCost(level, price)
+        Dim required, cumulative
+        required = 2 ^ (level - 1)
+        cumulative = 2 ^ level - 1
+        Set CalculateGemCost = MakeRecord(Array("required", "cumulative", "cost", "total"), Array(required, cumulative, required * price, cumulative * price))
+    End Function
     Sub Calculate
-        Dim strVal, dblPrice, i, lngNeed, lngCum, dblCost, dblCumCost, strHtml, strCls
-        strVal = document.getElementById("txtPrice").value
-        If Not IsNumeric(strVal) Then
-            MsgBox "请输入大于0的有效数字！", vbExclamation, "输入错误"
-            document.getElementById("txtPrice").focus
-            Exit Sub
-        End If
-        dblPrice = CDbl(strVal)
-        If dblPrice <= 0 Then
-            MsgBox "请输入大于0的有效数字！", vbExclamation, "输入错误"
-            document.getElementById("txtPrice").focus
-            Exit Sub
-        End If
+        Dim dblPrice, level, rows(15)
+        If Not ReadInputNumber("txtPrice", Null, "positive", -1, "请输入大于0的有效数字！", dblPrice) Then Exit Sub
+        For level = 1 To 15
+            Set rows(level) = CalculateGemCost(level, dblPrice)
+        Next
+        RenderGemCosts rows
+    End Sub
+    Sub RenderGemCosts(rows)
+        Dim i, row, lngNeed, lngCum, dblCost, dblCumCost, strHtml, strCls
         strHtml = "<table><tr><th class=""g1"" width=""10%"">等级</th><th class=""g2"" width=""15%"">需要1级宝石(个)</th><th class=""g3"" width=""15%"">累计1级宝石(个)</th><th class=""g4"" width=""30%"">单个成本(万)</th><th class=""g5"" width=""30%"">累计成本(万)</th></tr>"
         For i = 1 To 15
-            lngNeed = 2 ^ (i - 1)
-            lngCum = 2 ^ i - 1
-            dblCost = lngNeed * dblPrice
-            dblCumCost = lngCum * dblPrice
+            Set row = rows(i)
+            lngNeed = row("required")
+            lngCum = row("cumulative")
+            dblCost = row("cost")
+            dblCumCost = row("total")
             gemCosts(i) = dblCost
             If i Mod 2 = 0 Then strCls = " class=""alt""" Else strCls = ""
             strHtml = strHtml & "<tr" & strCls & "><td class=""lv"">" & i & "级</td><td class=""num"">" & lngNeed & "</td><td class=""num"">" & lngCum & "</td><td class=""cost"" onclick=""ToggleGemPick " & i & """>" & FormatNumber(dblCost, 2) & "</td><td>" & FormatNumber(dblCumCost, 2) & "</td></tr>"
@@ -660,13 +612,7 @@
     ' 设置宝石结果区显示状态（同步切换提示文本与状态变量）
     Sub SetGemResultVisible(bOn)
         gemResultOn = bOn
-        If bOn Then
-            document.getElementById("resultArea").style.display = "block"
-            document.getElementById("gemResultToggleHint").innerText = "▲ 收起"
-        Else
-            document.getElementById("resultArea").style.display = "none"
-            document.getElementById("gemResultToggleHint").innerText = "▼ 展开"
-        End If
+        SetSectionVisible "resultArea", "gemResultToggleHint", bOn
     End Sub
     ' 结果区默认折叠，点击标题行展开/收起（与神器攻略一致）
     Sub ToggleGemResult
@@ -736,14 +682,9 @@
             If strVal = "" Then
                 dblQty = 1
             Else
-                If IsNumeric(strVal) Then
-                    If CDbl(strVal) >= 1 And CDbl(strVal) = Fix(CDbl(strVal)) Then
-                        dblQty = CDbl(strVal)
-                    Else
-                        dblQty = 0
-                    End If
-                Else
-                    dblQty = 0
+                dblQty = 0
+                If TryNumber(strVal, dblQty) Then
+                    If dblQty < 1 Or dblQty <> Fix(dblQty) Then dblQty = 0
                 End If
                 If dblQty = 0 Then
                     MsgBox "“" & k & "级”宝石的个数须为大于等于1的整数（不填默认1）！", vbExclamation, "输入错误"
@@ -757,58 +698,39 @@
         Next
         document.getElementById("gemSumResult").innerHTML = "已选 <b>" & gemPicked.Count & "</b> 项（" & strDetail & "），合计：<b>" & FormatNumber(dblSum, 2) & "</b> 万梦幻币"
     End Sub
-    Dim arrHistory, historyCount, lastDesc, lastResult
-    ReDim arrHistory(0)
-    historyCount = 0
-    lastDesc = ""
-    lastResult = ""
+    ' ===================== 定时提醒 =====================
     Dim remindTimerId, remindUiTimerId, remindLastFired, remindHour, remindMinute, remindSecond
     remindTimerId = 0
     remindUiTimerId = 0
     remindHour = -1
-    Function Pad2(n)
-        Pad2 = Right("0" & n, 2)
-    End Function
     Sub FillRemindMinutes
-        FillHourOptions "selRemindHour"
-        FillTimeOptions "selRemindMinute"
-        FillTimeOptions "selRemindSecond"
+        FillTimeOptions "selRemindHour", -1, 23
+        FillTimeOptions "selRemindMinute", 0, 59
+        FillTimeOptions "selRemindSecond", 0, 59
     End Sub
-    Sub FillTimeOptions(strId)
+    Sub FillTimeOptions(strId, first, last)
         Dim i, objSel, objOpt
         Set objSel = document.getElementById(strId)
-        For i = 0 To 59
+        For i = first To last
             Set objOpt = document.createElement("OPTION")
             objSel.options.Add objOpt
-            objOpt.text = Pad2(i)
+            If i = -1 Then objOpt.text = "不设置" Else objOpt.text = Pad2(i)
             objOpt.value = CStr(i)
         Next
     End Sub
-    Sub FillHourOptions(strId)
-        Dim i, objSel, objOpt
-        Set objSel = document.getElementById(strId)
-        Set objOpt = document.createElement("OPTION")
-        objSel.options.Add objOpt
-        objOpt.text = "不设置"
-        objOpt.value = "-1"
-        For i = 0 To 23
-            Set objOpt = document.createElement("OPTION")
-            objSel.options.Add objOpt
-            objOpt.text = Pad2(i)
-            objOpt.value = CStr(i)
+    Sub SetRemindControls(running)
+        Dim id
+        For Each id In Array("btnRemindStart", "btnRemindTest", "selRemindHour", "selRemindMinute", "selRemindSecond")
+            document.getElementById(id).disabled = running
         Next
+        document.getElementById("btnRemindStop").disabled = Not running
     End Sub
     Sub StartRemind
         remindHour = CInt(document.getElementById("selRemindHour").value)
         remindMinute = CInt(document.getElementById("selRemindMinute").value)
         remindSecond = CInt(document.getElementById("selRemindSecond").value)
         remindLastFired = ""
-        document.getElementById("btnRemindStart").disabled = True
-        document.getElementById("btnRemindStop").disabled = False
-        document.getElementById("btnRemindTest").disabled = True
-        document.getElementById("selRemindHour").disabled = True
-        document.getElementById("selRemindMinute").disabled = True
-        document.getElementById("selRemindSecond").disabled = True
+        SetRemindControls True
         StopRemindTimers
         remindTimerId = window.setInterval("CheckRemindTime", 1000, "VBScript")
         remindUiTimerId = window.setInterval("RefreshRemindStatus", 1000, "VBScript")
@@ -817,52 +739,50 @@
     End Sub
     Sub StopRemind
         StopRemindTimers
-        document.getElementById("btnRemindStart").disabled = False
-        document.getElementById("btnRemindStop").disabled = True
-        document.getElementById("btnRemindTest").disabled = False
-        document.getElementById("selRemindHour").disabled = False
-        document.getElementById("selRemindMinute").disabled = False
-        document.getElementById("selRemindSecond").disabled = False
+        SetRemindControls False
         document.getElementById("remindStatus").innerHTML = "已停止"
     End Sub
     Sub StopRemindTimers
-        If remindTimerId <> 0 Then window.clearInterval(remindTimerId) : remindTimerId = 0
-        If remindUiTimerId <> 0 Then window.clearInterval(remindUiTimerId) : remindUiTimerId = 0
+        If remindTimerId <> 0 Then
+            window.clearInterval remindTimerId
+            remindTimerId = 0
+        End If
+        If remindUiTimerId <> 0 Then
+            window.clearInterval remindUiTimerId
+            remindUiTimerId = 0
+        End If
     End Sub
+    Function RemindTarget(dtNow, targetHour, targetMinute, targetSecond)
+        Dim hourValue
+        hourValue = targetHour
+        If hourValue < 0 Then hourValue = Hour(dtNow)
+        RemindTarget = DateSerial(Year(dtNow), Month(dtNow), Day(dtNow)) + TimeSerial(hourValue, targetMinute, targetSecond)
+    End Function
+    Function RemindFireKey(dtNow, targetHour, targetMinute, targetSecond, lastFired)
+        Dim delta, key
+        RemindFireKey = ""
+        delta = DateDiff("s", RemindTarget(dtNow, targetHour, targetMinute, targetSecond), dtNow)
+        If delta < 0 Or delta > 10 Then Exit Function
+        key = CStr(Day(dtNow))
+        If targetHour < 0 Then key = key & "-" & Hour(dtNow)
+        If key <> lastFired Then RemindFireKey = key
+    End Function
     Sub CheckRemindTime
-        Dim dtNow, dtTarget, lngDelta, strKey
-        dtNow = Now
-        If remindHour >= 0 Then
-            dtTarget = DateSerial(Year(dtNow), Month(dtNow), Day(dtNow)) + TimeSerial(remindHour, remindMinute, remindSecond)
-            lngDelta = DateDiff("s", dtTarget, dtNow)
-            If lngDelta >= 0 And lngDelta <= 10 Then
-                strKey = Day(dtNow)
-                If remindLastFired <> strKey Then
-                    remindLastFired = strKey
-                    ShowRemindNotify
-                End If
-            End If
-        Else
-            dtTarget = DateSerial(Year(dtNow), Month(dtNow), Day(dtNow)) + TimeSerial(Hour(dtNow), remindMinute, remindSecond)
-            lngDelta = DateDiff("s", dtTarget, dtNow)
-            If lngDelta >= 0 And lngDelta <= 10 Then
-                strKey = Day(dtNow) & "-" & Hour(dtNow)
-                If remindLastFired <> strKey Then
-                    remindLastFired = strKey
-                    ShowRemindNotify
-                End If
-            End If
+        Dim key
+        key = RemindFireKey(Now, remindHour, remindMinute, remindSecond, remindLastFired)
+        If key <> "" Then
+            remindLastFired = key
+            ShowRemindNotify
         End If
     End Sub
     Sub RefreshRemindStatus
         Dim dtNow, dtNext, lngDiff, strMode
         dtNow = Now
+        dtNext = RemindTarget(dtNow, remindHour, remindMinute, remindSecond)
         If remindHour >= 0 Then
-            dtNext = DateSerial(Year(dtNow), Month(dtNow), Day(dtNow)) + TimeSerial(remindHour, remindMinute, remindSecond)
             If dtNext <= dtNow Then dtNext = DateAdd("d", 1, dtNext)
             strMode = "每天 " & Pad2(remindHour) & ":" & Pad2(remindMinute) & ":" & Pad2(remindSecond)
         Else
-            dtNext = DateSerial(Year(dtNow), Month(dtNow), Day(dtNow)) + TimeSerial(Hour(dtNow), remindMinute, remindSecond)
             If dtNext <= dtNow Then dtNext = DateAdd("h", 1, dtNext)
             strMode = "每小时第 " & Pad2(remindMinute) & " 分 " & Pad2(remindSecond) & " 秒"
         End If
@@ -880,6 +800,147 @@
         strCmd = "powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command """ & strPs & """"
         CreateObject("WScript.Shell").Run strCmd, 0, False
     End Sub
+    ' ===================== 修炼消耗 =====================
+    Dim xiuTypes
+    Set xiuTypes = MakeRecord(Array("attack", "magic", "hunt", "defend", "resist", "pet"), Array(Array("攻击修炼", 3, 4.5), Array("法术修炼", 3, 4.5), Array("猎术修炼", 3, 4.5), Array("防御修炼", 2, 3.5), Array("抗法修炼", 2, 3.5), Array("召唤兽修炼", 0, 0)))
+    Sub CheckEnterXiu
+        If window.event.keyCode = 13 Then CalcXiulian
+    End Sub
+    Function XiuExpForLv(lv)
+        XiuExpForLv = (lv * lv + lv * 3 + 11) * 10
+    End Function
+    Sub CalcXiulian
+        Dim strType, curLv, tgtLv, curExp, tgtExp, jiuPrice, jiuQuality, guoPrice, plan
+        strType = document.getElementById("selXiuType").value
+        If Not ReadInputNumber("txtXiuCurLv", Null, "integer", 25, "请输入当前修炼等级（0-25的整数）！", curLv) Then Exit Sub
+        If Not ReadInputNumber("txtXiuCurExp", 0, "integer", 2147483647, "当前经验必须为非负整数（不填默认按0计算）！", curExp) Then Exit Sub
+        If Not ReadInputNumber("txtXiuTgtLv", Null, "integer", 25, "请输入目标修炼等级（0-25的整数）！", tgtLv) Then Exit Sub
+        If tgtLv < curLv Then
+            MsgBox "目标修炼等级不能低于当前修炼等级！", vbExclamation, "输入错误"
+            document.getElementById("txtXiuTgtLv").focus
+            Exit Sub
+        End If
+        If Not ReadInputNumber("txtXiuTgtExp", 0, "integer", 2147483647, "目标经验必须为非负整数（不填默认按0计算）！", tgtExp) Then Exit Sub
+
+        ' 九转金丹选填项（仅人物修炼）：每颗经验 = 品质×0.5，总品质 = 还需经验×2；填了品质时按颗数向上取整
+        jiuPrice = 0
+        jiuQuality = 0
+        guoPrice = 0
+        If strType = "pet" Then
+            ' 召唤兽修炼：修炼果价格（万/颗，选填），每颗固定 150 点经验
+            If Not ReadInputNumber("txtGuoPrice", 0, "positive", -1, "修炼果价格必须为大于0的数字（不填则不计算总成本）！", guoPrice) Then Exit Sub
+        Else
+            If Not ReadInputNumber("txtJiuPrice", 0, "positive", -1, "九转金丹每品质价格必须为大于0的数字（不填则不计算金丹）！", jiuPrice) Then Exit Sub
+            If Not ReadInputNumber("txtJiuQuality", 0, "positive", -1, "九转金丹品质必须为大于0的数字（不填则不计算金丹）！", jiuQuality) Then Exit Sub
+        End If
+
+        If curLv < 25 And curExp >= XiuExpForLv(curLv + 1) Then
+            MsgBox "当前经验已达到升" & (curLv + 1) & "级所需（" & XiuExpForLv(curLv + 1) & "点），请先调整当前等级！", vbExclamation, "输入错误"
+            Exit Sub
+        End If
+        If tgtLv < 25 And tgtExp >= XiuExpForLv(tgtLv + 1) Then
+            MsgBox "目标经验已达到升" & (tgtLv + 1) & "级所需（" & XiuExpForLv(tgtLv + 1) & "点），请调整目标等级！", vbExclamation, "输入错误"
+            Exit Sub
+        End If
+
+        Set plan = CalculateXiuPlan(strType, curLv, tgtLv, curExp, tgtExp, jiuPrice, jiuQuality, guoPrice)
+        If plan("needExp") < 0 Then
+            MsgBox "当前修炼进度已达到目标！", vbInformation, "提示"
+            Exit Sub
+        End If
+        RenderXiuResult strType, curLv, tgtLv, curExp, tgtExp, jiuPrice, jiuQuality, guoPrice, plan
+    End Sub
+    Function CalculateXiuPlan(kind, curLv, tgtLv, curExp, tgtExp, jiuPrice, jiuQuality, guoPrice)
+        Dim needExp, level, times, info, jiuCount, jiuTotal, guoCount
+        needExp = tgtExp - curExp
+        For level = curLv + 1 To tgtLv
+            needExp = needExp + XiuExpForLv(level)
+        Next
+        times = -Int(-needExp / 10)
+        info = xiuTypes(kind)
+        jiuCount = 0
+        jiuTotal = needExp / XIU_PILL_EXP
+        If jiuQuality > 0 Then
+            jiuCount = -Int(-needExp / (jiuQuality * XIU_PILL_EXP))
+            jiuTotal = jiuCount * jiuQuality
+        End If
+        guoCount = -Int(-needExp / XIU_FRUIT_EXP)
+        Set CalculateXiuPlan = MakeRecord(Array("needExp", "times", "baiHuan", "guoCount", "guoCoin", "coinN", "coinF", "jiuCount", "jiuTotal", "jiuCoin"), Array(needExp, times, -Int(-needExp / XIU_HUNDRED_RING_EXP), guoCount, guoCount * guoPrice, times * info(1), times * info(2), jiuCount, jiuTotal, jiuTotal * jiuPrice / COIN_PER_WAN))
+    End Function
+    Sub RenderXiuResult(strType, curLv, tgtLv, curExp, tgtExp, jiuPrice, jiuQuality, guoPrice, plan)
+        Dim info, strName, needExp, times, needContrib, contribHtml, xiuHtml
+        Dim baiHuan, guoCount, guoCoin, guoStr, coinN, coinF, jiuTotalQ, jiuCount, jiuCoin, jiuHtml
+        info = xiuTypes(strType)
+        strName = info(0)
+        needExp = plan("needExp")
+        times = plan("times")
+
+        needContrib = tgtLv * 150
+        contribHtml = "≥ <b>" & needContrib & "</b> 点"
+        xiuHtml = "<table class=""xiu-table""><tr><th class=""x1"" width=""30%"">项目</th><th class=""x2"">结果</th></tr>"
+        xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">修炼类型</td><td class=""xiu-val"">" & strName & "</td></tr>"
+        xiuHtml = xiuHtml & "<tr class=""alt""><td class=""xiu-item"">修炼进度</td><td class=""xiu-val"">" & curLv & "级（" & curExp & "经验） → " & tgtLv & "级（" & tgtExp & "经验）</td></tr>"
+        If times = 0 Then
+            xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">还需修炼经验</td><td class=""xiu-val""><b>0</b> 点（已达到目标进度，无需修炼）</td></tr>"
+            If strType <> "pet" Then
+                xiuHtml = xiuHtml & "<tr class=""alt""><td class=""xiu-item"">要求帮派总贡献</td><td class=""xiu-val"">" & contribHtml & "（目标等级 " & tgtLv & " × 150）</td></tr>"
+            End If
+        Else
+            xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">还需修炼经验</td><td class=""xiu-val""><b>" & needExp & "</b> 点</td></tr>"
+            If strType = "pet" Then
+                ' 召唤兽修炼：每百环约 760 点经验、每颗修炼果固定 150 点经验，次数与个数均向上取整
+                baiHuan = plan("baiHuan")
+                guoCount = plan("guoCount")
+                xiuHtml = xiuHtml & "<tr class=""alt""><td class=""xiu-item"">召唤兽修炼百环</td><td class=""xiu-val""><b>" & baiHuan & "</b> 次（每百环约 760 点经验）</td></tr>"
+                guoStr = "<b>" & guoCount & "</b> 个（每颗 150 点经验）"
+                If guoPrice > 0 Then
+                    guoCoin = plan("guoCoin")
+                    guoStr = guoStr & "，<b>" & FmtAmount(guoCoin) & "</b> 万梦幻币"
+                End If
+                xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">修炼果</td><td class=""xiu-val"">" & guoStr & "</td></tr>"
+            Else
+                coinN = plan("coinN")
+                coinF = plan("coinF")
+                xiuHtml = xiuHtml & "<tr class=""alt""><td class=""xiu-item"">修炼次数</td><td class=""xiu-val""><b>" & times & "</b> 次（每次提升 10 点经验）</td></tr>"
+                xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">正常模式消耗</td><td class=""xiu-val""><b>" & FmtAmount(coinN) & "</b> 万梦幻币 + <b>" & times * 5 & "</b> 点资材</td></tr>"
+                xiuHtml = xiuHtml & "<tr class=""alt""><td class=""xiu-item"">免资材模式消耗</td><td class=""xiu-val""><b>" & FmtAmount(coinF) & "</b> 万梦幻币（不消耗资材）</td></tr>"
+                ' 九转金丹方案（填了价格或品质时显示；经验 = 品质×0.5，总品质 = 还需经验×2）
+                If jiuPrice > 0 Or jiuQuality > 0 Then
+                    jiuTotalQ = plan("jiuTotal")
+                    jiuCount = plan("jiuCount")
+                    jiuCoin = plan("jiuCoin")
+                    jiuHtml = "<tr><td class=""xiu-item"">九转金丹</td><td class=""xiu-val""><b>" & jiuTotalQ & "</b> 品质"
+                    If jiuQuality > 0 Then jiuHtml = jiuHtml & "（<b>" & jiuCount & "</b> 颗 × " & jiuQuality & " 品）"
+                    If jiuPrice > 0 Then jiuHtml = jiuHtml & "，<b>" & FmtAmount(jiuCoin) & "</b> 万梦幻币"
+                    xiuHtml = xiuHtml & jiuHtml & "</td></tr>"
+                End If
+                xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">要求帮派总贡献</td><td class=""xiu-val"">" & contribHtml & "（目标等级 " & tgtLv & " × 150）</td></tr>"
+            End If
+        End If
+        xiuHtml = xiuHtml & "</table>"
+        document.getElementById("xiuResult").innerHTML = xiuHtml
+    End Sub
+    Sub OnXiuTypeChange
+        Dim isPet
+        isPet = (document.getElementById("selXiuType").value = "pet")
+        If isPet Then
+            document.getElementById("divXiuJiu").style.display = "none"
+            document.getElementById("divXiuGuo").style.display = ""
+        Else
+            document.getElementById("divXiuJiu").style.display = ""
+            document.getElementById("divXiuGuo").style.display = "none"
+        End If
+    End Sub
+    ' ===================== 属性换算：输入、纯计算与展示 =====================
+    Dim arrHistory, historyCount, lastDesc, lastResult
+    ReDim arrHistory(0)
+    historyCount = 0
+    lastDesc = ""
+    Set lastResult = Nothing
+    Dim attrInputs, attrResults, raceCoeffs
+    attrInputs = Array(Array("strength", "txtStr", "力"), Array("magic", "txtMag", "魔"), Array("constitution", "txtCon", "体"), Array("endurance", "txtEnd", "耐"), Array("agility", "txtAgi", "敏"))
+    attrResults = Array(Array("damage", "tdADmg"), Array("magic", "tdAMag"), Array("defense", "tdADef"), Array("hp", "tdAHp"), Array("speed", "tdASpd"))
+    Set raceCoeffs = MakeRecord(Array("human", "immortal", "demon"), Array(Array("人族", 0.67, 1.5, 5), Array("仙族", 0.57, 1.6, 4.5), Array("魔族", 0.77, 1.4, 6)))
     Sub CheckEnterAttr
         If window.event.keyCode = 13 Then CalcAttr
     End Sub
@@ -902,337 +963,1131 @@
         End If
         document.getElementById("divAttrTable").style.display = "none"
     End Sub
-    Sub CheckEnterXiu
-        If window.event.keyCode = 13 Then CalcXiulian
-    End Sub
-    Function XiuExpForLv(lv)
-        XiuExpForLv = (lv * lv + lv * 3 + 11) * 10
-    End Function
-    Sub CalcXiulian
-        Dim strType, strName, strVal
-        Dim curLv, tgtLv, curExp, tgtExp
-        Dim i, needExp, times, perCoin, perCoinFree, coinN, coinF, strN, strF
-        Dim needContrib, contribHtml, xiuHtml
-        Dim jiuPrice, jiuQuality, jiuTotalQ, jiuCount, jiuCoin, jiuCoinStr, jiuHtml
-        Dim guoPrice, baiHuan, guoCount, guoCoin, guoCoinStr, guoStr
-
-        strType = document.getElementById("selXiuType").value
-        strVal = document.getElementById("txtXiuCurLv").value
-        If Not IsNumeric(strVal) Or strVal = "" Then
-            MsgBox "请输入当前修炼等级（0-25的整数）！", vbExclamation, "输入错误"
-            document.getElementById("txtXiuCurLv").focus
-            Exit Sub
-        End If
-        If CDbl(strVal) <> Int(CDbl(strVal)) Or CDbl(strVal) < 0 Or CDbl(strVal) > 25 Then
-            MsgBox "当前修炼等级必须为0-25的整数！", vbExclamation, "输入错误"
-            document.getElementById("txtXiuCurLv").focus
-            Exit Sub
-        End If
-        curLv = CInt(strVal)
-
-        curExp = 0
-        strVal = document.getElementById("txtXiuCurExp").value
-        If strVal <> "" Then
-            If Not IsNumeric(strVal) Then
-                MsgBox "当前经验必须为非负整数（不填默认按0计算）！", vbExclamation, "输入错误"
-                document.getElementById("txtXiuCurExp").focus
-                Exit Sub
-            End If
-            If CDbl(strVal) < 0 Or CDbl(strVal) <> Int(CDbl(strVal)) Then
-                MsgBox "当前经验必须为非负整数（不填默认按0计算）！", vbExclamation, "输入错误"
-                document.getElementById("txtXiuCurExp").focus
-                Exit Sub
-            End If
-            curExp = CLng(strVal)
-        End If
-
-        strVal = document.getElementById("txtXiuTgtLv").value
-        If Not IsNumeric(strVal) Or strVal = "" Then
-            MsgBox "请输入目标修炼等级（0-25的整数）！", vbExclamation, "输入错误"
-            document.getElementById("txtXiuTgtLv").focus
-            Exit Sub
-        End If
-        If CDbl(strVal) <> Int(CDbl(strVal)) Or CDbl(strVal) < 0 Or CDbl(strVal) > 25 Then
-            MsgBox "目标修炼等级必须为0-25的整数！", vbExclamation, "输入错误"
-            document.getElementById("txtXiuTgtLv").focus
-            Exit Sub
-        End If
-        tgtLv = CInt(strVal)
-        If tgtLv < curLv Then
-            MsgBox "目标修炼等级不能低于当前修炼等级！", vbExclamation, "输入错误"
-            document.getElementById("txtXiuTgtLv").focus
-            Exit Sub
-        End If
-
-        tgtExp = 0
-        strVal = document.getElementById("txtXiuTgtExp").value
-        If strVal <> "" Then
-            If Not IsNumeric(strVal) Then
-                MsgBox "目标经验必须为非负整数（不填默认按0计算）！", vbExclamation, "输入错误"
-                document.getElementById("txtXiuTgtExp").focus
-                Exit Sub
-            End If
-            If CDbl(strVal) < 0 Or CDbl(strVal) <> Int(CDbl(strVal)) Then
-                MsgBox "目标经验必须为非负整数（不填默认按0计算）！", vbExclamation, "输入错误"
-                document.getElementById("txtXiuTgtExp").focus
-                Exit Sub
-            End If
-            tgtExp = CLng(strVal)
-        End If
-
-        ' 九转金丹选填项（仅人物修炼）：每颗经验 = 品质×0.5，总品质 = 还需经验×2；填了品质时按颗数向上取整
-        jiuPrice = 0
-        jiuQuality = 0
-        jiuHtml = ""
-        guoPrice = 0
-        If strType = "pet" Then
-            ' 召唤兽修炼：修炼果价格（万/颗，选填），每颗固定 150 点经验
-            strVal = Trim(document.getElementById("txtGuoPrice").value)
-            If strVal <> "" Then
-                If Not IsNumeric(strVal) Then
-                    MsgBox "修炼果价格必须为大于0的数字（不填则不计算总成本）！", vbExclamation, "输入错误"
-                    document.getElementById("txtGuoPrice").focus
-                    Exit Sub
-                End If
-                If CDbl(strVal) <= 0 Then
-                    MsgBox "修炼果价格必须为大于0的数字（不填则不计算总成本）！", vbExclamation, "输入错误"
-                    document.getElementById("txtGuoPrice").focus
-                    Exit Sub
-                End If
-                guoPrice = CDbl(strVal)
-            End If
-        Else
-            strVal = Trim(document.getElementById("txtJiuPrice").value)
-            If strVal <> "" Then
-                If Not IsNumeric(strVal) Then
-                    MsgBox "九转金丹每品质价格必须为大于0的数字（不填则不计算金丹）！", vbExclamation, "输入错误"
-                    document.getElementById("txtJiuPrice").focus
-                    Exit Sub
-                End If
-                If CDbl(strVal) <= 0 Then
-                    MsgBox "九转金丹每品质价格必须为大于0的数字（不填则不计算金丹）！", vbExclamation, "输入错误"
-                    document.getElementById("txtJiuPrice").focus
-                    Exit Sub
-                End If
-                jiuPrice = CDbl(strVal)
-            End If
-            strVal = Trim(document.getElementById("txtJiuQuality").value)
-            If strVal <> "" Then
-                If Not IsNumeric(strVal) Then
-                    MsgBox "九转金丹品质必须为大于0的数字（不填则不计算金丹）！", vbExclamation, "输入错误"
-                    document.getElementById("txtJiuQuality").focus
-                    Exit Sub
-                End If
-                If CDbl(strVal) <= 0 Then
-                    MsgBox "九转金丹品质必须为大于0的数字（不填则不计算金丹）！", vbExclamation, "输入错误"
-                    document.getElementById("txtJiuQuality").focus
-                    Exit Sub
-                End If
-                jiuQuality = CDbl(strVal)
-            End If
-        End If
-
-        If curLv < 25 And curExp >= XiuExpForLv(curLv + 1) Then
-            MsgBox "当前经验已达到升" & (curLv + 1) & "级所需（" & XiuExpForLv(curLv + 1) & "点），请先调整当前等级！", vbExclamation, "输入错误"
-            Exit Sub
-        End If
-        If tgtLv < 25 And tgtExp >= XiuExpForLv(tgtLv + 1) Then
-            MsgBox "目标经验已达到升" & (tgtLv + 1) & "级所需（" & XiuExpForLv(tgtLv + 1) & "点），请调整目标等级！", vbExclamation, "输入错误"
-            Exit Sub
-        End If
-
-        needExp = tgtExp - curExp
-        For i = curLv + 1 To tgtLv
-            needExp = needExp + XiuExpForLv(i)
+    Function ReadAttributes
+        Dim attributes, field, value
+        Set attributes = CreateObject("Scripting.Dictionary")
+        For Each field In attrInputs
+            value = 0
+            If Not TryNumber(document.getElementById(field(1)).value, value) Then value = 0
+            attributes.Add field(0), value
         Next
-        If needExp < 0 Then
-            MsgBox "当前修炼进度已达到目标！", vbInformation, "提示"
-            Exit Sub
-        End If
-
-        times = Int((needExp + 9) / 10)
-
-        Select Case strType
-            Case "attack" : strName = "攻击修炼" : perCoin = 3 : perCoinFree = 4.5
-            Case "magic"  : strName = "法术修炼" : perCoin = 3 : perCoinFree = 4.5
-            Case "hunt"   : strName = "猎术修炼" : perCoin = 3 : perCoinFree = 4.5
-            Case "defend" : strName = "防御修炼" : perCoin = 2 : perCoinFree = 3.5
-            Case "resist" : strName = "抗法修炼" : perCoin = 2 : perCoinFree = 3.5
-            Case "pet"    : strName = "召唤兽修炼" : perCoin = 0 : perCoinFree = 0
-        End Select
-
-        needContrib = tgtLv * 150
-        contribHtml = "≥ <b>" & needContrib & "</b> 点"
-        xiuHtml = "<table class=""xiu-table""><tr><th class=""x1"" width=""30%"">项目</th><th class=""x2"">结果</th></tr>"
-        xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">修炼类型</td><td class=""xiu-val"">" & strName & "</td></tr>"
-        xiuHtml = xiuHtml & "<tr class=""alt""><td class=""xiu-item"">修炼进度</td><td class=""xiu-val"">" & curLv & "级（" & curExp & "经验） → " & tgtLv & "级（" & tgtExp & "经验）</td></tr>"
-        If times = 0 Then
-            xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">还需修炼经验</td><td class=""xiu-val""><b>0</b> 点（已达到目标进度，无需修炼）</td></tr>"
-            If strType <> "pet" Then
-                xiuHtml = xiuHtml & "<tr class=""alt""><td class=""xiu-item"">要求帮派总贡献</td><td class=""xiu-val"">" & contribHtml & "（目标等级 " & tgtLv & " × 150）</td></tr>"
-            End If
+        Set ReadAttributes = attributes
+    End Function
+    Function CalculateAttributes(kind, race, attributes, base, hit)
+        Dim coeffs, strength, magic, constitution, endurance, agility, damage, defense, spirit
+        coeffs = raceCoeffs(race)
+        strength = attributes("strength")
+        magic = attributes("magic")
+        constitution = attributes("constitution")
+        endurance = attributes("endurance")
+        agility = attributes("agility")
+        damage = strength * coeffs(1)
+        defense = endurance * coeffs(2)
+        spirit = strength * 0.4 + magic * 0.7 + endurance * 0.2 + constitution * 0.3
+        If kind = "weapon" Then
+            damage = hit / 3 + (base + strength * coeffs(1))
+            spirit = base / 4 + spirit
         Else
-            xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">还需修炼经验</td><td class=""xiu-val""><b>" & needExp & "</b> 点</td></tr>"
-            If strType = "pet" Then
-                ' 召唤兽修炼：每百环约 760 点经验、每颗修炼果固定 150 点经验，次数与个数均向上取整
-                baiHuan = -Int(-needExp / 760)
-                guoCount = -Int(-needExp / 150)
-                xiuHtml = xiuHtml & "<tr class=""alt""><td class=""xiu-item"">召唤兽修炼百环</td><td class=""xiu-val""><b>" & baiHuan & "</b> 次（每百环约 760 点经验）</td></tr>"
-                guoStr = "<b>" & guoCount & "</b> 个（每颗 150 点经验）"
-                If guoPrice > 0 Then
-                    guoCoin = guoCount * guoPrice
-                    If guoCoin = Int(guoCoin) Then guoCoinStr = FormatNumber(guoCoin, 0) Else guoCoinStr = FormatNumber(guoCoin, 1)
-                    guoStr = guoStr & "，<b>" & guoCoinStr & "</b> 万梦幻币"
-                End If
-                xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">修炼果</td><td class=""xiu-val"">" & guoStr & "</td></tr>"
-            Else
-                coinN = times * perCoin
-                coinF = times * perCoinFree
-                If coinN = Int(coinN) Then strN = FormatNumber(coinN, 0) Else strN = FormatNumber(coinN, 1)
-                If coinF = Int(coinF) Then strF = FormatNumber(coinF, 0) Else strF = FormatNumber(coinF, 1)
-                xiuHtml = xiuHtml & "<tr class=""alt""><td class=""xiu-item"">修炼次数</td><td class=""xiu-val""><b>" & times & "</b> 次（每次提升 10 点经验）</td></tr>"
-                xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">正常模式消耗</td><td class=""xiu-val""><b>" & strN & "</b> 万梦幻币 + <b>" & times * 5 & "</b> 点资材</td></tr>"
-                xiuHtml = xiuHtml & "<tr class=""alt""><td class=""xiu-item"">免资材模式消耗</td><td class=""xiu-val""><b>" & strF & "</b> 万梦幻币（不消耗资材）</td></tr>"
-                ' 九转金丹方案（填了价格或品质时显示；经验 = 品质×0.5，总品质 = 还需经验×2）
-                If jiuPrice > 0 Or jiuQuality > 0 Then
-                    jiuTotalQ = needExp * 2
-                    If jiuQuality > 0 Then
-                        jiuCount = -Int(-needExp / (jiuQuality * 0.5))
-                        jiuTotalQ = jiuCount * jiuQuality
-                    End If
-                    If jiuPrice > 0 Then
-                        jiuCoin = jiuTotalQ * jiuPrice / 10000
-                        If jiuCoin = Int(jiuCoin) Then jiuCoinStr = FormatNumber(jiuCoin, 0) Else jiuCoinStr = FormatNumber(jiuCoin, 1)
-                    End If
-                    If jiuQuality > 0 Then
-                        If jiuPrice > 0 Then
-                            jiuHtml = "<tr><td class=""xiu-item"">九转金丹</td><td class=""xiu-val""><b>" & jiuTotalQ & "</b> 品质（<b>" & jiuCount & "</b> 颗 × " & jiuQuality & " 品），<b>" & jiuCoinStr & "</b> 万梦幻币</td></tr>"
-                        Else
-                            jiuHtml = "<tr><td class=""xiu-item"">九转金丹</td><td class=""xiu-val""><b>" & jiuTotalQ & "</b> 品质（<b>" & jiuCount & "</b> 颗 × " & jiuQuality & " 品）</td></tr>"
-                        End If
-                    Else
-                        jiuHtml = "<tr><td class=""xiu-item"">九转金丹</td><td class=""xiu-val""><b>" & jiuTotalQ & "</b> 品质，<b>" & jiuCoinStr & "</b> 万梦幻币</td></tr>"
-                    End If
-                    xiuHtml = xiuHtml & jiuHtml
-                End If
-                xiuHtml = xiuHtml & "<tr><td class=""xiu-item"">要求帮派总贡献</td><td class=""xiu-val"">" & contribHtml & "（目标等级 " & tgtLv & " × 150）</td></tr>"
-            End If
+            defense = base + defense
         End If
-        xiuHtml = xiuHtml & "</table>"
-        document.getElementById("xiuResult").innerHTML = xiuHtml
-    End Sub
-    Sub OnXiuTypeChange
-        Dim isPet
-        isPet = (document.getElementById("selXiuType").value = "pet")
-        If isPet Then
-            document.getElementById("divXiuJiu").style.display = "none"
-            document.getElementById("divXiuGuo").style.display = ""
-        Else
-            document.getElementById("divXiuJiu").style.display = ""
-            document.getElementById("divXiuGuo").style.display = "none"
-        End If
-    End Sub
+        Set CalculateAttributes = MakeRecord(Array("damage", "magic", "defense", "hp", "speed"), Array(damage, spirit, defense, constitution * coeffs(3), constitution * 0.1 + endurance * 0.1 + strength * 0.1 + agility * 0.7))
+    End Function
     Sub CalcWeapon
-        Dim strRace, strDmg, strHit, dblDmg, dblHit
-        Dim dblStr, dblMag, dblEnd, dblCon, dblAgi
-        Dim dblStrDmgCoeff, dblEndDefCoeff, dblConHpCoeff
-        Dim dblSpirit, dblTotalDmg, dblPhysInit, dblMagicInit, dblDefense, dblHp, dblSpeed
-        strRace = document.getElementById("selRace").value
-        strDmg = document.getElementById("txtWeaponDmg").value
-        If Not IsNumeric(strDmg) Or strDmg = "" Then
-            MsgBox "请输入武器伤害！", vbExclamation, "输入错误"
-            document.getElementById("txtWeaponDmg").focus
-            Exit Sub
-        End If
-        dblDmg = CDbl(strDmg)
-        strHit = document.getElementById("txtWeaponHit").value
-        If Not IsNumeric(strHit) Or strHit = "" Then
-            MsgBox "请输入武器命中！", vbExclamation, "输入错误"
-            document.getElementById("txtWeaponHit").focus
-            Exit Sub
-        End If
-        dblHit = CDbl(strHit)
-        dblStr = 0 : dblMag = 0 : dblEnd = 0 : dblCon = 0 : dblAgi = 0
-        If document.getElementById("txtStr").value <> "" And IsNumeric(document.getElementById("txtStr").value) Then dblStr = CDbl(document.getElementById("txtStr").value)
-        If document.getElementById("txtMag").value <> "" And IsNumeric(document.getElementById("txtMag").value) Then dblMag = CDbl(document.getElementById("txtMag").value)
-        If document.getElementById("txtEnd").value <> "" And IsNumeric(document.getElementById("txtEnd").value) Then dblEnd = CDbl(document.getElementById("txtEnd").value)
-        If document.getElementById("txtCon").value <> "" And IsNumeric(document.getElementById("txtCon").value) Then dblCon = CDbl(document.getElementById("txtCon").value)
-        If document.getElementById("txtAgi").value <> "" And IsNumeric(document.getElementById("txtAgi").value) Then dblAgi = CDbl(document.getElementById("txtAgi").value)
-        Select Case strRace
-            Case "human" : dblStrDmgCoeff = 0.67 : dblEndDefCoeff = 1.5 : dblConHpCoeff = 5
-            Case "immortal" : dblStrDmgCoeff = 0.57 : dblEndDefCoeff = 1.6 : dblConHpCoeff = 4.5
-            Case "demon" : dblStrDmgCoeff = 0.77 : dblEndDefCoeff = 1.4 : dblConHpCoeff = 6
-        End Select
-        dblTotalDmg = dblDmg + dblStr * dblStrDmgCoeff
-        dblSpirit = dblStr * 0.4 + dblMag * 0.7 + dblEnd * 0.2 + dblCon * 0.3
-        dblPhysInit = dblHit / 3 + dblTotalDmg
-        SaveToHistory
-        dblMagicInit = dblDmg / 4 + dblSpirit
-        dblDefense = dblEnd * dblEndDefCoeff
-        dblHp = dblCon * dblConHpCoeff
-        dblSpeed = dblCon * 0.1 + dblEnd * 0.1 + dblStr * 0.1 + dblAgi * 0.7
-        document.getElementById("divAttrTable").style.display = ""
-        document.getElementById("tdADmg").innerText = FormatNumber(dblPhysInit, 2)
-        document.getElementById("tdAMag").innerText = FormatNumber(dblMagicInit, 2)
-        document.getElementById("tdADef").innerText = FormatNumber(dblDefense, 2)
-        document.getElementById("tdAHp").innerText = FormatNumber(dblHp, 2)
-        document.getElementById("tdASpd").innerText = FormatNumber(dblSpeed, 2)
-        Dim rn
-        Select Case strRace : Case "human" : rn = "人族" : Case "immortal" : rn = "仙族" : Case "demon" : rn = "魔族" : Case Else : rn = strRace : End Select
-        lastDesc = "武器 " & rn & " 伤害:" & dblDmg & " 命中:" & dblHit
-        If dblStr <> 0 Then lastDesc = lastDesc & " 力:" & dblStr
-        If dblMag <> 0 Then lastDesc = lastDesc & " 魔:" & dblMag
-        If dblCon <> 0 Then lastDesc = lastDesc & " 体:" & dblCon
-        If dblEnd <> 0 Then lastDesc = lastDesc & " 耐:" & dblEnd
-        If dblAgi <> 0 Then lastDesc = lastDesc & " 敏:" & dblAgi
-        lastResult = "伤害:" & FormatNumber(dblPhysInit, 2) & "  法伤:" & FormatNumber(dblMagicInit, 2) & "  防御:" & FormatNumber(dblDefense, 2) & "  气血:" & FormatNumber(dblHp, 2) & "  速度:" & FormatNumber(dblSpeed, 2)
-        RenderHistory
+        CalculateAttrInput "weapon"
     End Sub
     Sub CalcEquip
-        Dim strRace, dblDef, dblCon, dblEnd, dblStr, dblMag, dblAgi, strVal
-        Dim dblStrDmgCoeff, dblEndDefCoeff, dblConHpCoeff
-        Dim dblDamage, dblSpirit, dblDefense, dblSpeed, dblHp
-        strRace = document.getElementById("selRace").value
-        strVal = document.getElementById("txtEquipDef").value
-        If Not IsNumeric(strVal) Or strVal = "" Then
-            MsgBox "请输入装备防御！", vbExclamation, "输入错误"
-            document.getElementById("txtEquipDef").focus
+        CalculateAttrInput "equip"
+    End Sub
+    Sub CalculateAttrInput(kind)
+        Dim base, hit, race, attributes, result, field, coeffs, description
+        hit = 0
+        If kind = "weapon" Then
+            If Not ReadInputNumber("txtWeaponDmg", Null, "number", -1, "请输入武器伤害！", base) Then Exit Sub
+            If Not ReadInputNumber("txtWeaponHit", Null, "number", -1, "请输入武器命中！", hit) Then Exit Sub
+        Else
+            If Not ReadInputNumber("txtEquipDef", Null, "number", -1, "请输入装备防御！", base) Then Exit Sub
+        End If
+        race = document.getElementById("selRace").value
+        coeffs = raceCoeffs(race)
+        Set attributes = ReadAttributes
+        Set result = CalculateAttributes(kind, race, attributes, base, hit)
+        If kind = "weapon" Then
+            description = "武器 " & coeffs(0) & " 伤害:" & base & " 命中:" & hit
+        Else
+            description = "装备 " & coeffs(0) & " 防御:" & base
+        End If
+        For Each field In attrInputs
+            If attributes(field(0)) <> 0 Then description = description & " " & field(2) & ":" & attributes(field(0))
+        Next
+        SaveToHistory
+        lastDesc = description
+        Set lastResult = result
+        document.getElementById("divAttrTable").style.display = ""
+        For Each field In attrResults
+            document.getElementById(field(1)).innerText = FormatNumber(result(field(0)), 2)
+        Next
+        RenderHistory
+    End Sub
+    Function AttrResultCells(result)
+        Dim field, html
+        html = ""
+        For Each field In attrResults
+            html = html & "<td class=""num"">" & FormatNumber(result(field(0)), 2) & "</td>"
+        Next
+        AttrResultCells = html
+    End Function
+    Sub SaveToHistory
+        Dim idx
+        If lastDesc = "" Then Exit Sub
+        idx = historyCount
+        historyCount = historyCount + 1
+        ReDim Preserve arrHistory(historyCount - 1)
+        arrHistory(idx) = Array(Pad2(Hour(Now)) & ":" & Pad2(Minute(Now)) & ":" & Pad2(Second(Now)), lastDesc, lastResult)
+        lastDesc = ""
+        Set lastResult = Nothing
+        TrimHistory
+    End Sub
+    Sub TrimHistory
+        Dim maxH, removeCount, i
+        maxH = CInt(document.getElementById("selHistoryMax").value)
+        If historyCount <= maxH Then Exit Sub
+        removeCount = historyCount - maxH
+        For i = 0 To historyCount - removeCount - 1
+            arrHistory(i) = arrHistory(i + removeCount)
+        Next
+        historyCount = maxH
+        ReDim Preserve arrHistory(historyCount - 1)
+    End Sub
+    Sub OnChangeHistoryLimit
+        TrimHistory
+        If lastDesc <> "" Or historyCount > 0 Then RenderHistory
+    End Sub
+    Sub RenderHistory
+        Dim html, i, e
+        html = "<table class=""history-table""><tr><th class=""h1"" width=""8%""></th><th class=""h2"" width=""9%"">时间</th><th class=""h3"" width=""28%"">输入参数</th><th class=""h4"">伤害</th><th class=""h5"">法伤</th><th class=""h6"">防御</th><th class=""h7"">气血</th><th class=""h8"">速度</th><th class=""h9"" width=""6%""></th></tr>"
+        If lastDesc <> "" Then
+            html = html & "<tr class=""row-current""><td class=""current-tag"">当前</td><td class=""hist-time"">" & Pad2(Hour(Now)) & ":" & Pad2(Minute(Now)) & ":" & Pad2(Second(Now)) & "</td><td class=""hist-info"">" & lastDesc & "</td>"
+            html = html & AttrResultCells(lastResult)
+            html = html & "<td></td></tr>"
+        End If
+        For i = historyCount - 1 To 0 Step -1
+            e = arrHistory(i)
+            html = html & "<tr><td class=""hist-tag"">历史</td><td class=""hist-time"">" & e(0) & "</td><td class=""hist-info"">" & e(1) & "</td>"
+            html = html & AttrResultCells(e(2))
+            html = html & "<td class=""hist-del""><button class=""hist-del-btn"" onclick=""DeleteHistory " & i & """>删</button></td></tr>"
+        Next
+        html = html & "</table>"
+        document.getElementById("divHistoryTable").innerHTML = html
+        document.getElementById("divHistory").style.display = ""
+    End Sub
+    Sub DeleteHistory(idx)
+        Dim i
+        If idx < 0 Or idx >= historyCount Then Exit Sub
+        For i = idx To historyCount - 2
+            arrHistory(i) = arrHistory(i + 1)
+        Next
+        historyCount = historyCount - 1
+        If historyCount = 0 Then ReDim arrHistory(0) Else ReDim Preserve arrHistory(historyCount - 1)
+        RenderHistory
+    End Sub
+    Sub ClearHistory
+        ReDim arrHistory(0)
+        historyCount = 0
+        document.getElementById("divHistory").style.display = "none"
+        document.getElementById("divHistoryTable").innerHTML = ""
+    End Sub
+    ' ===================== 宠环会话与明细 =====================
+    ' 宠环任务区默认折叠，点击标题行展开/收起（规则同神器攻略）
+    Sub TogglePetSection
+        ToggleSection "petSection", "petToggleHint"
+    End Sub
+    ' 宠环跑环计数：+ 时弹录入框登记本次成本（万梦幻币，非必填按 0），- 撤销该任务最近一次记录（次数-1 并同步扣回其成本）
+    ' “是否计算成本”选“否”时 + 不弹框，直接按 0 成本记账（仅计次数）；- 仍按撤销逻辑（无成本记录时仅减次数）
+    ' 多号统计（1~5 号）：数据全部按号存两维——petCostHist(号,任务) 成本栈、petCounts(号,任务) 次数、petCostTotal(号) 累计成本、
+    ' petDetailList(号) 录入顺序明细（格式 "任务序号:成本" 逗号分隔）；petCurChar 为当前号（0-4），DOM 只展示当前号视图，切号整体换装
+    ' “是否计算成本”全局共享不分号；清零只清当前号；全部号合计为跨号只读汇总
+    Dim petCostHist(4, 12), petCounts(4, 12), petCostTotal(4), petDetailList(4)
+    Dim petCostIdx, petCostSavedScrollTop, petCurChar
+    Dim pcI, petTaskNames
+    petTaskNames = Array("找人", "乐器", "60级装备", "花", "1级家具", "80级装备", "三级药", "2级家具", "烹饪", "非指定变异召唤兽", "70级装备", "指定变异召唤兽", "上交非变异召唤兽")
+    petCostIdx = -1
+    petCurChar = 0
+    ' 历史记录：petDirty 当天有未保存变更（清零/退出时提醒）；petExiting 退出按钮流程中（兜底提醒跳过，避免重复弹窗）；
+    ' petHistData 文件加载的 日期→记录对象数组；petHistDateList 日期索引（日历点击传参用）；petHistYear/Month 当前显示月（-1 未初始化，展开时设为当月）；petIoSavedScrollTop 导入/导出弹窗打开前的滚动位置
+    Dim petDirty, petExiting, petHistYear, petHistMonth, petHistSavedScrollTop, petIoSavedScrollTop
+    Dim petHistDateList(), petHistData
+    Dim petHistSelectedDate
+    petHistSelectedDate = ""
+    Set petHistData = CreateObject("Scripting.Dictionary")
+    petDirty = False
+    petExiting = False
+    petHistYear = -1
+    petHistMonth = -1
+    ReDim petHistDateList(-1)
+    For pcI = 0 To PET_CHAR_COUNT - 1
+        PetResetChar pcI
+    Next
+    Sub PetResetChar(character)
+        Dim task
+        petCostTotal(character) = 0
+        petDetailList(character) = ""
+        For task = 0 To PET_TASK_COUNT - 1
+            petCostHist(character, task) = ""
+            petCounts(character, task) = 0
+        Next
+    End Sub
+    Sub RefreshPetSession
+        Dim task, count
+        For task = 0 To PET_TASK_COUNT - 1
+            Set count = document.getElementById("petCnt" & task)
+            If Not count Is Nothing Then count.innerText = CStr(petCounts(petCurChar, task))
+        Next
+        RefreshPetCostTotal
+        RefreshPetDetail
+    End Sub
+    Sub PetAdd(idx)
+        Dim objSel, lngIdx
+        Set objSel = document.getElementById("selPetCostMode")
+        If Not (objSel Is Nothing) Then
+            If objSel.value = "0" Then
+                lngIdx = CLng(idx)
+                PetRecordCost lngIdx, 0
+                Exit Sub
+            End If
+        End If
+        OpenPetCostDlg idx
+    End Sub
+    Sub PetSub(idx)
+        PetUndoOne idx
+    End Sub
+    ' 号名（1~5 号）
+    Function PetCharName(c)
+        PetCharName = (CLng(c) + 1) & "号"
+    End Function
+    ' 只修改当前号次数；登记或撤销完成全部状态更新后统一刷新视图。
+    Sub PetChange(idx, delta)
+        Dim lngN
+        lngN = petCounts(petCurChar, idx) + CLng(delta)
+        If lngN < 0 Then lngN = 0
+        petCounts(petCurChar, idx) = lngN
+    End Sub
+    ' 切换当前号：页签高亮、次数换装、累计成本与明细重绘（成本弹窗开着时有遮罩挡住页签，无需防护）
+    Sub PetSwitchChar(c)
+        Dim i, objBtn
+        c = CLng(c)
+        If c < 0 Or c >= PET_CHAR_COUNT Then Exit Sub
+        If c = petCurChar Then Exit Sub
+        petCurChar = c
+        For i = 0 To PET_CHAR_COUNT - 1
+            Set objBtn = document.getElementById("petCharBtn" & i)
+            If Not objBtn Is Nothing Then
+                If i = c Then
+                    objBtn.className = "pet-char-btn-on"
+                Else
+                    objBtn.className = "pet-char-btn"
+                End If
+            End If
+        Next
+        RefreshPetSession
+    End Sub
+    ' 撤销最近一次记录（当前号）：次数-1；该任务有成本记录时同步扣回（成本>0 先弹确认框告知金额）
+    Sub PetUndoOne(idx)
+        Dim lngN, dblCost
+        idx = CLng(idx)
+        lngN = petCounts(petCurChar, idx)
+        If lngN <= 0 Then Exit Sub
+        If petCostHist(petCurChar, idx) <> "" Then
+            dblCost = PetCostPeek(idx)
+            If dblCost > 0 Then
+                If MsgBox("将撤销「" & PetCharName(petCurChar) & " · " & PetTaskName(idx) & "」最近一次记录：次数 -1，并从累计成本中扣回 " & PetFmtCost(dblCost) & " 万梦幻币。是否继续？", vbYesNo + vbQuestion, "撤销确认") <> vbYes Then Exit Sub
+            End If
+            petCostTotal(petCurChar) = petCostTotal(petCurChar) - PetCostPop(idx)
+            If petCostTotal(petCurChar) < 0 Then petCostTotal(petCurChar) = 0
+            PetDetailRemoveLast idx
+        End If
+        PetChange idx, -1
+        petDirty = True
+        RefreshPetSession
+    End Sub
+    ' 读取当前号该任务最近一次录入的成本（不出栈）
+    Function PetCostPeek(idx)
+        Dim strS, lngP
+        PetCostPeek = 0
+        strS = petCostHist(petCurChar, idx)
+        If strS = "" Then Exit Function
+        lngP = InStrRev(strS, ",")
+        If lngP = 0 Then
+            PetCostPeek = CDbl(strS)
+        Else
+            PetCostPeek = CDbl(Mid(strS, lngP + 1))
+        End If
+    End Function
+    ' 弹出并返回当前号该任务最近一次录入的成本（从历史中移除）
+    Function PetCostPop(idx)
+        Dim strS, lngP
+        PetCostPop = PetCostPeek(idx)
+        strS = petCostHist(petCurChar, idx)
+        If strS = "" Then Exit Function
+        lngP = InStrRev(strS, ",")
+        If lngP = 0 Then
+            petCostHist(petCurChar, idx) = ""
+        Else
+            petCostHist(petCurChar, idx) = Left(strS, lngP - 1)
+        End If
+    End Function
+    ' 成本格式化：最多保留2位小数，去掉末尾无意义的 0 与小数点
+    Function PetFmtCost(v)
+        PetFmtCost = TrimNumberZeros(FormatNumber(v, 2))
+    End Function
+    ' 成本格式化（无千分位版，专用于历史文件与跨端交换文本）：最多保留2位小数，去掉末尾无意义的 0 与小数点；
+    ' PetFmtCost（FormatNumber 默认带千分位）仅供界面显示，写文件/交换用本函数免得移动版 parseFloat 在逗号截断
+    Function PetFmtCostPlain(v)
+        PetFmtCostPlain = TrimNumberZeros(FormatNumber(v, 2, -1, 0, 0))
+    End Function
+    Function TrimNumberZeros(ByVal strS)
+        If InStr(strS, ".") > 0 Then
+            Do While Right(strS, 1) = "0"
+                strS = Left(strS, Len(strS) - 1)
+            Loop
+            If Right(strS, 1) = "." Then strS = Left(strS, Len(strS) - 1)
+        End If
+        TrimNumberZeros = strS
+    End Function
+    ' 任务名称统一从配置读取，未知任务回退为序号。
+    Function PetTaskName(idx)
+        PetTaskName = "第" & (idx + 1) & "项"
+        If idx >= 0 And idx < PET_TASK_COUNT Then PetTaskName = petTaskNames(idx)
+    End Function
+    ' 三类宠环弹窗共用遮罩、视口定位及滚动恢复；内容和焦点由各入口处理。
+    Sub OpenPetDialog(prefix, ByRef savedScrollTop, alignTall)
+        Dim dialog, overlay, viewHeight
+        savedScrollTop = document.body.scrollTop
+        document.body.style.overflow = "hidden"
+        document.body.scrollTop = savedScrollTop
+        Set dialog = document.getElementById(prefix & "Dialog")
+        Set overlay = document.getElementById(prefix & "Overlay")
+        dialog.style.display = "block"
+        overlay.style.display = "block"
+        overlay.style.pixelWidth = document.body.scrollWidth
+        overlay.style.pixelHeight = document.body.scrollHeight
+        viewHeight = document.body.clientHeight
+        dialog.style.pixelLeft = Int((document.body.clientWidth - dialog.offsetWidth) / 2) + document.body.scrollLeft
+        If alignTall And dialog.offsetHeight > viewHeight Then
+            dialog.style.pixelTop = 8 + document.body.scrollTop
+        Else
+            dialog.style.pixelTop = Int((viewHeight - dialog.offsetHeight) / 2) + document.body.scrollTop
+        End If
+    End Sub
+    Sub ClosePetDialog(prefix, savedScrollTop)
+        document.getElementById(prefix & "Dialog").style.display = "none"
+        document.getElementById(prefix & "Overlay").style.display = "none"
+        document.body.style.overflow = ""
+        document.body.scrollTop = savedScrollTop
+    End Sub
+    Sub OpenPetCostDlg(idx)
+        Dim objInp
+        petCostIdx = CLng(idx)
+        document.getElementById("petCostTitle").innerText = "录入「" & PetCharName(petCurChar) & " · " & PetTaskName(petCostIdx) & "」本次成本"
+        Set objInp = document.getElementById("petCostInput")
+        objInp.value = ""
+        OpenPetDialog "petCost", petCostSavedScrollTop, False
+        objInp.focus
+    End Sub
+    Sub PetCostKeyDown
+        If window.event.keyCode = 13 Then PetCostOk
+    End Sub
+    ' 确定：留空按 0 计入；非法输入保持弹窗待修正；成功则次数+1 并累计成本
+    Sub PetCostOk
+        Dim strVal, dblCost, message
+        If petCostIdx < 0 Then Exit Sub
+        strVal = Trim(document.getElementById("petCostInput").value)
+        dblCost = 0
+        If strVal <> "" Then
+            If Not TryNumber(strVal, dblCost) Then
+                MsgBox "成本必须为数字（单位：万梦幻币），不填按 0 计入！", vbExclamation, "输入错误"
+                document.getElementById("petCostInput").focus
+                Exit Sub
+            End If
+            If dblCost < 0 Then
+                MsgBox "成本不能为负数（单位：万梦幻币），不填按 0 计入！", vbExclamation, "输入错误"
+                document.getElementById("petCostInput").focus
+                Exit Sub
+            End If
+            On Error Resume Next
+            Err.Clear
+            dblCost = Int(dblCost * 100 + 0.5) / 100
+            message = Err.Description
+            Err.Clear
+            On Error GoTo 0
+            If message <> "" Then
+                MsgBox "成本超出可保存范围，请减小金额！", vbExclamation, "输入错误"
+                Exit Sub
+            End If
+        End If
+        PetRecordCost petCostIdx, dblCost
+        ClosePetCostDlg
+    End Sub
+    ' 登记一笔成本（可为 0）并计数 +1（当前号）：成本入栈、明细追加、累计与表格同步刷新
+    Sub PetRecordCost(ByVal idx, ByVal dblCost)
+        idx = CLng(idx)
+        dblCost = CDbl(dblCost)
+        If petCostHist(petCurChar, idx) = "" Then
+            petCostHist(petCurChar, idx) = CStr(dblCost)
+        Else
+            petCostHist(petCurChar, idx) = petCostHist(petCurChar, idx) & "," & CStr(dblCost)
+        End If
+        If petDetailList(petCurChar) = "" Then
+            petDetailList(petCurChar) = idx & ":" & CStr(dblCost)
+        Else
+            petDetailList(petCurChar) = petDetailList(petCurChar) & "," & idx & ":" & CStr(dblCost)
+        End If
+        petCostTotal(petCurChar) = petCostTotal(petCurChar) + dblCost
+        PetChange idx, 1
+        petDirty = True
+        RefreshPetSession
+    End Sub
+    Sub PetCostCancel
+        ClosePetCostDlg
+    End Sub
+    Sub ClosePetCostDlg
+        ClosePetDialog "petCost", petCostSavedScrollTop
+        petCostIdx = -1
+    End Sub
+    ' 刷新累计成本：当前号 + 全部号合计两个数字
+    Sub RefreshPetCostTotal
+        Dim n, dblAll
+        dblAll = 0
+        For n = 0 To PET_CHAR_COUNT - 1
+            dblAll = dblAll + petCostTotal(n)
+        Next
+        document.getElementById("petTotalCost").innerText = PetFmtCost(petCostTotal(petCurChar))
+        document.getElementById("petAllCost").innerText = PetFmtCost(dblAll)
+    End Sub
+    ' 展示/收起累计成本明细（展开时先刷新内容）
+    Sub TogglePetDetail
+        If document.getElementById("petDetailSection").style.display = "none" Then RefreshPetDetail
+        ToggleSection "petDetailSection", "petDetailToggleHint"
+    End Sub
+    ' 积分奖励矩阵表与最终得分表默认折叠，点击标题行展开/收起（纯静态表，无内容刷新）
+    Sub TogglePetReward
+        ToggleSection "petRewardSection", "petRewardToggleHint"
+    End Sub
+    Sub TogglePetScore
+        ToggleSection "petScoreSection", "petScoreToggleHint"
+    End Sub
+    ' 构建只读展示数据，供会话与历史共用汇总和逐笔明细表。
+    Function PetViewRecord(record)
+        Dim sums, item, details
+        Set sums = CreateObject("Scripting.Dictionary")
+        details = record("details")
+        For Each item In details
+            If Not sums.Exists(item(0)) Then sums.Add item(0), 0
+            sums(item(0)) = sums(item(0)) + item(1)
+        Next
+        Set PetViewRecord = MakeRecord(Array("c", "counts", "details", "sums"), Array(record("c"), record("counts"), details, sums))
+    End Function
+    Function PetSessionViews
+        Dim records, counts, character, task, record
+        records = Array()
+        For character = 0 To PET_CHAR_COUNT - 1
+            ReDim counts(12)
+            For task = 0 To PET_TASK_COUNT - 1
+                counts(task) = petCounts(character, task)
+            Next
+            Set record = MakeRecord(Array("c", "counts", "details"), Array(character, counts, PetParseDetails(petDetailList(character))))
+            AppendValue records, PetViewRecord(record)
+        Next
+        PetSessionViews = records
+    End Function
+    ' 从当前号全局明细中移除指定任务最近一笔（与该号成本栈弹出保持同步）
+    Sub PetDetailRemoveLast(idx)
+        Dim arrAll, arrItem, n, lngFound, strOut
+        If petDetailList(petCurChar) = "" Then Exit Sub
+        arrAll = Split(petDetailList(petCurChar), ",")
+        lngFound = -1
+        For n = UBound(arrAll) To 0 Step -1
+            arrItem = Split(arrAll(n), ":")
+            If CLng(arrItem(0)) = CLng(idx) Then
+                lngFound = n
+                Exit For
+            End If
+        Next
+        If lngFound < 0 Then Exit Sub
+        strOut = ""
+        For n = 0 To UBound(arrAll)
+            If n <> lngFound Then
+                If strOut = "" Then
+                    strOut = arrAll(n)
+                Else
+                    strOut = strOut & "," & arrAll(n)
+                End If
+            End If
+        Next
+        petDetailList(petCurChar) = strOut
+    End Sub
+    ' 重绘成本汇总与明细表：汇总按号分组（每号小节+小计，末行全部号合计）；明细只显示当前号（最新在上，序号为录入顺序）
+    Sub RefreshPetDetail
+        Dim objWrap
+        Set objWrap = document.getElementById("petDetailSection")
+        If objWrap Is Nothing Then Exit Sub
+        objWrap.innerHTML = PetRenderTables(PetSessionViews, petCurChar)
+    End Sub
+    ' 清零当前号的次数与累计成本（有未保存变更先提醒保存；有记录时再确认；其他号不受影响）
+    Sub PetCountReset
+        Dim i, blnHasData, r
+        ' 清零前保存提醒：当天有未保存变更时先问（是=先保存再清零 / 否=不保存直接清零 / 取消=不清零）
+        If petDirty Then
+            r = MsgBox("当天宠环成本记录有未保存的变更，清零前先保存吗？" & vbCrLf & vbCrLf & "【是】先保存再清零    【否】不保存直接清零    【取消】不清零", vbYesNoCancel + vbQuestion, "保存提醒")
+            If r = vbCancel Then Exit Sub
+            If r = vbYes Then
+                ' 保存失败（已弹提示）且当天确有数据：不清零；当天无可保存数据：继续清零
+                If Not PetSaveBeforeAction Then Exit Sub
+            End If
+        End If
+        blnHasData = False
+        For i = 0 To PET_TASK_COUNT - 1
+            If petCounts(petCurChar, i) > 0 Then blnHasData = True
+        Next
+        If blnHasData Or petCostTotal(petCurChar) > 0 Then
+            If MsgBox("将清空 " & PetCharName(petCurChar) & " 的全部次数与累计成本（当前 " & PetFmtCost(petCostTotal(petCurChar)) & " 万梦幻币），其他号不受影响。是否继续？", vbYesNo + vbQuestion, "清零确认") <> vbYes Then Exit Sub
+        End If
+        PetResetChar petCurChar
+        petDirty = True
+        RefreshPetSession
+    End Sub
+    ' ===================== 宠环成本历史记录（文件按行存储：日期|号|次数CSV|明细CSV|累计成本，同一天多次保存覆盖当天） =====================
+    ' 行格式即双端交换格式：与移动版“历史记录导入/导出”通用；total 一律无千分位（见 PetFmtCostPlain），跨端解析不被逗号截断
+    ' 当天日期字符串（yyyy-mm-dd）
+    Function PetTodayStr
+        PetTodayStr = Year(Date) & "-" & Right("0" & Month(Date), 2) & "-" & Right("0" & Day(Date), 2)
+    End Function
+    ' 历史记录文件路径（与工具箱同目录，内容纯 ASCII）
+    Function PetHistFile
+        Dim fso
+        Set fso = CreateObject("Scripting.FileSystemObject")
+        PetHistFile = fso.BuildPath(fso.GetParentFolderName(window.location.pathname), "pet_cost_history.txt")
+    End Function
+    ' 读取历史文件全部行（文件不存在返回空数组，调用方过滤空行）
+    Function PetReadHistLines
+        Dim fso, f, strAll, message
+        strAll = ""
+        Set f = Nothing
+        On Error Resume Next
+        Err.Clear
+        Set fso = CreateObject("Scripting.FileSystemObject")
+        If fso.FileExists(PetHistFile) Then
+            Set f = fso.OpenTextFile(PetHistFile, 1)
+            ' 清空或删除最后一天后文件为零字节，直接 ReadAll 会触发错误 62（输入超出了文件尾）。
+            If Err.Number = 0 Then
+                If Not f.AtEndOfStream Then strAll = f.ReadAll
+            End If
+        End If
+        message = Err.Description
+        Err.Clear
+        If Not f Is Nothing Then f.Close
+        If message = "" Then message = Err.Description
+        Err.Clear
+        On Error GoTo 0
+        If message <> "" Then Err.Raise 5, "PetReadHistLines", message
+        If strAll = "" Then
+            PetReadHistLines = Array()
+        Else
+            PetReadHistLines = Split(strAll, vbCrLf)
+        End If
+    End Function
+    ' 存储结果显式区分成功、无数据、错误及并发变更；提示仅由事件入口负责。
+    Function PetResult(status, data, raw, message)
+        Set PetResult = MakeRecord(Array("status", "data", "raw", "error"), Array(status, data, raw, message))
+    End Function
+    Function TextMatches(text, pattern)
+        Dim regex
+        Set regex = New RegExp
+        regex.Pattern = pattern
+        regex.IgnoreCase = True
+        TextMatches = regex.Test(CStr(text))
+    End Function
+    Function PetInteger(text, maximum)
+        Dim number
+        PetInteger = False
+        If Not TextMatches(text, "^\d+$") Then Exit Function
+        If Not TryNumber(text, number) Then Exit Function
+        PetInteger = (number <= maximum)
+    End Function
+    Function PetNumber(text, ByRef number)
+        PetNumber = False
+        If Not TextMatches(Trim(text), "^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$") Then Exit Function
+        PetNumber = TryNumber(text, number)
+    End Function
+    Sub AppendValue(ByRef values, value)
+        ReDim Preserve values(UBound(values) + 1)
+        If IsObject(value) Then
+            Set values(UBound(values)) = value
+        Else
+            values(UBound(values)) = value
+        End If
+    End Sub
+    ' 交换行日期字段校验：先检查结构和范围，再验证日历日期，拒绝 DateSerial 自动归一化。
+    Function PetValidDate(s)
+        Dim yearValue, monthValue, dayValue, dt
+        PetValidDate = False
+        If Not TextMatches(s, "^\d{4}-\d{2}-\d{2}$") Then Exit Function
+        yearValue = CInt(Left(s, 4))
+        monthValue = CInt(Mid(s, 6, 2))
+        dayValue = CInt(Right(s, 2))
+        If yearValue < 100 Or monthValue < 1 Or monthValue > 12 Or dayValue < 1 Or dayValue > 31 Then Exit Function
+        On Error Resume Next
+        Err.Clear
+        dt = DateSerial(yearValue, monthValue, dayValue)
+        If Err.Number = 0 Then PetValidDate = (Year(dt) = yearValue And Month(dt) = monthValue And Day(dt) = dayValue)
+        Err.Clear
+        On Error GoTo 0
+    End Function
+    Function PetParseDetails(text)
+        Dim items, fields, item, amount, details
+        details = Array()
+        If text <> "" Then
+            items = Split(text, ",")
+            For Each item In items
+                fields = Split(item, ":")
+                If UBound(fields) <> 1 Then Err.Raise 5, , "明细须为“任务序号:成本”格式。"
+                If Not PetInteger(fields(0), PET_TASK_COUNT - 1) Then Err.Raise 5, , "明细任务序号须为 0~12。"
+                If Not PetNumber(fields(1), amount) Then Err.Raise 5, , "明细成本须为完整数字。"
+                AppendValue details, Array(CLng(fields(0)), amount)
+            Next
+        End If
+        PetParseDetails = details
+    End Function
+    Function PetParseLine(line, normalizeTotal)
+        Dim fields, counts, i, details, total
+        fields = Split(line, "|")
+        If UBound(fields) <> 4 Then Err.Raise 5, , "须有 5 个竖线分隔的字段。"
+        If Not PetValidDate(fields(0)) Then Err.Raise 5, , "日期须为真实的 yyyy-mm-dd 日期。"
+        If Not PetInteger(fields(1), PET_CHAR_COUNT - 1) Then Err.Raise 5, , "号字段须为 0~4。"
+        counts = Split(fields(2), ",")
+        If UBound(counts) <> PET_TASK_COUNT - 1 Then Err.Raise 5, , "次数字段须为 13 项。"
+        For i = 0 To UBound(counts)
+            If Not PetInteger(counts(i), 2147483647) Then Err.Raise 5, , "次数须为 0~2147483647 的整数。"
+            counts(i) = CDbl(counts(i))
+        Next
+        details = PetParseDetails(fields(3))
+        If Not PetNumber(Replace(fields(4), ",", ""), total) Then Err.Raise 5, , "累计成本须为完整数字。"
+        If normalizeTotal Then line = fields(0) & "|" & fields(1) & "|" & fields(2) & "|" & fields(3) & "|" & PetFmtCostPlain(total)
+        Set PetParseLine = MakeRecord(Array("date", "c", "counts", "detail", "details", "total", "line"), Array(fields(0), CLng(fields(1)), counts, fields(3), details, total, line))
+    End Function
+    Function PetParseHistText(text, normalizeTotal)
+        Dim lines, line, history, records, record, count, message, result
+        Set history = CreateObject("Scripting.Dictionary")
+        lines = Split(Replace(Replace(text, vbCrLf, vbLf), vbCr, vbLf), vbLf)
+        count = 0
+        For Each line In lines
+            line = Trim(line)
+            If line <> "" Then
+                count = count + 1
+                On Error Resume Next
+                Err.Clear
+                Set record = PetParseLine(line, normalizeTotal)
+                message = Err.Description
+                Err.Clear
+                On Error GoTo 0
+                If message <> "" Then
+                    Set PetParseHistText = PetResult("error", Nothing, text, "第 " & count & " 行：" & message)
+                    Exit Function
+                End If
+                records = Array()
+                If history.Exists(record("date")) Then records = history(record("date"))
+                AppendValue records, record
+                history(record("date")) = records
+            End If
+        Next
+        Set result = PetResult("ok", history, text, "")
+        If count = 0 Then result("status") = "empty"
+        result.Add "count", count
+        result.Add "days", history.Count
+        Set PetParseHistText = result
+    End Function
+    Function PetReadHistory
+        Dim lines, message
+        On Error Resume Next
+        Err.Clear
+        lines = PetReadHistLines
+        message = Err.Description
+        Err.Clear
+        On Error GoTo 0
+        If message <> "" Then
+            Set PetReadHistory = PetResult("error", Nothing, "", message)
+        Else
+            Set PetReadHistory = PetParseHistText(Join(lines, vbCrLf), False)
+        End If
+    End Function
+    Function PetMergeHistory(history, incoming)
+        Dim merged, day
+        Set merged = CreateObject("Scripting.Dictionary")
+        For Each day In history.Keys
+            If Not incoming.Exists(day) Then merged.Add day, history(day)
+        Next
+        For Each day In incoming.Keys
+            merged.Add day, incoming(day)
+        Next
+        Set PetMergeHistory = merged
+    End Function
+    Function PetHistoryText(history)
+        Dim day, record, records, text
+        text = ""
+        For Each day In history.Keys
+            records = history(day)
+            For Each record In records
+                text = text & record("line") & vbCrLf
+            Next
+        Next
+        PetHistoryText = text
+    End Function
+    Function PetWriteHistory(history, expectedRaw)
+        Dim check, fso, stream, message, text
+        Set check = PetReadHistory
+        If check("status") = "error" Then
+            Set PetWriteHistory = check
+            Exit Function
+        End If
+        If check("raw") <> expectedRaw Then
+            Set PetWriteHistory = PetResult("changed", Nothing, expectedRaw, "确认期间历史记录发生变化，已取消操作，请重新查看。")
+            Exit Function
+        End If
+        text = PetHistoryText(history)
+        Set stream = Nothing
+        On Error Resume Next
+        Err.Clear
+        Set fso = CreateObject("Scripting.FileSystemObject")
+        Set stream = fso.CreateTextFile(PetHistFile, True)
+        If Err.Number = 0 Then stream.Write text
+        message = Err.Description
+        Err.Clear
+        If Not stream Is Nothing Then stream.Close
+        If message = "" Then message = Err.Description
+        Err.Clear
+        On Error GoTo 0
+        If message = "" Then
+            Set PetWriteHistory = PetResult("ok", history, text, "")
+        Else
+            Set PetWriteHistory = PetResult("error", Nothing, expectedRaw, message)
+        End If
+    End Function
+    ' 组装当天全部有数据号的记录行（无数据返回空数组）
+    Function PetBuildTodayLines
+        Dim d, i, n, strCounts, blnHas, arrLines
+        d = PetTodayStr
+        ReDim arrLines(-1)
+        For i = 0 To PET_CHAR_COUNT - 1
+            blnHas = False
+            strCounts = ""
+            For n = 0 To PET_TASK_COUNT - 1
+                If n > 0 Then strCounts = strCounts & ","
+                strCounts = strCounts & CStr(petCounts(i, n))
+                If petCounts(i, n) > 0 Or petCostHist(i, n) <> "" Then blnHas = True
+            Next
+            If blnHas Then
+                ReDim Preserve arrLines(UBound(arrLines) + 1)
+                arrLines(UBound(arrLines)) = d & "|" & i & "|" & strCounts & "|" & petDetailList(i) & "|" & PetFmtCostPlain(petCostTotal(i))
+            End If
+        Next
+        PetBuildTodayLines = arrLines
+    End Function
+    ' 保存当天快照，返回 status/data/raw/error；当天无数据不写文件，仅成功写入才清除 petDirty。
+    Function PetSaveHistoryCore
+        Dim incoming, loaded, merged, result
+        Set incoming = PetParseHistText(Join(PetBuildTodayLines, vbCrLf), True)
+        If incoming("status") <> "ok" Then
+            Set PetSaveHistoryCore = incoming
+            Exit Function
+        End If
+        Set loaded = PetReadHistory
+        If loaded("status") = "error" Then
+            Set PetSaveHistoryCore = loaded
+            Exit Function
+        End If
+        Set merged = PetMergeHistory(loaded("data"), incoming("data"))
+        Set result = PetWriteHistory(merged, loaded("raw"))
+        If result("status") = "ok" Then petDirty = False
+        Set PetSaveHistoryCore = result
+    End Function
+    Function PetSaveBeforeAction
+        Dim result
+        Set result = PetSaveHistoryCore
+        PetSaveBeforeAction = (result("status") = "ok" Or result("status") = "empty")
+        If Not PetSaveBeforeAction Then MsgBox "保存失败：" & result("error"), vbExclamation, "保存失败"
+    End Function
+    ' “保存当天记录”按钮：保存并提示（历史区展开时同步刷新日历）
+    Sub PetSaveHistory
+        Dim result
+        Set result = PetSaveHistoryCore
+        If result("status") = "empty" Then
+            MsgBox "当天暂无可保存的宠环成本记录。", vbInformation, "保存当天记录"
             Exit Sub
         End If
-        dblDef = CDbl(strVal)
-        dblCon = 0 : dblEnd = 0 : dblStr = 0 : dblMag = 0 : dblAgi = 0
-        If document.getElementById("txtCon").value <> "" And IsNumeric(document.getElementById("txtCon").value) Then dblCon = CDbl(document.getElementById("txtCon").value)
-        If document.getElementById("txtEnd").value <> "" And IsNumeric(document.getElementById("txtEnd").value) Then dblEnd = CDbl(document.getElementById("txtEnd").value)
-        If document.getElementById("txtStr").value <> "" And IsNumeric(document.getElementById("txtStr").value) Then dblStr = CDbl(document.getElementById("txtStr").value)
-        If document.getElementById("txtMag").value <> "" And IsNumeric(document.getElementById("txtMag").value) Then dblMag = CDbl(document.getElementById("txtMag").value)
-        If document.getElementById("txtAgi").value <> "" And IsNumeric(document.getElementById("txtAgi").value) Then dblAgi = CDbl(document.getElementById("txtAgi").value)
-        Select Case strRace
-            Case "human" : dblStrDmgCoeff = 0.67 : dblEndDefCoeff = 1.5 : dblConHpCoeff = 5
-            Case "immortal" : dblStrDmgCoeff = 0.57 : dblEndDefCoeff = 1.6 : dblConHpCoeff = 4.5
-            Case "demon" : dblStrDmgCoeff = 0.77 : dblEndDefCoeff = 1.4 : dblConHpCoeff = 6
-        End Select
-        dblDamage = dblStr * dblStrDmgCoeff
-        dblSpirit = dblStr * 0.4 + dblMag * 0.7 + dblEnd * 0.2 + dblCon * 0.3
-        SaveToHistory
-        dblDefense = dblDef + dblEnd * dblEndDefCoeff
-        dblHp = dblCon * dblConHpCoeff
-        dblSpeed = dblCon * 0.1 + dblEnd * 0.1 + dblStr * 0.1 + dblAgi * 0.7
-        document.getElementById("divAttrTable").style.display = ""
-        document.getElementById("tdADmg").innerText = FormatNumber(dblDamage, 2)
-        document.getElementById("tdAMag").innerText = FormatNumber(dblSpirit, 2)
-        document.getElementById("tdADef").innerText = FormatNumber(dblDefense, 2)
-        document.getElementById("tdAHp").innerText = FormatNumber(dblHp, 2)
-        document.getElementById("tdASpd").innerText = FormatNumber(dblSpeed, 2)
-        Dim rn2
-        Select Case strRace : Case "human" : rn2 = "人族" : Case "immortal" : rn2 = "仙族" : Case "demon" : rn2 = "魔族" : Case Else : rn2 = strRace : End Select
-        lastDesc = "装备 " & rn2 & " 防御:" & dblDef
-        If dblStr <> 0 Then lastDesc = lastDesc & " 力:" & dblStr
-        If dblMag <> 0 Then lastDesc = lastDesc & " 魔:" & dblMag
-        If dblCon <> 0 Then lastDesc = lastDesc & " 体:" & dblCon
-        If dblEnd <> 0 Then lastDesc = lastDesc & " 耐:" & dblEnd
-        If dblAgi <> 0 Then lastDesc = lastDesc & " 敏:" & dblAgi
-        lastResult = "伤害:" & FormatNumber(dblDamage, 2) & "  法伤:" & FormatNumber(dblSpirit, 2) & "  防御:" & FormatNumber(dblDefense, 2) & "  气血:" & FormatNumber(dblHp, 2) & "  速度:" & FormatNumber(dblSpeed, 2)
-        RenderHistory
+        If result("status") <> "ok" Then
+            MsgBox "保存失败：" & result("error"), vbExclamation, "保存失败"
+            Exit Sub
+        End If
+        MsgBox "已保存 " & PetTodayStr & " 的宠环成本记录（可在“历史记录查询”中查看）。", vbInformation, "保存成功"
+        If document.getElementById("petHistSection").style.display <> "none" Then RefreshPetHist
+    End Sub
+    ' 加载历史文件到 petHistData（日期 → 该日记录对象数组），失败明确返回 False。
+    Function PetLoadHist
+        Dim result
+        Set result = PetReadHistory
+        PetLoadHist = False
+        If result("status") = "error" Then
+            MsgBox "读取历史记录失败：" & result("error"), vbExclamation, "历史记录"
+            Exit Function
+        End If
+        Set petHistData = result("data")
+        PetLoadHist = True
+    End Function
+    ' 日期数组升序（插入排序，量小）
+    Sub PetSortDates(arr)
+        Dim i, j, t
+        For i = 1 To UBound(arr)
+            t = arr(i)
+            j = i - 1
+            Do While j >= 0
+                If arr(j) > t Then
+                    arr(j + 1) = arr(j)
+                    j = j - 1
+                Else
+                    Exit Do
+                End If
+            Loop
+            arr(j + 1) = t
+        Next
+    End Sub
+    ' 展开/收起历史记录查询（展开时重读文件渲染日历）
+    Sub TogglePetHist
+        If document.getElementById("petHistSection").style.display = "none" Then RefreshPetHist
+        ToggleSection "petHistSection", "petHistToggleHint"
+    End Sub
+    ' 渲染日历：周日起头；有记录日期紫底白字可点（传日期索引规避字符串引号问题）；今天紫字
+    Sub RefreshPetHist
+        Dim objSec, n, strH, wd, days, d, cIdx, strDate, arrKeys, strToday
+        Set objSec = document.getElementById("petHistSection")
+        If objSec Is Nothing Then Exit Sub
+        If Not PetLoadHist Then
+            objSec.innerText = "历史记录读取失败，请检查文件后重试。"
+            Exit Sub
+        End If
+        If petHistYear < 0 Then
+            petHistYear = Year(Date)
+            petHistMonth = Month(Date)
+        End If
+        arrKeys = petHistData.Keys
+        PetSortDates arrKeys
+        ReDim petHistDateList(UBound(arrKeys))
+        For n = 0 To UBound(arrKeys)
+            petHistDateList(n) = arrKeys(n)
+        Next
+        strToday = PetTodayStr
+        strH = "<div style=""margin-top: 6px;""><button class=""pet-char-btn"" style=""width: 26px;"" onclick=""PetHistPrevMonth"">&lt;</button><b style=""margin: 0 10px; font-size: 14px;"">" & petHistYear & "年" & petHistMonth & "月</b><button class=""pet-char-btn"" style=""width: 26px;"" onclick=""PetHistNextMonth"">&gt;</button><span class=""tip"" style=""margin-left: 8px;"">高亮日期有记录，点击查看</span></div>"
+        strH = strH & "<table class=""pet-hist-cal""><tr><th width=""14%"">日</th><th width=""14%"">一</th><th width=""14%"">二</th><th width=""14%"">三</th><th width=""15%"">四</th><th width=""14%"">五</th><th width=""15%"">六</th></tr>"
+        wd = Weekday(DateSerial(petHistYear, petHistMonth, 1))
+        days = Day(DateSerial(petHistYear, petHistMonth + 1, 0))
+        d = 1 - (wd - 1)
+        Do While d <= days
+            strH = strH & "<tr>"
+            For cIdx = 0 To 6
+                If d >= 1 And d <= days Then
+                    strDate = petHistYear & "-" & Right("0" & petHistMonth, 2) & "-" & Right("0" & d, 2)
+                    If petHistData.Exists(strDate) Then
+                        strH = strH & "<td class=""pet-hist-day pet-hist-has"" onclick=""PetShowHist " & PetDateIndex(strDate) & """>" & d & "</td>"
+                    ElseIf strDate = strToday Then
+                        strH = strH & "<td class=""pet-hist-day pet-hist-today"">" & d & "</td>"
+                    Else
+                        strH = strH & "<td class=""pet-hist-day"">" & d & "</td>"
+                    End If
+                Else
+                    strH = strH & "<td class=""pet-hist-day""></td>"
+                End If
+                d = d + 1
+            Next
+            strH = strH & "</tr>"
+        Loop
+        strH = strH & "</table>"
+        objSec.innerHTML = strH
+    End Sub
+    ' 日期在 petHistDateList 中的下标（-1 未找到）
+    Function PetDateIndex(strDate)
+        Dim n
+        PetDateIndex = -1
+        For n = 0 To UBound(petHistDateList)
+            If petHistDateList(n) = strDate Then
+                PetDateIndex = n
+                Exit Function
+            End If
+        Next
+    End Function
+    Sub PetHistPrevMonth
+        petHistMonth = petHistMonth - 1
+        If petHistMonth = 0 Then
+            petHistMonth = 12
+            petHistYear = petHistYear - 1
+        End If
+        RefreshPetHist
+    End Sub
+    Sub PetHistNextMonth
+        petHistMonth = petHistMonth + 1
+        If petHistMonth = 13 Then
+            petHistMonth = 1
+            petHistYear = petHistYear + 1
+        End If
+        RefreshPetHist
+    End Sub
+    ' 点击日历日期：弹窗展示该日保存的成本汇总（按号分组）与逐笔明细（最新在上）
+    Sub PetShowHist(idx)
+        Dim strDate, records, views, record
+        idx = CLng(idx)
+        If idx < 0 Or idx > UBound(petHistDateList) Then Exit Sub
+        strDate = petHistDateList(idx)
+        If Not PetLoadHist Then Exit Sub
+        If Not petHistData.Exists(strDate) Then Exit Sub
+        records = petHistData(strDate)
+        views = Array()
+        For Each record In records
+            AppendValue views, PetViewRecord(record)
+        Next
+        OpenPetHistDlg strDate, PetRenderTables(views, -1)
+    End Sub
+    Function PetRenderTables(records, detailCharacter)
+        Dim n, m, record, arrCnt, arrDet, arrItem, strH, strCls, c, detailTitle
+        Dim lngRows, lngCnt, dblSum, lngAllCnt, dblAllSum, blnAny, blnAnyDet, rn, taskSum, t
+        strH = "<div class=""pet-block-title"""
+        If detailCharacter = -1 Then strH = strH & " style=""margin-top: 0;"""
+        strH = strH & ">【成本汇总】</div>"
+        strH = strH & "<table><tr><th width=""55%"">任务内容</th><th width=""20%"">次数</th><th width=""25%"">合计成本（万）</th></tr>"
+        lngAllCnt = 0
+        dblAllSum = 0
+        blnAny = False
+        For n = 0 To UBound(records)
+            Set record = records(n)
+            c = record("c")
+            arrCnt = record("counts")
+            Set taskSum = record("sums")
+            lngRows = 0
+            lngCnt = 0
+            dblSum = 0
+            For t = 0 To PET_TASK_COUNT - 1
+                If taskSum.Exists(t) Then
+                    If lngRows = 0 Then
+                        strH = strH & "<tr><td class=""pet-char-cell"" colspan=""3"">" & PetCharName(c) & "</td></tr>"
+                        blnAny = True
+                    End If
+                    lngRows = lngRows + 1
+                    lngCnt = lngCnt + arrCnt(t)
+                    dblSum = dblSum + taskSum(t)
+                    strCls = ""
+                    If lngRows Mod 2 = 0 Then strCls = " class=""alt"""
+                    strH = strH & "<tr" & strCls & "><td class=""lv"">" & PetTaskName(t) & "</td><td class=""num"">" & arrCnt(t) & "</td><td class=""num"">" & PetFmtCost(taskSum(t)) & "</td></tr>"
+                End If
+            Next
+            If lngRows > 0 Then
+                strH = strH & "<tr><td class=""pet-subtotal"">" & PetCharName(c) & " 小计</td><td class=""pet-subtotal""><b>" & lngCnt & "</b></td><td class=""pet-subtotal""><b>" & PetFmtCost(dblSum) & "</b></td></tr>"
+                lngAllCnt = lngAllCnt + lngCnt
+                dblAllSum = dblAllSum + dblSum
+            End If
+        Next
+        If Not blnAny Then
+            strH = strH & "<tr><td class=""pet-empty"" colspan=""3"">暂无成本记录</td></tr>"
+        Else
+            strH = strH & "<tr><td class=""pet-grand"">全部号合计</td><td class=""pet-grand""><b>" & lngAllCnt & "</b></td><td class=""pet-grand""><b>" & PetFmtCost(dblAllSum) & "</b></td></tr>"
+        End If
+        strH = strH & "</table>"
+        detailTitle = "成本明细"
+        If detailCharacter >= 0 Then detailTitle = detailTitle & " · " & PetCharName(detailCharacter) & "（最新在上）"
+        strH = strH & "<div class=""pet-block-title"">【" & detailTitle & "】</div>"
+        strH = strH & "<div class=""pet-detail-scroll""><table><tr><th width=""15%"">序号</th><th width=""55%"">任务内容</th><th width=""30%"">成本（万）</th></tr>"
+        blnAnyDet = False
+        For n = 0 To UBound(records)
+            Set record = records(n)
+            c = record("c")
+            arrDet = record("details")
+            If UBound(arrDet) >= 0 And (detailCharacter = -1 Or detailCharacter = c) Then
+                If detailCharacter = -1 Then strH = strH & "<tr><td class=""pet-char-cell"" colspan=""3"">" & PetCharName(c) & "</td></tr>"
+                blnAnyDet = True
+                rn = 0
+                For m = UBound(arrDet) To 0 Step -1
+                    arrItem = arrDet(m)
+                    rn = rn + 1
+                    strCls = ""
+                    If rn Mod 2 = 0 Then strCls = " class=""alt"""
+                    strH = strH & "<tr" & strCls & "><td class=""num"">" & (m + 1) & "</td><td class=""lv"">" & PetTaskName(CLng(arrItem(0))) & "</td><td class=""num"">" & PetFmtCost(CDbl(arrItem(1))) & "</td></tr>"
+                Next
+            End If
+        Next
+        If Not blnAnyDet Then strH = strH & "<tr><td class=""pet-empty"" colspan=""3"">暂无成本记录</td></tr>"
+        strH = strH & "</table></div>"
+        PetRenderTables = strH
+    End Function
+    ' 打开历史弹窗：遮罩 + 视口居中 + 锁背景滚动（内容超高时顶部对齐）
+    Sub OpenPetHistDlg(strDate, strHtml)
+        petHistSelectedDate = strDate
+        document.getElementById("petHistTitle").innerText = "📅 " & strDate & " 宠环成本记录"
+        document.getElementById("petHistBody").innerHTML = strHtml
+        OpenPetDialog "petHist", petHistSavedScrollTop, True
+    End Sub
+    Sub ClosePetHist
+        petHistSelectedDate = ""
+        ClosePetDialog "petHist", petHistSavedScrollTop
+    End Sub
+    ' 删除仅处理已保存快照，不改当前计数、成本和 petDirty；空日期仅由全部清空入口传入。
+    Sub PetDeleteHistDay
+        If petHistSelectedDate <> "" Then PetRemoveHistory petHistSelectedDate
+    End Sub
+    Sub PetClearHistory
+        window.event.cancelBubble = True
+        PetRemoveHistory ""
+    End Sub
+    Sub PetRemoveHistory(ByVal strDate)
+        Dim loaded, history, result, hasRecords, strScope, strToken, strAnswer, strNote
+        Set loaded = PetReadHistory
+        If loaded("status") = "error" Then
+            MsgBox "读取历史记录失败，未执行删除：" & loaded("error"), vbExclamation, "删除历史记录"
+            Exit Sub
+        End If
+        Set history = loaded("data")
+        hasRecords = (history.Count > 0)
+        If strDate <> "" Then hasRecords = history.Exists(strDate)
+        If Not hasRecords Then
+            If strDate = "" Then
+                MsgBox "暂无可清空的历史记录。", vbInformation, "清空历史记录"
+            Else
+                MsgBox strDate & " 已无历史记录。", vbInformation, "删除该日记录"
+            End If
+            If petHistSelectedDate <> "" Then ClosePetHist
+            RefreshPetHist
+            Exit Sub
+        End If
+        strNote = ""
+        If strDate = "" Then
+            strScope = "全部 " & history.Count & " 个日期、全部号的历史记录"
+            strToken = "清空全部历史记录"
+        Else
+            strScope = strDate & " 的全部号历史记录"
+            strToken = strDate
+            strNote = vbCrLf & "其他日期记录保留。"
+        End If
+        If MsgBox("即将永久删除" & strScope & "。" & strNote & vbCrLf & vbCrLf & "此操作不可撤销，建议先取消并导出备份。" & vbCrLf & "当前计数和成本不受影响；再次保存当天记录会重新生成当天历史。" & vbCrLf & vbCrLf & "是否继续？", vbYesNo + vbExclamation + vbDefaultButton2, "删除历史记录 · 确认范围") <> vbYes Then Exit Sub
+        If strDate = "" Then
+            If MsgBox("再次确认：将清空所有日期的宠环历史记录，不只是当前月份或当前号！" & vbCrLf & "没有导出备份的记录将无法恢复。" & vbCrLf & vbCrLf & "确定继续清空吗？", vbYesNo + vbExclamation + vbDefaultButton2, "清空全部历史记录 · 二次确认") <> vbYes Then Exit Sub
+        End If
+        strAnswer = InputBox("最后确认：请输入“" & strToken & "”以删除" & strScope & "。" & vbCrLf & "输入不一致或取消均不会删除。", "删除历史记录 · 输入确认", "")
+        If strAnswer = "" Then Exit Sub
+        If strAnswer <> strToken Then
+            MsgBox "输入不一致，已取消删除，历史记录未改动。", vbInformation, "已取消删除"
+            Exit Sub
+        End If
+        ' 确认期间若其他窗口保存或导入了记录，拒绝用旧快照覆盖。
+        If strDate = "" Then
+            history.RemoveAll
+        Else
+            history.Remove strDate
+        End If
+        Set result = PetWriteHistory(history, loaded("raw"))
+        If result("status") <> "ok" Then
+            MsgBox "删除失败：" & result("error"), vbExclamation, "删除失败"
+            Exit Sub
+        End If
+        If petHistSelectedDate <> "" Then ClosePetHist
+        RefreshPetHist
+        If strDate = "" Then
+            MsgBox "已清空全部宠环历史记录。", vbInformation, "清空完成"
+        Else
+            MsgBox "已删除 " & strDate & " 的全部号历史记录，其他日期保留。", vbInformation, "删除完成"
+        End If
+    End Sub
+    ' ===================== 历史记录跨端导入/导出（交换格式即文件行格式，与移动版通用） =====================
+    ' 导出：全部已保存历史行填入文本框，全选待复制（到移动版“导入”粘贴）
+    Sub PetHistExport
+        Dim loaded, strAll, lngCnt
+        window.event.cancelBubble = True
+        Set loaded = PetReadHistory
+        If loaded("status") = "error" Then
+            MsgBox "读取历史记录失败：" & loaded("error"), vbExclamation, "导出历史记录"
+            Exit Sub
+        End If
+        strAll = PetHistoryText(loaded("data"))
+        lngCnt = loaded("count")
+        If strAll = "" Then
+            MsgBox "暂无已保存的历史记录（先点“保存当天记录”或从移动版导入）。", vbInformation, "导出历史记录"
+            Exit Sub
+        End If
+        document.getElementById("petIoTitle").innerText = "导出历史记录（与移动版通用）"
+        document.getElementById("petIoNote").innerText = "共 " & lngCnt & " 行。点“全选复制”复制全部文本，再到移动版“历史记录查询”的“导入”粘贴。"
+        document.getElementById("petIoText").value = strAll
+        document.getElementById("petIoOkBtn").style.display = "none"
+        document.getElementById("petIoCopyBtn").style.display = ""
+        OpenPetIoDlg
+        document.getElementById("petIoText").select
+    End Sub
+    ' 导入：粘贴移动版导出的行文本，确认后与本机文件合并（同日期覆盖、其他保留）
+    Sub PetHistImport
+        window.event.cancelBubble = True
+        document.getElementById("petIoTitle").innerText = "导入历史记录（与移动版通用）"
+        document.getElementById("petIoNote").innerText = "粘贴移动版导出的记录文本后点“导入”。导入日期将覆盖本机同日期记录，其他日期保留；不影响当前计数。"
+        document.getElementById("petIoText").value = ""
+        document.getElementById("petIoOkBtn").style.display = ""
+        document.getElementById("petIoCopyBtn").style.display = "none"
+        OpenPetIoDlg
+    End Sub
+    ' 导入确认：逐行校验（5 段/日期/号 0-4/13 项整数次数/明细 t:c 且任务号 0-12/数字成本），
+    ' 全过才合并写入：导入文本中的日期整日覆盖本地同日期行，本地其他日期保留；
+    ' 计数器与 petDirty 不受影响（导入的是已落盘快照，不是会话数据）；写入时 total 顺手规范化去千分位
+    Sub PetIoOk
+        Dim incoming, loaded, merged, result
+        ' 统一换行为 vbLf 再分行（兼容 CRLF / LF / CR 及末尾多余换行）
+        ' total 容忍千分位（HTA 旧版文件可能写过），写入时规范化
+        Set incoming = PetParseHistText(document.getElementById("petIoText").value, True)
+        If incoming("status") = "error" Then
+            MsgBox "导入失败：" & incoming("error"), vbExclamation, "导入失败"
+            Exit Sub
+        End If
+        If incoming("status") = "empty" Then
+            MsgBox "请先粘贴历史记录文本！", vbExclamation, "导入历史记录"
+            Exit Sub
+        End If
+        Set loaded = PetReadHistory
+        If loaded("status") = "error" Then
+            MsgBox "读取历史记录失败，未执行导入：" & loaded("error"), vbExclamation, "导入失败"
+            Exit Sub
+        End If
+        ' 本地保留日期不在导入集合的行，再追加导入行（total 重写为无千分位）
+        Set merged = PetMergeHistory(loaded("data"), incoming("data"))
+        Set result = PetWriteHistory(merged, loaded("raw"))
+        If result("status") <> "ok" Then
+            MsgBox "导入失败：" & result("error"), vbExclamation, "导入失败"
+            Exit Sub
+        End If
+        PetIoClose
+        MsgBox "导入成功：共 " & incoming("count") & " 行（" & incoming("days") & " 天），导入日期已覆盖本机同日期记录，其他日期保留。", vbInformation, "导入历史记录"
+        If document.getElementById("petHistSection").style.display <> "none" Then RefreshPetHist
+    End Sub
+    ' 全选并尝试复制文本框内容（剪贴板被安全设置拦截时退化为全选待手动 Ctrl+C）
+    Sub PetIoCopyAll
+        Dim objT
+        Set objT = document.getElementById("petIoText")
+        objT.focus
+        objT.select
+        On Error Resume Next
+        window.clipboardData.setData "Text", objT.value
+        If Err.Number = 0 Then
+            MsgBox "已复制到剪贴板，到移动版“导入”粘贴即可。", vbInformation, "导出历史记录"
+        Else
+            Err.Clear
+            MsgBox "已全选文本（剪贴板直接写入被拦截），请按 Ctrl+C 复制。", vbInformation, "导出历史记录"
+        End If
+        On Error GoTo 0
+    End Sub
+    ' 打开导入/导出弹窗：遮罩 + 视口居中 + 锁背景滚动（同历史查看弹窗）
+    Sub OpenPetIoDlg
+        OpenPetDialog "petIo", petIoSavedScrollTop, True
+    End Sub
+    Sub PetIoClose
+        ClosePetDialog "petIo", petIoSavedScrollTop
     End Sub
     ' ================== 神器任务攻略（序章/起/转/合） ==================
     Dim arrShenqi, sqCurrentIdx
@@ -1327,1064 +2182,8 @@
         Next
         document.getElementById("sqLinks").innerHTML = strHtml
     End Sub
-    ' 攻略区默认折叠，点击标题行展开/收起
     Sub ToggleSqSection
-        Dim objLinks, objHint
-        Set objLinks = document.getElementById("sqLinks")
-        Set objHint = document.getElementById("sqToggleHint")
-        If objLinks.style.display = "none" Then
-            objLinks.style.display = "block"
-            objHint.innerText = "▲ 收起"
-        Else
-            objLinks.style.display = "none"
-            objHint.innerText = "▼ 展开"
-        End If
-    End Sub
-    ' 宠环任务区默认折叠，点击标题行展开/收起（规则同神器攻略）
-    Sub TogglePetSection
-        Dim objBody, objHint
-        Set objBody = document.getElementById("petSection")
-        Set objHint = document.getElementById("petToggleHint")
-        If objBody.style.display = "none" Then
-            objBody.style.display = "block"
-            objHint.innerText = "▲ 收起"
-        Else
-            objBody.style.display = "none"
-            objHint.innerText = "▼ 展开"
-        End If
-    End Sub
-    ' 宠环跑环计数：+ 时弹录入框登记本次成本（万梦幻币，非必填按 0），- 撤销该任务最近一次记录（次数-1 并同步扣回其成本）
-    ' “是否计算成本”选“否”时 + 不弹框，直接按 0 成本记账（仅计次数）；- 仍按撤销逻辑（无成本记录时仅减次数）
-    ' 多号统计（1~5 号）：数据全部按号存两维——petCostHist(号,任务) 成本栈、petCounts(号,任务) 次数、petCostTotal(号) 累计成本、
-    ' petDetailList(号) 录入顺序明细（格式 "任务序号:成本" 逗号分隔）；petCurChar 为当前号（0-4），DOM 只展示当前号视图，切号整体换装
-    ' “是否计算成本”全局共享不分号；清零只清当前号；全部号合计为跨号只读汇总
-    Dim petCostHist(4, 12), petCounts(4, 12), petCostTotal(4), petDetailList(4)
-    Dim petCostIdx, petCostSavedScrollTop, petCurChar
-    Dim pcI, pcJ
-    For pcI = 0 To 4
-        petCostTotal(pcI) = 0
-        petDetailList(pcI) = ""
-        For pcJ = 0 To 12
-            petCostHist(pcI, pcJ) = ""
-            petCounts(pcI, pcJ) = 0
-        Next
-    Next
-    petCostIdx = -1
-    petCurChar = 0
-    ' 历史记录：petDirty 当天有未保存变更（清零/退出时提醒）；petExiting 退出按钮流程中（兜底提醒跳过，避免重复弹窗）；
-    ' petHistData 文件加载的 日期→记录行（vbLf 连接）；petHistDateList 日期索引（日历点击传参用）；petHistYear/Month 当前显示月（-1 未初始化，展开时设为当月）；petIoSavedScrollTop 导入/导出弹窗打开前的滚动位置
-    Dim petDirty, petExiting, petHistYear, petHistMonth, petHistSavedScrollTop, petIoSavedScrollTop
-    Dim petHistDateList(), petHistData
-    Dim petHistSelectedDate
-    petHistSelectedDate = ""
-    Set petHistData = CreateObject("Scripting.Dictionary")
-    petDirty = False
-    petExiting = False
-    petHistYear = -1
-    petHistMonth = -1
-    ReDim petHistDateList(-1)
-    Sub PetAdd(idx)
-        Dim objSel, lngIdx
-        Set objSel = document.getElementById("selPetCostMode")
-        If Not (objSel Is Nothing) Then
-            If objSel.value = "0" Then
-                lngIdx = CLng(idx)
-                PetRecordCost lngIdx, 0
-                Exit Sub
-            End If
-        End If
-        OpenPetCostDlg idx
-    End Sub
-    Sub PetSub(idx)
-        PetUndoOne idx
-    End Sub
-    ' 号名（1~5 号）
-    Function PetCharName(c)
-        PetCharName = (CLng(c) + 1) & "号"
-    End Function
-    ' 次数变更：数据层 petCounts(当前号,任务) 与 DOM 同步更新（两处始终一致，切号时直接按数据换装视图）
-    Sub PetChange(idx, delta)
-        Dim objCnt, lngN
-        Set objCnt = document.getElementById("petCnt" & idx)
-        If objCnt Is Nothing Then Exit Sub
-        lngN = petCounts(petCurChar, idx) + CLng(delta)
-        If lngN < 0 Then lngN = 0
-        petCounts(petCurChar, idx) = lngN
-        objCnt.innerText = CStr(lngN)
-    End Sub
-    ' 切换当前号：页签高亮、次数换装、累计成本与明细重绘（成本弹窗开着时有遮罩挡住页签，无需防护）
-    Sub PetSwitchChar(c)
-        Dim i, objBtn, objCnt
-        c = CLng(c)
-        If c < 0 Or c > 4 Then Exit Sub
-        If c = petCurChar Then Exit Sub
-        petCurChar = c
-        For i = 0 To 4
-            Set objBtn = document.getElementById("petCharBtn" & i)
-            If Not objBtn Is Nothing Then
-                If i = c Then
-                    objBtn.className = "pet-char-btn-on"
-                Else
-                    objBtn.className = "pet-char-btn"
-                End If
-            End If
-        Next
-        For i = 0 To 12
-            Set objCnt = document.getElementById("petCnt" & i)
-            If Not objCnt Is Nothing Then objCnt.innerText = CStr(petCounts(c, i))
-        Next
-        RefreshPetCostTotal
-        RefreshPetDetail
-    End Sub
-    ' 撤销最近一次记录（当前号）：次数-1；该任务有成本记录时同步扣回（成本>0 先弹确认框告知金额）
-    Sub PetUndoOne(idx)
-        Dim objCnt, lngN, dblCost
-        idx = CLng(idx)
-        Set objCnt = document.getElementById("petCnt" & idx)
-        If objCnt Is Nothing Then Exit Sub
-        lngN = petCounts(petCurChar, idx)
-        If lngN <= 0 Then Exit Sub
-        If petCostHist(petCurChar, idx) <> "" Then
-            dblCost = PetCostPeek(idx)
-            If dblCost > 0 Then
-                If MsgBox("将撤销「" & PetCharName(petCurChar) & " · " & PetTaskName(idx) & "」最近一次记录：次数 -1，并从累计成本中扣回 " & PetFmtCost(dblCost) & " 万梦幻币。是否继续？", vbYesNo + vbQuestion, "撤销确认") <> vbYes Then Exit Sub
-            End If
-            petCostTotal(petCurChar) = petCostTotal(petCurChar) - PetCostPop(idx)
-            If petCostTotal(petCurChar) < 0 Then petCostTotal(petCurChar) = 0
-            PetDetailRemoveLast idx
-            RefreshPetCostTotal
-        End If
-        PetChange idx, -1
-        RefreshPetDetail
-        petDirty = True
-    End Sub
-    ' 读取当前号该任务最近一次录入的成本（不出栈）
-    Function PetCostPeek(idx)
-        Dim strS, lngP
-        PetCostPeek = 0
-        strS = petCostHist(petCurChar, idx)
-        If strS = "" Then Exit Function
-        lngP = InStrRev(strS, ",")
-        If lngP = 0 Then
-            PetCostPeek = CDbl(strS)
-        Else
-            PetCostPeek = CDbl(Mid(strS, lngP + 1))
-        End If
-    End Function
-    ' 弹出并返回当前号该任务最近一次录入的成本（从历史中移除）
-    Function PetCostPop(idx)
-        Dim strS, lngP
-        PetCostPop = 0
-        strS = petCostHist(petCurChar, idx)
-        If strS = "" Then Exit Function
-        lngP = InStrRev(strS, ",")
-        If lngP = 0 Then
-            PetCostPop = CDbl(strS)
-            petCostHist(petCurChar, idx) = ""
-        Else
-            PetCostPop = CDbl(Mid(strS, lngP + 1))
-            petCostHist(petCurChar, idx) = Left(strS, lngP - 1)
-        End If
-    End Function
-    ' 成本格式化：最多保留2位小数，去掉末尾无意义的 0 与小数点
-    Function PetFmtCost(v)
-        Dim strS
-        strS = FormatNumber(v, 2)
-        If InStr(strS, ".") > 0 Then
-            Do While Right(strS, 1) = "0"
-                strS = Left(strS, Len(strS) - 1)
-            Loop
-            If Right(strS, 1) = "." Then strS = Left(strS, Len(strS) - 1)
-        End If
-        PetFmtCost = strS
-    End Function
-    ' 成本格式化（无千分位版，专用于历史文件与跨端交换文本）：最多保留2位小数，去掉末尾无意义的 0 与小数点；
-    ' PetFmtCost（FormatNumber 默认带千分位）仅供界面显示，写文件/交换用本函数免得移动版 parseFloat 在逗号截断
-    Function PetFmtCostPlain(v)
-        Dim strS
-        strS = FormatNumber(v, 2, -1, 0, 0)
-        If InStr(strS, ".") > 0 Then
-            Do While Right(strS, 1) = "0"
-                strS = Left(strS, Len(strS) - 1)
-            Loop
-            If Right(strS, 1) = "." Then strS = Left(strS, Len(strS) - 1)
-        End If
-        PetFmtCostPlain = strS
-    End Function
-    ' 取计数单元格所在行的任务名（次数列前两列为任务名）；异常时回退为序号
-    Function PetTaskName(idx)
-        Dim objCell, strName
-        strName = ""
-        On Error Resume Next
-        Set objCell = document.getElementById("petCnt" & idx).parentNode
-        strName = objCell.parentNode.cells(objCell.cellIndex - 2).innerText
-        On Error GoTo 0
-        If strName = "" Then strName = "第" & (idx + 1) & "项"
-        PetTaskName = strName
-    End Function
-    ' 打开成本录入弹窗：锁定背景滚动，弹窗定位到视口中央，输入框留空（留空按 0 计入）
-    Sub OpenPetCostDlg(idx)
-        Dim objDlg, objInp, vw, vh
-        petCostIdx = CLng(idx)
-        document.getElementById("petCostTitle").innerText = "录入「" & PetCharName(petCurChar) & " · " & PetTaskName(petCostIdx) & "」本次成本"
-        Set objInp = document.getElementById("petCostInput")
-        objInp.value = ""
-        petCostSavedScrollTop = document.body.scrollTop
-        document.body.style.overflow = "hidden"
-        document.body.scrollTop = petCostSavedScrollTop
-        Set objDlg = document.getElementById("petCostDialog")
-        objDlg.style.display = "block"
-        document.getElementById("petCostOverlay").style.display = "block"
-        document.getElementById("petCostOverlay").style.pixelWidth = document.body.scrollWidth
-        document.getElementById("petCostOverlay").style.pixelHeight = document.body.scrollHeight
-        vw = document.body.clientWidth
-        vh = document.body.clientHeight
-        objDlg.style.pixelLeft = Int((vw - objDlg.offsetWidth) / 2) + document.body.scrollLeft
-        objDlg.style.pixelTop = Int((vh - objDlg.offsetHeight) / 2) + document.body.scrollTop
-        objInp.focus
-    End Sub
-    Sub PetCostKeyDown
-        If window.event.keyCode = 13 Then PetCostOk
-    End Sub
-    ' 确定：留空按 0 计入；非法输入保持弹窗待修正；成功则次数+1 并累计成本
-    Sub PetCostOk
-        Dim strVal, dblCost
-        If petCostIdx < 0 Then Exit Sub
-        strVal = Trim(document.getElementById("petCostInput").value)
-        dblCost = 0
-        If strVal <> "" Then
-            If Not IsNumeric(strVal) Then
-                MsgBox "成本必须为数字（单位：万梦幻币），不填按 0 计入！", vbExclamation, "输入错误"
-                document.getElementById("petCostInput").focus
-                Exit Sub
-            End If
-            dblCost = CDbl(strVal)
-            If dblCost < 0 Then
-                MsgBox "成本不能为负数（单位：万梦幻币），不填按 0 计入！", vbExclamation, "输入错误"
-                document.getElementById("petCostInput").focus
-                Exit Sub
-            End If
-            dblCost = Int(dblCost * 100 + 0.5) / 100
-        End If
-        PetRecordCost petCostIdx, dblCost
-        ClosePetCostDlg
-    End Sub
-    ' 登记一笔成本（可为 0）并计数 +1（当前号）：成本入栈、明细追加、累计与表格同步刷新
-    Sub PetRecordCost(ByVal idx, ByVal dblCost)
-        idx = CLng(idx)
-        dblCost = CDbl(dblCost)
-        If petCostHist(petCurChar, idx) = "" Then
-            petCostHist(petCurChar, idx) = CStr(dblCost)
-        Else
-            petCostHist(petCurChar, idx) = petCostHist(petCurChar, idx) & "," & CStr(dblCost)
-        End If
-        If petDetailList(petCurChar) = "" Then
-            petDetailList(petCurChar) = idx & ":" & CStr(dblCost)
-        Else
-            petDetailList(petCurChar) = petDetailList(petCurChar) & "," & idx & ":" & CStr(dblCost)
-        End If
-        petCostTotal(petCurChar) = petCostTotal(petCurChar) + dblCost
-        RefreshPetCostTotal
-        PetChange idx, 1
-        RefreshPetDetail
-        petDirty = True
-    End Sub
-    Sub PetCostCancel
-        ClosePetCostDlg
-    End Sub
-    Sub ClosePetCostDlg
-        document.getElementById("petCostDialog").style.display = "none"
-        document.getElementById("petCostOverlay").style.display = "none"
-        document.body.style.overflow = ""
-        document.body.scrollTop = petCostSavedScrollTop
-        petCostIdx = -1
-    End Sub
-    ' 刷新累计成本：当前号 + 全部号合计两个数字
-    Sub RefreshPetCostTotal
-        Dim n, dblAll
-        dblAll = 0
-        For n = 0 To 4
-            dblAll = dblAll + petCostTotal(n)
-        Next
-        document.getElementById("petTotalCost").innerText = PetFmtCost(petCostTotal(petCurChar))
-        document.getElementById("petAllCost").innerText = PetFmtCost(dblAll)
-    End Sub
-    ' 展示/收起累计成本明细（展开时先刷新内容）
-    Sub TogglePetDetail
-        Dim objSec, objHint
-        Set objSec = document.getElementById("petDetailSection")
-        Set objHint = document.getElementById("petDetailToggleHint")
-        If objSec.style.display = "none" Then
-            RefreshPetDetail
-            objSec.style.display = "block"
-            objHint.innerText = "▲ 收起"
-        Else
-            objSec.style.display = "none"
-            objHint.innerText = "▼ 展开"
-        End If
-    End Sub
-    ' 积分奖励矩阵表与最终得分表默认折叠，点击标题行展开/收起（纯静态表，无内容刷新）
-    Sub TogglePetReward
-        Dim objSec, objHint
-        Set objSec = document.getElementById("petRewardSection")
-        Set objHint = document.getElementById("petRewardToggleHint")
-        If objSec.style.display = "none" Then
-            objSec.style.display = "block"
-            objHint.innerText = "▲ 收起"
-        Else
-            objSec.style.display = "none"
-            objHint.innerText = "▼ 展开"
-        End If
-    End Sub
-    Sub TogglePetScore
-        Dim objSec, objHint
-        Set objSec = document.getElementById("petScoreSection")
-        Set objHint = document.getElementById("petScoreToggleHint")
-        If objSec.style.display = "none" Then
-            objSec.style.display = "block"
-            objHint.innerText = "▲ 收起"
-        Else
-            objSec.style.display = "none"
-            objHint.innerText = "▼ 展开"
-        End If
-    End Sub
-    ' 某号某任务成本合计（万）
-    Function PetTaskSum(c, idx)
-        Dim arrCost, n, dblS
-        PetTaskSum = 0
-        If petCostHist(c, idx) = "" Then Exit Function
-        arrCost = Split(petCostHist(c, idx), ",")
-        For n = 0 To UBound(arrCost)
-            If IsNumeric(arrCost(n)) Then dblS = dblS + CDbl(arrCost(n))
-        Next
-        PetTaskSum = dblS
-    End Function
-    ' 从当前号全局明细中移除指定任务最近一笔（与该号成本栈弹出保持同步）
-    Sub PetDetailRemoveLast(idx)
-        Dim arrAll, arrItem, n, lngFound, strOut
-        If petDetailList(petCurChar) = "" Then Exit Sub
-        arrAll = Split(petDetailList(petCurChar), ",")
-        lngFound = -1
-        For n = UBound(arrAll) To 0 Step -1
-            arrItem = Split(arrAll(n), ":")
-            If CLng(arrItem(0)) = CLng(idx) Then
-                lngFound = n
-                Exit For
-            End If
-        Next
-        If lngFound < 0 Then Exit Sub
-        strOut = ""
-        For n = 0 To UBound(arrAll)
-            If n <> lngFound Then
-                If strOut = "" Then
-                    strOut = arrAll(n)
-                Else
-                    strOut = strOut & "," & arrAll(n)
-                End If
-            End If
-        Next
-        petDetailList(petCurChar) = strOut
-    End Sub
-    ' 重绘成本汇总与明细表：汇总按号分组（每号小节+小计，末行全部号合计）；明细只显示当前号（最新在上，序号为录入顺序）
-    Sub RefreshPetDetail
-        Dim objWrap, arrAll, arrItem, n, c, strH, strCls, lngCnt, dblSum, lngAllCnt, dblAllSum, lngRows, blnAny
-        Set objWrap = document.getElementById("petDetailSection")
-        If objWrap Is Nothing Then Exit Sub
-        strH = "<div class=""pet-block-title"">【成本汇总】</div>"
-        strH = strH & "<table><tr><th width=""55%"">任务内容</th><th width=""20%"">次数</th><th width=""25%"">合计成本（万）</th></tr>"
-        lngAllCnt = 0
-        dblAllSum = 0
-        blnAny = False
-        For c = 0 To 4
-            lngRows = 0
-            lngCnt = 0
-            dblSum = 0
-            For n = 0 To 12
-                If petCostHist(c, n) <> "" Then
-                    If lngRows = 0 Then
-                        strH = strH & "<tr><td class=""pet-char-cell"" colspan=""3"">" & PetCharName(c) & "</td></tr>"
-                        blnAny = True
-                    End If
-                    lngRows = lngRows + 1
-                    lngCnt = lngCnt + petCounts(c, n)
-                    dblSum = dblSum + PetTaskSum(c, n)
-                    strCls = ""
-                    If lngRows Mod 2 = 0 Then strCls = " class=""alt"""
-                    strH = strH & "<tr" & strCls & "><td class=""lv"">" & PetTaskName(n) & "</td><td class=""num"">" & petCounts(c, n) & "</td><td class=""num"">" & PetFmtCost(PetTaskSum(c, n)) & "</td></tr>"
-                End If
-            Next
-            If lngRows > 0 Then
-                strH = strH & "<tr><td class=""pet-subtotal"">" & PetCharName(c) & " 小计</td><td class=""pet-subtotal""><b>" & lngCnt & "</b></td><td class=""pet-subtotal""><b>" & PetFmtCost(dblSum) & "</b></td></tr>"
-                lngAllCnt = lngAllCnt + lngCnt
-                dblAllSum = dblAllSum + dblSum
-            End If
-        Next
-        If Not blnAny Then
-            strH = strH & "<tr><td class=""pet-empty"" colspan=""3"">暂无成本记录</td></tr>"
-        Else
-            strH = strH & "<tr><td class=""pet-grand"">全部号合计</td><td class=""pet-grand""><b>" & lngAllCnt & "</b></td><td class=""pet-grand""><b>" & PetFmtCost(dblAllSum) & "</b></td></tr>"
-        End If
-        strH = strH & "</table>"
-        strH = strH & "<div class=""pet-block-title"">【成本明细 · " & PetCharName(petCurChar) & "（最新在上）】</div>"
-        strH = strH & "<div class=""pet-detail-scroll""><table><tr><th width=""15%"">序号</th><th width=""55%"">任务内容</th><th width=""30%"">成本（万）</th></tr>"
-        If petDetailList(petCurChar) = "" Then
-            strH = strH & "<tr><td class=""pet-empty"" colspan=""3"">暂无成本记录</td></tr>"
-        Else
-            arrAll = Split(petDetailList(petCurChar), ",")
-            For n = UBound(arrAll) To 0 Step -1
-                arrItem = Split(arrAll(n), ":")
-                strCls = ""
-                If (UBound(arrAll) - n) Mod 2 = 1 Then strCls = " class=""alt"""
-                strH = strH & "<tr" & strCls & "><td class=""num"">" & (n + 1) & "</td><td class=""lv"">" & PetTaskName(CLng(arrItem(0))) & "</td><td class=""num"">" & PetFmtCost(CDbl(arrItem(1))) & "</td></tr>"
-            Next
-        End If
-        strH = strH & "</table></div>"
-        objWrap.innerHTML = strH
-    End Sub
-    ' 清零当前号的次数与累计成本（有未保存变更先提醒保存；有记录时再确认；其他号不受影响）
-    Sub PetCountReset
-        Dim i, objCnt, blnHasData, r
-        ' 清零前保存提醒：当天有未保存变更时先问（是=先保存再清零 / 否=不保存直接清零 / 取消=不清零）
-        If petDirty Then
-            r = MsgBox("当天宠环成本记录有未保存的变更，清零前先保存吗？" & vbCrLf & vbCrLf & "【是】先保存再清零    【否】不保存直接清零    【取消】不清零", vbYesNoCancel + vbQuestion, "保存提醒")
-            If r = vbCancel Then Exit Sub
-            If r = vbYes Then
-                If Not PetSaveHistoryCore Then
-                    ' 保存失败（已弹提示）且当天确有数据：不清零；当天无可保存数据：继续清零
-                    If UBound(PetBuildTodayLines) >= 0 Then Exit Sub
-                End If
-            End If
-        End If
-        blnHasData = False
-        For i = 0 To 12
-            If petCounts(petCurChar, i) > 0 Then blnHasData = True
-        Next
-        If blnHasData Or petCostTotal(petCurChar) > 0 Then
-            If MsgBox("将清空 " & PetCharName(petCurChar) & " 的全部次数与累计成本（当前 " & PetFmtCost(petCostTotal(petCurChar)) & " 万梦幻币），其他号不受影响。是否继续？", vbYesNo + vbQuestion, "清零确认") <> vbYes Then Exit Sub
-        End If
-        For i = 0 To 12
-            petCounts(petCurChar, i) = 0
-            Set objCnt = document.getElementById("petCnt" & i)
-            If Not objCnt Is Nothing Then objCnt.innerText = "0"
-            petCostHist(petCurChar, i) = ""
-        Next
-        petCostTotal(petCurChar) = 0
-        petDetailList(petCurChar) = ""
-        RefreshPetCostTotal
-        RefreshPetDetail
-        petDirty = True
-    End Sub
-    ' ===================== 宠环成本历史记录（文件按行存储：日期|号|次数CSV|明细CSV|累计成本，同一天多次保存覆盖当天） =====================
-    ' 行格式即双端交换格式：与移动版“历史记录导入/导出”通用；total 一律无千分位（见 PetFmtCostPlain），跨端解析不被逗号截断
-    ' 当天日期字符串（yyyy-mm-dd）
-    Function PetTodayStr
-        PetTodayStr = Year(Date) & "-" & Right("0" & Month(Date), 2) & "-" & Right("0" & Day(Date), 2)
-    End Function
-    ' 历史记录文件路径（与工具箱同目录，内容纯 ASCII）
-    Function PetHistFile
-        Dim fso
-        Set fso = CreateObject("Scripting.FileSystemObject")
-        PetHistFile = fso.BuildPath(fso.GetParentFolderName(window.location.pathname), "pet_cost_history.txt")
-    End Function
-    ' 读取历史文件全部行（文件不存在返回空数组，调用方过滤空行）
-    Function PetReadHistLines
-        Dim fso, f, strAll
-        strAll = ""
-        Set fso = CreateObject("Scripting.FileSystemObject")
-        If fso.FileExists(PetHistFile) Then
-            Set f = fso.OpenTextFile(PetHistFile, 1)
-            ' 清空或删除最后一天后文件为零字节，直接 ReadAll 会触发错误 62（输入超出了文件尾）。
-            If Not f.AtEndOfStream Then strAll = f.ReadAll
-            f.Close
-        End If
-        If strAll = "" Then
-            PetReadHistLines = Array()
-        Else
-            PetReadHistLines = Split(strAll, vbCrLf)
-        End If
-    End Function
-    ' 组装当天全部有数据号的记录行（无数据返回空数组）
-    Function PetBuildTodayLines
-        Dim d, i, n, strCounts, blnHas, arrLines
-        d = PetTodayStr
-        ReDim arrLines(-1)
-        For i = 0 To 4
-            blnHas = False
-            strCounts = ""
-            For n = 0 To 12
-                If n > 0 Then strCounts = strCounts & ","
-                strCounts = strCounts & CStr(petCounts(i, n))
-                If petCounts(i, n) > 0 Or petCostHist(i, n) <> "" Then blnHas = True
-            Next
-            If blnHas Then
-                ReDim Preserve arrLines(UBound(arrLines) + 1)
-                arrLines(UBound(arrLines)) = d & "|" & i & "|" & strCounts & "|" & petDetailList(i) & "|" & PetFmtCostPlain(petCostTotal(i))
-            End If
-        Next
-        PetBuildTodayLines = arrLines
-    End Function
-    ' 保存当天快照到历史文件（过滤旧当天行后追加新行），成功返回 True；当天无数据返回 False 不写文件
-    Function PetSaveHistoryCore
-        Dim arrOld, arrNew, strAll, n, d, fso, f
-        PetSaveHistoryCore = False
-        arrNew = PetBuildTodayLines
-        If UBound(arrNew) < 0 Then Exit Function
-        arrOld = PetReadHistLines
-        d = PetTodayStr
-        strAll = ""
-        For n = 0 To UBound(arrOld)
-            If arrOld(n) <> "" Then
-                If Split(arrOld(n), "|")(0) <> d Then strAll = strAll & arrOld(n) & vbCrLf
-            End If
-        Next
-        For n = 0 To UBound(arrNew)
-            strAll = strAll & arrNew(n) & vbCrLf
-        Next
-        On Error Resume Next
-        Err.Clear
-        Set fso = CreateObject("Scripting.FileSystemObject")
-        Set f = fso.CreateTextFile(PetHistFile, True)
-        f.Write strAll
-        f.Close
-        If Err.Number <> 0 Then
-            Err.Clear
-            On Error GoTo 0
-            MsgBox "保存失败：无法写入历史记录文件（" & PetHistFile & "）。", vbExclamation, "保存失败"
-            Exit Function
-        End If
-        On Error GoTo 0
-        petDirty = False
-        PetSaveHistoryCore = True
-    End Function
-    ' “保存当天记录”按钮：保存并提示（历史区展开时同步刷新日历）
-    Sub PetSaveHistory
-        If Not PetSaveHistoryCore Then
-            If UBound(PetBuildTodayLines) < 0 Then MsgBox "当天暂无可保存的宠环成本记录。", vbInformation, "保存当天记录"
-            Exit Sub
-        End If
-        MsgBox "已保存 " & PetTodayStr & " 的宠环成本记录（可在“历史记录查询”中查看）。", vbInformation, "保存成功"
-        If document.getElementById("petHistSection").style.display <> "none" Then RefreshPetHist
-    End Sub
-    ' 加载历史文件到 petHistData（日期 → 该日全部记录行，vbLf 连接）
-    Sub PetLoadHist
-        Dim arrAll, n, strDate
-        petHistData.RemoveAll
-        arrAll = PetReadHistLines
-        For n = 0 To UBound(arrAll)
-            If arrAll(n) <> "" And InStr(arrAll(n), "|") > 0 Then
-                strDate = Split(arrAll(n), "|")(0)
-                If petHistData.Exists(strDate) Then
-                    petHistData(strDate) = petHistData(strDate) & vbLf & arrAll(n)
-                Else
-                    petHistData.Add strDate, arrAll(n)
-                End If
-            End If
-        Next
-    End Sub
-    ' 日期数组升序（插入排序，量小）
-    Sub PetSortDates(arr)
-        Dim i, j, t
-        For i = 1 To UBound(arr)
-            t = arr(i)
-            j = i - 1
-            Do While j >= 0
-                If arr(j) > t Then
-                    arr(j + 1) = arr(j)
-                    j = j - 1
-                Else
-                    Exit Do
-                End If
-            Loop
-            arr(j + 1) = t
-        Next
-    End Sub
-    ' 展开/收起历史记录查询（展开时重读文件渲染日历）
-    Sub TogglePetHist
-        Dim objSec, objHint
-        Set objSec = document.getElementById("petHistSection")
-        Set objHint = document.getElementById("petHistToggleHint")
-        If objSec.style.display = "none" Then
-            RefreshPetHist
-            objSec.style.display = "block"
-            objHint.innerText = "▲ 收起"
-        Else
-            objSec.style.display = "none"
-            objHint.innerText = "▼ 展开"
-        End If
-    End Sub
-    ' 渲染日历：周日起头；有记录日期紫底白字可点（传日期索引规避字符串引号问题）；今天紫字
-    Sub RefreshPetHist
-        Dim objSec, n, strH, wd, days, d, cIdx, strDate, arrKeys, strToday
-        Set objSec = document.getElementById("petHistSection")
-        If objSec Is Nothing Then Exit Sub
-        PetLoadHist
-        If petHistYear < 0 Then
-            petHistYear = Year(Date)
-            petHistMonth = Month(Date)
-        End If
-        arrKeys = petHistData.Keys
-        PetSortDates arrKeys
-        ReDim petHistDateList(UBound(arrKeys))
-        For n = 0 To UBound(arrKeys)
-            petHistDateList(n) = arrKeys(n)
-        Next
-        strToday = PetTodayStr
-        strH = "<div style=""margin-top: 6px;""><button class=""pet-char-btn"" style=""width: 26px;"" onclick=""PetHistPrevMonth"">&lt;</button><b style=""margin: 0 10px; font-size: 14px;"">" & petHistYear & "年" & petHistMonth & "月</b><button class=""pet-char-btn"" style=""width: 26px;"" onclick=""PetHistNextMonth"">&gt;</button><span class=""tip"" style=""margin-left: 8px;"">高亮日期有记录，点击查看</span></div>"
-        strH = strH & "<table class=""pet-hist-cal""><tr><th width=""14%"">日</th><th width=""14%"">一</th><th width=""14%"">二</th><th width=""14%"">三</th><th width=""15%"">四</th><th width=""14%"">五</th><th width=""15%"">六</th></tr>"
-        wd = Weekday(DateSerial(petHistYear, petHistMonth, 1))
-        days = Day(DateSerial(petHistYear, petHistMonth + 1, 0))
-        d = 1 - (wd - 1)
-        Do While d <= days
-            strH = strH & "<tr>"
-            For cIdx = 0 To 6
-                If d >= 1 And d <= days Then
-                    strDate = petHistYear & "-" & Right("0" & petHistMonth, 2) & "-" & Right("0" & d, 2)
-                    If petHistData.Exists(strDate) Then
-                        strH = strH & "<td class=""pet-hist-day pet-hist-has"" onclick=""PetShowHist " & PetDateIndex(strDate) & """>" & d & "</td>"
-                    ElseIf strDate = strToday Then
-                        strH = strH & "<td class=""pet-hist-day pet-hist-today"">" & d & "</td>"
-                    Else
-                        strH = strH & "<td class=""pet-hist-day"">" & d & "</td>"
-                    End If
-                Else
-                    strH = strH & "<td class=""pet-hist-day""></td>"
-                End If
-                d = d + 1
-            Next
-            strH = strH & "</tr>"
-        Loop
-        strH = strH & "</table>"
-        objSec.innerHTML = strH
-    End Sub
-    ' 日期在 petHistDateList 中的下标（-1 未找到）
-    Function PetDateIndex(strDate)
-        Dim n
-        PetDateIndex = -1
-        For n = 0 To UBound(petHistDateList)
-            If petHistDateList(n) = strDate Then
-                PetDateIndex = n
-                Exit Function
-            End If
-        Next
-    End Function
-    Sub PetHistPrevMonth
-        petHistMonth = petHistMonth - 1
-        If petHistMonth = 0 Then
-            petHistMonth = 12
-            petHistYear = petHistYear - 1
-        End If
-        RefreshPetHist
-    End Sub
-    Sub PetHistNextMonth
-        petHistMonth = petHistMonth + 1
-        If petHistMonth = 13 Then
-            petHistMonth = 1
-            petHistYear = petHistYear + 1
-        End If
-        RefreshPetHist
-    End Sub
-    ' 点击日历日期：弹窗展示该日保存的成本汇总（按号分组）与逐笔明细（最新在上）
-    Sub PetShowHist(idx)
-        Dim strDate, arrLines, n, m, arrF, arrCnt, arrDet, arrItem, strH, strCls
-        Dim c, lngRows, lngCnt, dblSum, lngAllCnt, dblAllSum, blnAny, blnAnyDet, rn
-        Dim taskHas, taskSum, t, dblC
-        idx = CLng(idx)
-        If idx < 0 Or idx > UBound(petHistDateList) Then Exit Sub
-        strDate = petHistDateList(idx)
-        If Not petHistData.Exists(strDate) Then Exit Sub
-        arrLines = Split(petHistData(strDate), vbLf)
-        strH = "<div class=""pet-block-title"" style=""margin-top: 0;"">【成本汇总】</div>"
-        strH = strH & "<table><tr><th width=""55%"">任务内容</th><th width=""20%"">次数</th><th width=""25%"">合计成本（万）</th></tr>"
-        lngAllCnt = 0
-        dblAllSum = 0
-        blnAny = False
-        For n = 0 To UBound(arrLines)
-            arrF = Split(arrLines(n), "|")
-            c = CLng(arrF(1))
-            arrCnt = Split(arrF(2), ",")
-            Set taskHas = CreateObject("Scripting.Dictionary")
-            Set taskSum = CreateObject("Scripting.Dictionary")
-            If arrF(3) <> "" Then
-                arrDet = Split(arrF(3), ",")
-                For m = 0 To UBound(arrDet)
-                    arrItem = Split(arrDet(m), ":")
-                    t = CLng(arrItem(0))
-                    dblC = CDbl(arrItem(1))
-                    If taskHas.Exists(t) Then
-                        taskSum(t) = taskSum(t) + dblC
-                    Else
-                        taskHas.Add t, True
-                        taskSum.Add t, dblC
-                    End If
-                Next
-            End If
-            lngRows = 0
-            lngCnt = 0
-            dblSum = 0
-            For t = 0 To 12
-                If taskHas.Exists(t) Then
-                    If lngRows = 0 Then
-                        strH = strH & "<tr><td class=""pet-char-cell"" colspan=""3"">" & PetCharName(c) & "</td></tr>"
-                        blnAny = True
-                    End If
-                    lngRows = lngRows + 1
-                    lngCnt = lngCnt + CLng(arrCnt(t))
-                    dblSum = dblSum + taskSum(t)
-                    strCls = ""
-                    If lngRows Mod 2 = 0 Then strCls = " class=""alt"""
-                    strH = strH & "<tr" & strCls & "><td class=""lv"">" & PetTaskName(t) & "</td><td class=""num"">" & arrCnt(t) & "</td><td class=""num"">" & PetFmtCost(taskSum(t)) & "</td></tr>"
-                End If
-            Next
-            If lngRows > 0 Then
-                strH = strH & "<tr><td class=""pet-subtotal"">" & PetCharName(c) & " 小计</td><td class=""pet-subtotal""><b>" & lngCnt & "</b></td><td class=""pet-subtotal""><b>" & PetFmtCost(dblSum) & "</b></td></tr>"
-                lngAllCnt = lngAllCnt + lngCnt
-                dblAllSum = dblAllSum + dblSum
-            End If
-        Next
-        If Not blnAny Then
-            strH = strH & "<tr><td class=""pet-empty"" colspan=""3"">暂无成本记录</td></tr>"
-        Else
-            strH = strH & "<tr><td class=""pet-grand"">全部号合计</td><td class=""pet-grand""><b>" & lngAllCnt & "</b></td><td class=""pet-grand""><b>" & PetFmtCost(dblAllSum) & "</b></td></tr>"
-        End If
-        strH = strH & "</table>"
-        strH = strH & "<div class=""pet-block-title"">【成本明细】</div>"
-        strH = strH & "<div class=""pet-detail-scroll""><table><tr><th width=""15%"">序号</th><th width=""55%"">任务内容</th><th width=""30%"">成本（万）</th></tr>"
-        blnAnyDet = False
-        For n = 0 To UBound(arrLines)
-            arrF = Split(arrLines(n), "|")
-            c = CLng(arrF(1))
-            If arrF(3) <> "" Then
-                arrDet = Split(arrF(3), ",")
-                strH = strH & "<tr><td class=""pet-char-cell"" colspan=""3"">" & PetCharName(c) & "</td></tr>"
-                blnAnyDet = True
-                rn = 0
-                For m = UBound(arrDet) To 0 Step -1
-                    arrItem = Split(arrDet(m), ":")
-                    rn = rn + 1
-                    strCls = ""
-                    If rn Mod 2 = 0 Then strCls = " class=""alt"""
-                    strH = strH & "<tr" & strCls & "><td class=""num"">" & (m + 1) & "</td><td class=""lv"">" & PetTaskName(CLng(arrItem(0))) & "</td><td class=""num"">" & PetFmtCost(CDbl(arrItem(1))) & "</td></tr>"
-                Next
-            End If
-        Next
-        If Not blnAnyDet Then strH = strH & "<tr><td class=""pet-empty"" colspan=""3"">暂无成本记录</td></tr>"
-        strH = strH & "</table></div>"
-        OpenPetHistDlg strDate, strH
-    End Sub
-    ' 打开历史弹窗：遮罩 + 视口居中 + 锁背景滚动（内容超高时顶部对齐）
-    Sub OpenPetHistDlg(strDate, strHtml)
-        Dim objDlg, vw, vh
-        petHistSelectedDate = strDate
-        petHistSavedScrollTop = document.body.scrollTop
-        document.body.style.overflow = "hidden"
-        document.body.scrollTop = petHistSavedScrollTop
-        document.getElementById("petHistTitle").innerText = "📅 " & strDate & " 宠环成本记录"
-        document.getElementById("petHistBody").innerHTML = strHtml
-        Set objDlg = document.getElementById("petHistDialog")
-        objDlg.style.display = "block"
-        document.getElementById("petHistOverlay").style.display = "block"
-        document.getElementById("petHistOverlay").style.pixelWidth = document.body.scrollWidth
-        document.getElementById("petHistOverlay").style.pixelHeight = document.body.scrollHeight
-        vw = document.body.clientWidth
-        vh = document.body.clientHeight
-        If objDlg.offsetHeight > vh Then
-            objDlg.style.pixelTop = 8 + document.body.scrollTop
-        Else
-            objDlg.style.pixelTop = Int((vh - objDlg.offsetHeight) / 2) + document.body.scrollTop
-        End If
-        objDlg.style.pixelLeft = Int((vw - objDlg.offsetWidth) / 2) + document.body.scrollLeft
-    End Sub
-    Sub ClosePetHist
-        petHistSelectedDate = ""
-        document.getElementById("petHistDialog").style.display = "none"
-        document.getElementById("petHistOverlay").style.display = "none"
-        document.body.style.overflow = ""
-        document.body.scrollTop = petHistSavedScrollTop
-    End Sub
-    ' 删除仅处理已保存快照，不改当前计数、成本和 petDirty；空日期仅由全部清空入口传入。
-    Sub PetDeleteHistDay
-        If petHistSelectedDate <> "" Then PetRemoveHistory petHistSelectedDate
-    End Sub
-    Sub PetClearHistory
-        window.event.cancelBubble = True
-        PetRemoveHistory ""
-    End Sub
-    Sub PetRemoveHistory(ByVal strDate)
-        Dim arrOld, arrCheck, n, d, dicDates, lngRows, strOut, strScope, strToken, strAnswer, strNote, fso, f
-        On Error Resume Next
-        Err.Clear
-        arrOld = PetReadHistLines
-        If Err.Number <> 0 Then
-            Err.Clear
-            On Error GoTo 0
-            MsgBox "读取历史记录失败，未执行删除，请检查文件访问权限。", vbExclamation, "删除历史记录"
-            Exit Sub
-        End If
-        On Error GoTo 0
-        Set dicDates = CreateObject("Scripting.Dictionary")
-        lngRows = 0
-        strOut = ""
-        For n = 0 To UBound(arrOld)
-            If arrOld(n) <> "" Then
-                d = Split(arrOld(n), "|")(0)
-                If Not dicDates.Exists(d) Then dicDates.Add d, True
-                If strDate = "" Or d = strDate Then
-                    lngRows = lngRows + 1
-                Else
-                    strOut = strOut & arrOld(n) & vbCrLf
-                End If
-            End If
-        Next
-        If lngRows = 0 Then
-            If strDate = "" Then
-                MsgBox "暂无可清空的历史记录。", vbInformation, "清空历史记录"
-            Else
-                MsgBox strDate & " 已无历史记录。", vbInformation, "删除该日记录"
-            End If
-            If petHistSelectedDate <> "" Then ClosePetHist
-            RefreshPetHist
-            Exit Sub
-        End If
-        strNote = ""
-        If strDate = "" Then
-            strScope = "全部 " & dicDates.Count & " 个日期、全部号的历史记录"
-            strToken = "清空全部历史记录"
-        Else
-            strScope = strDate & " 的全部号历史记录"
-            strToken = strDate
-            strNote = vbCrLf & "其他日期记录保留。"
-        End If
-        If MsgBox("即将永久删除" & strScope & "。" & strNote & vbCrLf & vbCrLf & "此操作不可撤销，建议先取消并导出备份。" & vbCrLf & "当前计数和成本不受影响；再次保存当天记录会重新生成当天历史。" & vbCrLf & vbCrLf & "是否继续？", vbYesNo + vbExclamation + vbDefaultButton2, "删除历史记录 · 确认范围") <> vbYes Then Exit Sub
-        If strDate = "" Then
-            If MsgBox("再次确认：将清空所有日期的宠环历史记录，不只是当前月份或当前号！" & vbCrLf & "没有导出备份的记录将无法恢复。" & vbCrLf & vbCrLf & "确定继续清空吗？", vbYesNo + vbExclamation + vbDefaultButton2, "清空全部历史记录 · 二次确认") <> vbYes Then Exit Sub
-        End If
-        strAnswer = InputBox("最后确认：请输入“" & strToken & "”以删除" & strScope & "。" & vbCrLf & "输入不一致或取消均不会删除。", "删除历史记录 · 输入确认", "")
-        If strAnswer = "" Then Exit Sub
-        If strAnswer <> strToken Then
-            MsgBox "输入不一致，已取消删除，历史记录未改动。", vbInformation, "已取消删除"
-            Exit Sub
-        End If
-        ' 确认期间若其他窗口保存或导入了记录，拒绝用旧快照覆盖。
-        On Error Resume Next
-        Err.Clear
-        arrCheck = PetReadHistLines
-        If Err.Number <> 0 Then
-            Err.Clear
-            On Error GoTo 0
-            MsgBox "重新读取历史记录失败，未执行删除。", vbExclamation, "删除失败"
-            Exit Sub
-        End If
-        On Error GoTo 0
-        If Join(arrCheck, vbCrLf) <> Join(arrOld, vbCrLf) Then
-            MsgBox "确认期间历史记录发生变化，已取消删除，请重新查看后操作。", vbExclamation, "已取消删除"
-            Exit Sub
-        End If
-        On Error Resume Next
-        Err.Clear
-        Set fso = CreateObject("Scripting.FileSystemObject")
-        Set f = fso.CreateTextFile(PetHistFile, True)
-        f.Write strOut
-        f.Close
-        If Err.Number <> 0 Then
-            Err.Clear
-            On Error GoTo 0
-            MsgBox "删除失败：无法写入历史记录文件，请检查文件访问权限或磁盘空间。", vbExclamation, "删除失败"
-            Exit Sub
-        End If
-        On Error GoTo 0
-        If petHistSelectedDate <> "" Then ClosePetHist
-        RefreshPetHist
-        If strDate = "" Then
-            MsgBox "已清空全部宠环历史记录。", vbInformation, "清空完成"
-        Else
-            MsgBox "已删除 " & strDate & " 的全部号历史记录，其他日期保留。", vbInformation, "删除完成"
-        End If
-    End Sub
-    ' ===================== 历史记录跨端导入/导出（交换格式即文件行格式，与移动版通用） =====================
-    ' 导出：全部已保存历史行填入文本框，全选待复制（到移动版“导入”粘贴）
-    Sub PetHistExport
-        Dim arrAll, n, strAll, lngCnt
-        window.event.cancelBubble = True
-        arrAll = PetReadHistLines
-        strAll = ""
-        lngCnt = 0
-        For n = 0 To UBound(arrAll)
-            If arrAll(n) <> "" Then
-                strAll = strAll & arrAll(n) & vbCrLf
-                lngCnt = lngCnt + 1
-            End If
-        Next
-        If strAll = "" Then
-            MsgBox "暂无已保存的历史记录（先点“保存当天记录”或从移动版导入）。", vbInformation, "导出历史记录"
-            Exit Sub
-        End If
-        document.getElementById("petIoTitle").innerText = "导出历史记录（与移动版通用）"
-        document.getElementById("petIoNote").innerText = "共 " & lngCnt & " 行。点“全选复制”复制全部文本，再到移动版“历史记录查询”的“导入”粘贴。"
-        document.getElementById("petIoText").value = strAll
-        document.getElementById("petIoOkBtn").style.display = "none"
-        document.getElementById("petIoCopyBtn").style.display = ""
-        OpenPetIoDlg
-        document.getElementById("petIoText").select
-    End Sub
-    ' 导入：粘贴移动版导出的行文本，确认后与本机文件合并（同日期覆盖、其他保留）
-    Sub PetHistImport
-        window.event.cancelBubble = True
-        document.getElementById("petIoTitle").innerText = "导入历史记录（与移动版通用）"
-        document.getElementById("petIoNote").innerText = "粘贴移动版导出的记录文本后点“导入”。导入日期将覆盖本机同日期记录，其他日期保留；不影响当前计数。"
-        document.getElementById("petIoText").value = ""
-        document.getElementById("petIoOkBtn").style.display = ""
-        document.getElementById("petIoCopyBtn").style.display = "none"
-        OpenPetIoDlg
-    End Sub
-    ' 交换行日期字段校验：yyyy-mm-dd 结构 + IsDate 双重校验
-    Function PetValidDate(s)
-        PetValidDate = False
-        If Len(s) <> 10 Then Exit Function
-        If Mid(s, 5, 1) <> "-" Or Mid(s, 8, 1) <> "-" Then Exit Function
-        If Not IsNumeric(Left(s, 4) & Mid(s, 6, 2) & Mid(s, 9, 2)) Then Exit Function
-        If Not IsDate(s) Then Exit Function
-        PetValidDate = True
-    End Function
-    ' 导入确认：逐行校验（5 段/日期/号 0-4/13 项整数次数/明细 t:c 且任务号 0-12/数字成本），
-    ' 全过才合并写入：导入文本中的日期整日覆盖本地同日期行，本地其他日期保留；
-    ' 计数器与 petDirty 不受影响（导入的是已落盘快照，不是会话数据）；写入时 total 顺手规范化去千分位
-    Sub PetIoOk
-        Dim strAll, arrLines, strLine, arrF, arrCnt, arrDet, arrItem
-        Dim n, m, strDate, dicDates, arrOld, strOut, fso, f, lngIn
-        strAll = document.getElementById("petIoText").value
-        If Trim(Replace(Replace(strAll, vbCrLf, " "), vbCr, " ")) = "" Then
-            MsgBox "请先粘贴历史记录文本！", vbExclamation, "导入历史记录"
-            Exit Sub
-        End If
-        ' 统一换行为 vbLf 再分行（兼容 CRLF / LF / CR 及末尾多余换行）
-        strAll = Replace(strAll, vbCrLf, vbLf)
-        strAll = Replace(strAll, vbCr, vbLf)
-        arrLines = Split(strAll, vbLf)
-        lngIn = 0
-        Set dicDates = CreateObject("Scripting.Dictionary")
-        For n = 0 To UBound(arrLines)
-            strLine = Trim(arrLines(n))
-            If strLine <> "" Then
-                lngIn = lngIn + 1
-                arrF = Split(strLine, "|")
-                If UBound(arrF) <> 4 Then
-                    MsgBox "第 " & lngIn & " 行不是 5 个竖线分隔的字段：" & vbCrLf & Left(strLine, 60), vbExclamation, "导入失败"
-                    Exit Sub
-                End If
-                If Not PetValidDate(arrF(0)) Then
-                    MsgBox "第 " & lngIn & " 行日期不是 yyyy-mm-dd 格式：" & vbCrLf & Left(strLine, 60), vbExclamation, "导入失败"
-                    Exit Sub
-                End If
-                If Not IsNumeric(arrF(1)) Or CLng(arrF(1)) < 0 Or CLng(arrF(1)) > 4 Then
-                    MsgBox "第 " & lngIn & " 行号字段须为 0~4：" & vbCrLf & Left(strLine, 60), vbExclamation, "导入失败"
-                    Exit Sub
-                End If
-                arrCnt = Split(arrF(2), ",")
-                If UBound(arrCnt) <> 12 Then
-                    MsgBox "第 " & lngIn & " 行次数字段须为逗号分隔的 13 项：" & vbCrLf & Left(strLine, 60), vbExclamation, "导入失败"
-                    Exit Sub
-                End If
-                For m = 0 To 12
-                    If Not IsNumeric(arrCnt(m)) Or InStr(arrCnt(m), ".") > 0 Then
-                        MsgBox "第 " & lngIn & " 行次数须为非负整数：" & vbCrLf & Left(strLine, 60), vbExclamation, "导入失败"
-                        Exit Sub
-                    End If
-                Next
-                If arrF(3) <> "" Then
-                    arrDet = Split(arrF(3), ",")
-                    For m = 0 To UBound(arrDet)
-                        arrItem = Split(arrDet(m), ":")
-                        If UBound(arrItem) <> 1 Or Not IsNumeric(arrItem(0)) Or Not IsNumeric(arrItem(1)) Then
-                            MsgBox "第 " & lngIn & " 行明细须为“任务序号:成本”格式：" & vbCrLf & Left(strLine, 60), vbExclamation, "导入失败"
-                            Exit Sub
-                        End If
-                        If CLng(arrItem(0)) < 0 Or CLng(arrItem(0)) > 12 Then
-                            MsgBox "第 " & lngIn & " 行明细任务序号须为 0~12：" & vbCrLf & Left(strLine, 60), vbExclamation, "导入失败"
-                            Exit Sub
-                        End If
-                    Next
-                End If
-                ' total 容忍千分位（HTA 旧版文件可能写过），写入时规范化
-                If Not IsNumeric(Replace(arrF(4), ",", "")) Then
-                    MsgBox "第 " & lngIn & " 行累计成本须为数字：" & vbCrLf & Left(strLine, 60), vbExclamation, "导入失败"
-                    Exit Sub
-                End If
-                If Not dicDates.Exists(arrF(0)) Then dicDates.Add arrF(0), True
-            End If
-        Next
-        ' 本地保留日期不在导入集合的行，再追加导入行（total 重写为无千分位）
-        arrOld = PetReadHistLines
-        strOut = ""
-        For n = 0 To UBound(arrOld)
-            If arrOld(n) <> "" Then
-                If Not dicDates.Exists(Split(arrOld(n), "|")(0)) Then strOut = strOut & arrOld(n) & vbCrLf
-            End If
-        Next
-        For n = 0 To UBound(arrLines)
-            strLine = Trim(arrLines(n))
-            If strLine <> "" Then
-                arrF = Split(strLine, "|")
-                strOut = strOut & arrF(0) & "|" & arrF(1) & "|" & arrF(2) & "|" & arrF(3) & "|" & PetFmtCostPlain(CDbl(Replace(arrF(4), ",", ""))) & vbCrLf
-            End If
-        Next
-        On Error Resume Next
-        Err.Clear
-        Set fso = CreateObject("Scripting.FileSystemObject")
-        Set f = fso.CreateTextFile(PetHistFile, True)
-        f.Write strOut
-        f.Close
-        If Err.Number <> 0 Then
-            Err.Clear
-            On Error GoTo 0
-            MsgBox "导入失败：无法写入历史记录文件（" & PetHistFile & "）。", vbExclamation, "导入历史记录"
-            Exit Sub
-        End If
-        On Error GoTo 0
-        PetIoClose
-        MsgBox "导入成功：共 " & lngIn & " 行（" & dicDates.Count & " 天），导入日期已覆盖本机同日期记录，其他日期保留。", vbInformation, "导入历史记录"
-        If document.getElementById("petHistSection").style.display <> "none" Then RefreshPetHist
-    End Sub
-    ' 全选并尝试复制文本框内容（剪贴板被安全设置拦截时退化为全选待手动 Ctrl+C）
-    Sub PetIoCopyAll
-        Dim objT
-        Set objT = document.getElementById("petIoText")
-        objT.focus
-        objT.select
-        On Error Resume Next
-        window.clipboardData.setData "Text", objT.value
-        If Err.Number = 0 Then
-            MsgBox "已复制到剪贴板，到移动版“导入”粘贴即可。", vbInformation, "导出历史记录"
-        Else
-            Err.Clear
-            MsgBox "已全选文本（剪贴板直接写入被拦截），请按 Ctrl+C 复制。", vbInformation, "导出历史记录"
-        End If
-        On Error GoTo 0
-    End Sub
-    ' 打开导入/导出弹窗：遮罩 + 视口居中 + 锁背景滚动（同历史查看弹窗）
-    Sub OpenPetIoDlg
-        Dim objDlg, vw, vh
-        petIoSavedScrollTop = document.body.scrollTop
-        document.body.style.overflow = "hidden"
-        document.body.scrollTop = petIoSavedScrollTop
-        Set objDlg = document.getElementById("petIoDialog")
-        objDlg.style.display = "block"
-        document.getElementById("petIoOverlay").style.display = "block"
-        document.getElementById("petIoOverlay").style.pixelWidth = document.body.scrollWidth
-        document.getElementById("petIoOverlay").style.pixelHeight = document.body.scrollHeight
-        vw = document.body.clientWidth
-        vh = document.body.clientHeight
-        If objDlg.offsetHeight > vh Then
-            objDlg.style.pixelTop = 8 + document.body.scrollTop
-        Else
-            objDlg.style.pixelTop = Int((vh - objDlg.offsetHeight) / 2) + document.body.scrollTop
-        End If
-        objDlg.style.pixelLeft = Int((vw - objDlg.offsetWidth) / 2) + document.body.scrollLeft
-    End Sub
-    Sub PetIoClose
-        document.getElementById("petIoDialog").style.display = "none"
-        document.getElementById("petIoOverlay").style.display = "none"
-        document.body.style.overflow = ""
-        document.body.scrollTop = petIoSavedScrollTop
+        ToggleSection "sqLinks", "sqToggleHint"
     End Sub
     Sub ShowShenqi(idx)
         sqCurrentIdx = CInt(idx)
@@ -2467,7 +2266,7 @@
     ' 丢弃导航、推荐位、侧边栏、评论区等全部非正文区域；DOM 最小化，加快加载并让滚动更流畅
     ' 游侠站正文容器为 .c-detail；3DM 站桌面版为 warp_center、移动版为 detaile_cont，截尾锚点按站点区分
     Function SqExtractBody(strHtml, strUrl)
-        Dim re, m, posStart, posEnd, posTry, posJ, posP, strBody, blnIs3dm, posLt, posGt, intCh
+        Dim re, m, posStart, posEnd, posTry, posJ, posP, strBody, blnIs3dm, posLt, posGt, intCh, anchors, anchor
         SqExtractBody = ""
         blnIs3dm = False
         Set re = New RegExp
@@ -2490,30 +2289,14 @@
         posEnd = Len(strHtml)
         ' 逐个截尾锚点：保留到最早出现者之前
         If blnIs3dm Then
-            posTry = InStr(posStart, strHtml, "floating-button-container", vbTextCompare)
-            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
-            posTry = InStr(posStart, strHtml, "warp_b", vbTextCompare)
-            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
-            posTry = InStr(posStart, strHtml, "warp_c", vbTextCompare)
-            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
-            posTry = InStr(posStart, strHtml, "related_cont", vbTextCompare)
-            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
-            posTry = InStr(posStart, strHtml, "comm-title", vbTextCompare)
-            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
-            posTry = InStr(posStart, strHtml, "sy-tuijian", vbTextCompare)
-            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
+            anchors = Array("floating-button-container", "warp_b", "warp_c", "related_cont", "comm-title", "sy-tuijian")
         Else
-            posTry = InStr(posStart, strHtml, "share-container", vbTextCompare)
-            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
-            posTry = InStr(posStart, strHtml, "hidden-table", vbTextCompare)
-            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
-            posTry = InStr(posStart, strHtml, "newsbbs", vbTextCompare)
-            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
-            posTry = InStr(posStart, strHtml, "gl_r", vbTextCompare)
-            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
-            posTry = InStr(posStart, strHtml, ChrW(&H63A8) & ChrW(&H8350) & ChrW(&H9605) & ChrW(&H8BFB))  ' 推荐阅读
-            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
+            anchors = Array("share-container", "hidden-table", "newsbbs", "gl_r", ChrW(&H63A8) & ChrW(&H8350) & ChrW(&H9605) & ChrW(&H8BFB))  ' 推荐阅读
         End If
+        For Each anchor In anchors
+            posTry = InStr(posStart, strHtml, anchor, vbTextCompare)
+            If posTry > 0 And posTry - 1 < posEnd Then posEnd = posTry - 1
+        Next
         ' 结束语“以上就是……”：保留到其段落结束（含神器小结自然收尾）
         posJ = InStr(posStart, strHtml, ChrW(&H4EE5) & ChrW(&H4E0A) & ChrW(&H5C31) & ChrW(&H662F))
         If posJ > 0 Then
@@ -2537,16 +2320,7 @@
         If posEnd <= posStart Then Exit Function
         strBody = Mid(strHtml, posStart, posEnd - posStart + 1)
         ' 正文中偶发的脚本与事件属性同样剥离，旧 IE 引擎执行会报脚本错误
-        re.Global = True
-        re.IgnoreCase = True
-        re.Pattern = "<script\b[\s\S]*?</script\s*>"
-        strBody = re.Replace(strBody, "")
-        re.Pattern = "<script\b[^>]*>"
-        strBody = re.Replace(strBody, "")
-        re.Pattern = " on[a-zA-Z]+\s*=\s*""[^""]*"""
-        strBody = re.Replace(strBody, "")
-        re.Pattern = " on[a-zA-Z]+\s*=\s*'[^']*'"
-        strBody = re.Replace(strBody, "")
+        strBody = SqCleanContent(strBody, False)
         SqExtractBody = "<html><head>" & _
             "<base href=""" & strUrl & """>" & _
             "<style>" & _
@@ -2556,25 +2330,35 @@
             "p{margin:10px 0;}" & _
             "</style></head><body>" & strBody & "</body></html>"
     End Function
+    Function SqCleanContent(ByVal html, stripFrames)
+        Dim regex, pattern
+        Set regex = New RegExp
+        regex.Global = True
+        regex.IgnoreCase = True
+        For Each pattern In Array("<script\b[\s\S]*?</script\s*>", "<script\b[^>]*>")
+            regex.Pattern = pattern
+            html = regex.Replace(html, "")
+        Next
+        If stripFrames Then
+            For Each pattern In Array("<iframe\b[\s\S]*?</iframe\s*>", "<iframe\b[^>]*>")
+                regex.Pattern = pattern
+                html = regex.Replace(html, "")
+            Next
+        End If
+        For Each pattern In Array(" on[a-zA-Z]+\s*=\s*""[^""]*""", " on[a-zA-Z]+\s*=\s*'[^']*'")
+            regex.Pattern = pattern
+            html = regex.Replace(html, "")
+        Next
+        SqCleanContent = html
+    End Function
     Function SqTransformHtml(strHtml, strUrl)
         Dim re, strBase
         Set re = New RegExp
         re.Global = True
         re.IgnoreCase = True
         ' 移除脚本与嵌套框架：旧 IE 引擎无法执行现代 JS，保留会触发“脚本错误”弹窗
-        re.Pattern = "<script\b[\s\S]*?</script\s*>"
-        strHtml = re.Replace(strHtml, "")
-        re.Pattern = "<script\b[^>]*>"
-        strHtml = re.Replace(strHtml, "")
-        re.Pattern = "<iframe\b[\s\S]*?</iframe\s*>"
-        strHtml = re.Replace(strHtml, "")
-        re.Pattern = "<iframe\b[^>]*>"
-        strHtml = re.Replace(strHtml, "")
         ' 移除事件属性，防止调用已剥离的脚本
-        re.Pattern = " on[a-zA-Z]+\s*=\s*""[^""]*"""
-        strHtml = re.Replace(strHtml, "")
-        re.Pattern = " on[a-zA-Z]+\s*=\s*'[^']*'"
-        strHtml = re.Replace(strHtml, "")
+        strHtml = SqCleanContent(strHtml, True)
         ' javascript: 链接改为空锚
         re.Pattern = "(href\s*=\s*[""'])\s*javascript:[^""']*"
         strHtml = re.Replace(strHtml, "$1#")
@@ -2717,13 +2501,7 @@
         sqMoveOn = False
         sqUserLeft = document.getElementById("sqDialog").style.pixelLeft
         sqUserTop = document.getElementById("sqDialog").style.pixelTop
-        document.getElementById("sqDragMask").style.display = "none"
-        Set document.onmousemove = Nothing
-        Set document.onmouseup = Nothing
-        document.body.style.cursor = ""
-        On Error Resume Next
-        document.getElementById("sqDragMask").releaseCapture
-        On Error GoTo 0
+        FinishSqDrag
     End Sub
     ' 开始拖拽右下角手柄：显示覆盖遮罩并捕获鼠标，拖动中实时调整弹窗尺寸（400x300 ~ 当前视口）
     Sub StartSqResize
@@ -2767,6 +2545,9 @@
     Sub StopSqResize
         If Not sqResizeOn Then Exit Sub
         sqResizeOn = False
+        FinishSqDrag
+    End Sub
+    Sub FinishSqDrag
         document.getElementById("sqDragMask").style.display = "none"
         Set document.onmousemove = Nothing
         Set document.onmouseup = Nothing
@@ -2797,72 +2578,7 @@
         Set objShell = CreateObject("WScript.Shell")
         objShell.Run "explorer.exe " & arrShenqi(sqCurrentIdx)(1), 1, False
     End Sub
-    Sub SaveToHistory
-        Dim idx
-        If lastDesc = "" Then Exit Sub
-        idx = historyCount
-        historyCount = historyCount + 1
-        ReDim Preserve arrHistory(historyCount - 1)
-        arrHistory(idx) = Array(Pad2(Hour(Now)) & ":" & Pad2(Minute(Now)) & ":" & Pad2(Second(Now)), lastDesc, lastResult)
-        lastDesc = ""
-        lastResult = ""
-        TrimHistory
-    End Sub
-    Sub TrimHistory
-        Dim maxH, removeCount, i
-        maxH = CInt(document.getElementById("selHistoryMax").value)
-        If historyCount <= maxH Then Exit Sub
-        removeCount = historyCount - maxH
-        For i = 0 To historyCount - removeCount - 1
-            arrHistory(i) = arrHistory(i + removeCount)
-        Next
-        historyCount = maxH
-        ReDim Preserve arrHistory(historyCount - 1)
-    End Sub
-    Sub OnChangeHistoryLimit
-        TrimHistory
-        If lastDesc <> "" Or historyCount > 0 Then RenderHistory
-    End Sub
-    Sub RenderHistory
-        Dim html, i, e, cR, hR, j
-        html = "<table class=""history-table""><tr><th class=""h1"" width=""8%""></th><th class=""h2"" width=""9%"">时间</th><th class=""h3"" width=""28%"">输入参数</th><th class=""h4"">伤害</th><th class=""h5"">法伤</th><th class=""h6"">防御</th><th class=""h7"">气血</th><th class=""h8"">速度</th><th class=""h9"" width=""6%""></th></tr>"
-        If lastDesc <> "" Then
-            cR = Split(lastResult, "  ")
-            html = html & "<tr class=""row-current""><td class=""current-tag"">当前</td><td class=""hist-time"">" & Pad2(Hour(Now)) & ":" & Pad2(Minute(Now)) & ":" & Pad2(Second(Now)) & "</td><td class=""hist-info"">" & lastDesc & "</td>"
-            For i = 0 To 4
-                If i <= UBound(cR) Then html = html & "<td class=""num"">" & Split(cR(i), ":")(1) & "</td>" Else html = html & "<td class=""num"">/</td>"
-            Next
-            html = html & "<td></td></tr>"
-        End If
-        For i = historyCount - 1 To 0 Step -1
-            e = arrHistory(i)
-            hR = Split(e(2), "  ")
-            html = html & "<tr><td class=""hist-tag"">历史</td><td class=""hist-time"">" & e(0) & "</td><td class=""hist-info"">" & e(1) & "</td>"
-            For j = 0 To 4
-                If j <= UBound(hR) Then html = html & "<td class=""num"">" & Split(hR(j), ":")(1) & "</td>" Else html = html & "<td class=""num"">/</td>"
-            Next
-            html = html & "<td class=""hist-del""><button class=""hist-del-btn"" onclick=""DeleteHistory " & i & """>删</button></td></tr>"
-        Next
-        html = html & "</table>"
-        document.getElementById("divHistoryTable").innerHTML = html
-        document.getElementById("divHistory").style.display = ""
-    End Sub
-    Sub DeleteHistory(idx)
-        Dim i
-        If idx < 0 Or idx >= historyCount Then Exit Sub
-        For i = idx To historyCount - 2
-            arrHistory(i) = arrHistory(i + 1)
-        Next
-        historyCount = historyCount - 1
-        If historyCount = 0 Then ReDim arrHistory(0) Else ReDim Preserve arrHistory(historyCount - 1)
-        RenderHistory
-    End Sub
-    Sub ClearHistory
-        ReDim arrHistory(0)
-        historyCount = 0
-        document.getElementById("divHistory").style.display = "none"
-        document.getElementById("divHistoryTable").innerHTML = ""
-    End Sub
+    ' ===================== 主题切换 =====================
     Sub ToggleTheme
         Dim chk, track
         Set chk = document.getElementById("chkTheme")
@@ -2880,6 +2596,80 @@
         End If
         ' 日/夜文本宽度不同，重钉右上角按钮条位置
         PinTopButtons
+    End Sub
+    ' ===================== 初始化与窗口生命周期 =====================
+    Sub Window_OnLoad
+        Dim winW, maxH, winH, chromeH
+        winW = 1100
+        maxH = Int(screen.availHeight * 0.95)
+        If winW > Int(screen.availWidth * 0.95) Then winW = Int(screen.availWidth * 0.95)
+        ' 先按目标宽度调整窗口，待初始化完成后按实际内容高度贴合窗口，避免底部留白
+        window.resizeTo winW, 600
+        ' 主窗口尺寸变化时同步调整攻略弹窗并钉住右上角按钮条；窗口失去焦点时结束未完成的拖拽
+        On Error Resume Next
+        window.onresize = GetRef("Window_OnResize")
+        window.onscroll = GetRef("Window_OnScroll")
+        window.onblur = GetRef("Window_OnBlur")
+        window.onbeforeunload = GetRef("Window_OnBeforeUnload")
+        On Error GoTo 0
+        FillRemindMinutes
+        RenderShenqiLinks
+        ' 标题栏/边框补偿 = 临时窗口高 - 客户区高（quirks 模式下 documentElement.clientHeight 恒为 0，须用 body.clientHeight 读取视口高）；窗口高 = 内容高 + 补偿 + 少量余量
+        chromeH = 600 - document.body.clientHeight
+        If chromeH < 0 Or chromeH > 200 Then chromeH = 72
+        winH = document.body.scrollHeight + chromeH + 4
+        If winH > maxH Then winH = maxH
+        If winH < 400 Then winH = 400
+        window.resizeTo winW, winH
+        window.moveTo (screen.availWidth - winW) \ 2, (screen.availHeight - winH) \ 2
+        PinTopButtons
+        document.getElementById("txtPrice").focus
+    End Sub
+    Sub Window_OnUnload
+        StopRemindTimers
+    End Sub
+    ' 右上角按钮条（退出工具箱/主题切换）钉位：quirks 模式不支持 position:fixed（会随文档滚动漂移），
+    ' 改由脚本按视口重算 absolute 坐标（坐标系与攻略弹窗 PositionSqDialog 一致）；滚动/缩放/切主题时触发
+    Sub PinTopButtons
+        Dim objExit, objTheme, viewW, scrX, scrY
+        viewW = document.body.clientWidth
+        scrX = document.body.scrollLeft
+        scrY = document.body.scrollTop
+        Set objExit = document.getElementById("btnExitApp")
+        Set objTheme = document.getElementById("themeToggle")
+        ' 先清 CSS right 再量宽设 left：left/right 同时生效会把 absolute 元素宽度压成两者间距，
+        ' 内容被挤换行（日/夜文字串行的根因）；清掉后宽度恢复内容自然宽
+        objExit.style.right = "auto"
+        objTheme.style.right = "auto"
+        ' 退出按钮钉视口右上角（右缘内缩 20px，视觉上接替标题栏 X 的位置），主题切换排其左侧（间隔 12px）
+        objExit.style.pixelTop = scrY + 9
+        objExit.style.pixelLeft = viewW + scrX - objExit.offsetWidth - 20
+        objTheme.style.pixelTop = scrY + 10
+        objTheme.style.pixelLeft = viewW + scrX - objExit.offsetWidth - objTheme.offsetWidth - 32
+    End Sub
+    Sub Window_OnScroll
+        PinTopButtons
+    End Sub
+    ' “退出工具箱”按钮（X/Alt+F4 无法拦截，可取消的退出统一走此按钮）：有未保存变更时三选（保存后退出 / 不保存退出 / 留在工具箱），无变更直接退出
+    Sub PetExitApp
+        Dim r
+        If petDirty Then
+            r = MsgBox("宠环成本记录当天有未保存的变更，退出前是否保存？" & vbCrLf & vbCrLf & "【是】保存后退出    【否】不保存直接退出    【取消】留在工具箱", vbYesNoCancel + vbQuestion, "退出确认")
+            If r = vbCancel Then Exit Sub
+            If r = vbYes Then
+                ' 保存失败（已弹提示）且当天确有数据：留在工具箱待处理；当天无可保存数据：直接退出
+                If Not PetSaveBeforeAction Then Exit Sub
+            End If
+        End If
+        petExiting = True
+        window.close
+    End Sub
+    ' 兜底提醒：X/Alt+F4 等系统级关闭（HTA 受 IE 引擎限制无法取消，returnValue/取消键均拦不住）只能二选是否保存后退出；
+    ' 需要“留在工具箱”的可取消退出流程走右上角“退出工具箱”按钮
+    Sub Window_OnBeforeUnload
+        If petExiting Then Exit Sub
+        If Not petDirty Then Exit Sub
+        If MsgBox("宠环成本记录当天有未保存的变更，退出前是否保存？" & vbCrLf & vbCrLf & "【是】保存后退出    【否】不保存直接退出", vbYesNo + vbQuestion, "保存提醒") = vbYes Then PetSaveBeforeAction
     End Sub
 </script>
 </head>
