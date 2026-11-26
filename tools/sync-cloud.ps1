@@ -5,7 +5,10 @@
 # folder) and leaves the drop itself to the client window.
 #
 # Layout of the staging folder (only the newest release is kept - the same "one version in dist"
-# rule as the release folder):
+# rule as the release folder). The folder carries the cloud target name on purpose: the client
+# window shows "My Drive / MHToolbox" next to a local "dist\MHToolbox", so the drop is a
+# same-name drag and nobody has to remember which local folder maps to which cloud folder. The exe
+# launcher still unpacks into "MengHuanToolbox\" next to itself, a different name on purpose.
 #   CHANGELOG.md                    version record (kept for reading, not used by the checker)
 #   <name>_v<version>.zip           the package
 #   <name>_v<version>.exe           single-file build, when it exists
@@ -15,7 +18,7 @@
 # but refuses anonymous downloads (sharedownload answers errno=118), so the name is the only
 # public fact about a release.
 #
-# Where the files end up is "My Drive / MengHuanToolbox" in the share; the share path and its
+# Where the files end up is "My Drive / MHToolbox" in the share; the share path and its
 # code live in app\ocr\update_toolbox.ps1, so changing the share means editing that default, the
 # GUI drop target and the README together.
 #
@@ -75,7 +78,7 @@ if ($Version -eq '') {
     exit 0
 }
 
-if ($CloudDir -eq '') { $CloudDir = Join-Path $root 'dist\_cloud' }
+if ($CloudDir -eq '') { $CloudDir = Join-Path $root 'dist\MHToolbox' }
 $dist = Join-Path $root $DistDir
 $notes = Join-Path $root 'CHANGELOG.md'
 $zipPath = Join-Path $dist ($TopName + '_v' + $Version + '.zip')
@@ -173,6 +176,6 @@ try {
     Write-Output 'Cloud  : opened the staging folder'
 } catch { }
 
-Write-Output 'Cloud  : in the client, open  My Drive / MengHuanToolbox  and drop the files above into it'
+Write-Output 'Cloud  : in the client, open  My Drive / MHToolbox  and drop the files above into it'
 Write-Output 'Cloud  : (Baidu Pan offers no command line uploader; that last drop is the only manual step)'
 exit 0

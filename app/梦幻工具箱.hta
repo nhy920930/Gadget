@@ -221,9 +221,19 @@
     /* 自动检测更新开关：勾选框按原生大小显示（.input-bar input 默认 150×30 会把它撑大） */
     .input-bar .upd-auto-option { width: auto; margin-left: 10px; margin-right: 0; font-size: 13px; font-weight: normal; text-align: left; cursor: pointer; }
     .input-bar .upd-auto-option input { width: 16px; height: 16px; padding: 0; margin: 0 4px 0 0; border: 0; background: transparent; filter: none; vertical-align: middle; }
-    /* 自动检测发现新版本时只亮按钮旁这一行，不弹窗 */
+    /* 自动检测的结论只写在按钮旁这一行，不弹窗：有新版本用红字，查过没事/没连上用灰字小声说 */
     #updNewHint { color: #c0392b; font-weight: bold; }
+    #updNewHint.quiet { color: #888888; font-weight: normal; }
     body.dark #updNewHint { color: #f0a050; }
+    body.dark #updNewHint.quiet { color: #8b9299; }
+    /* 更新模块整块居中，说明文字单独占一行（原来挤在按钮右边，字一长就顶到复选框上）；
+       提示行固定高度，提示出现 / 消失时这一块不会上下跳 */
+    .input-bar.upd-bar { text-align: center; }
+    .input-bar .upd-line { text-align: center; white-space: nowrap; }
+    .input-bar .upd-title { width: auto; text-align: left; }
+    .input-bar .upd-line .pet-secondary-btn { margin-left: 10px; }
+    .upd-msg { height: 20px; line-height: 20px; margin-top: 6px; text-align: center; font-size: 13px; }
+    .upd-msg .tip { margin-left: 0; }
     .history-header { margin-top: 14px; font-weight: bold; font-size: 14px; color: #3d444d; padding-bottom: 6px; }
     .history-table td.hist-time { text-align: center; white-space: nowrap; font-size: 12px; color: #70787f; }
     .history-table td.hist-info { text-align: left; font-size: 13px; }
@@ -4379,8 +4389,8 @@
     updLink = ""
     updDlgShown = False
     updDlgScroll = 0
-    ' 自动检测更新：勾选后每次打开工具箱都静默查一次版本（只比对、不下载），
-    ' 有新版本才在“检查更新”按钮旁亮一行字，不弹窗、不写状态行。开关存在 app\data，默认关闭。
+    ' 自动检测更新：勾选后每次打开工具箱都静默查一次版本（只比对、不下载），结论只写在
+    ' “检查更新”按钮旁那一行（新版本红字、其余灰字），不弹窗、不写状态行。开关存在 app\data，默认关闭。
     updAutoOn = False
     Function UpdAutoFile
         UpdAutoFile = OcrDataDir() & "\update_auto.txt"
@@ -4410,9 +4420,24 @@
         Err.Clear
         On Error GoTo 0
     End Sub
+    ' 有新版本那条用红字（#updNewHint 自己的样式）；顺手把灰字用的 quiet 类摘掉
     Sub UpdNewHint(strText)
+        Dim obj
         On Error Resume Next
-        document.getElementById("updNewHint").innerText = strText
+        Set obj = document.getElementById("updNewHint")
+        obj.className = "tip"
+        obj.innerText = strText
+        Err.Clear
+        On Error GoTo 0
+    End Sub
+    ' 静默检测的“正在查 / 已是最新 / 没连上”用灰字小声说一句：不弹窗、不写底部状态行，
+    ' 但得让人看得出确实查过一次——否则勾了自动检测也像什么都没发生
+    Sub UpdNewHintQuiet(strText)
+        Dim obj
+        On Error Resume Next
+        Set obj = document.getElementById("updNewHint")
+        obj.className = "tip quiet"
+        obj.innerText = strText
         Err.Clear
         On Error GoTo 0
     End Sub
@@ -4497,7 +4522,7 @@
     ' 自动下载走不通时（GitHub 连不上，或远端还没发布新包），只能让玩家自己去分享页拿：
     ' 脚本结果里的 link= 优先（它会跟着 update_source.txt 里的 share= / pwd= 变），拿不到才用这里的默认值
     Function UpdShareUrl
-        UpdShareUrl = "https://pan.baidu.com/s/1jMjWXBqNIAm1qwaGaBkJ4w?pwd=8iif"
+        UpdShareUrl = "https://pan.baidu.com/s/1PPAo-s-AXvYV6QssWiAy7Q?pwd=ttcj"
     End Function
     Sub UpdOpenLink(strUrl)
         Dim strGo
@@ -4597,8 +4622,12 @@
         If strMode = "check" Or strMode = "silent" Then
             ' 网盘一般一两秒就回，GitHub 只是兜底；15 秒读不到版本就算失败，两段串起来也够
             updTimeoutMs = 120000
-            ' 静默检测不写状态行，结论只落在“检查更新”旁那一行
-            If strMode = "check" Then UpdNote "正在检查更新…", ""
+            ' 静默检测不写状态行：进度和结论都只落在“检查更新”旁那一行
+            If strMode = "check" Then
+                UpdNote "正在检查更新…", ""
+            Else
+                UpdNewHintQuiet "正在自动检测更新…"
+            End If
         Else
             ' 下载 + 解压 + 替换，留足 5 分钟
             updTimeoutMs = 300000
@@ -4656,9 +4685,9 @@
         If updTry * 500 >= updTimeoutMs Then
             updBusy = False
             UpdBusyUI False
-            ' 静默检测失败不打扰：清掉按钮旁的旧提示，下次开工具箱再试，不写红字
+            ' 静默检测超时不弹窗、不写状态行，只在按钮旁用灰字说一句，下次开工具箱再试
             If updMode = "silent" Then
-                UpdNewHint ""
+                UpdNewHintQuiet "自动检测超时，稍后可点“检查更新”"
                 UpdSetStatus "", ""
                 Exit Sub
             End If
@@ -4702,8 +4731,8 @@
         ' 先摆好弹窗再写红字：UpdDlgShow 会清空窗内那行提示
         UpdNote "自动更新失败，请重新检查并手动下载更新", "#b33"
     End Sub
-    ' 静默检测的结论只写按钮旁那一行：有新版本就亮出来，其余（已最新/本地更新/读不到）一律清空，
-    ' 不弹窗、不写红字——开机自动跑的东西不该打断人
+    ' 静默检测的结论只写按钮旁那一行：有新版本用红字亮出来，已最新/本地更新/没连上换成灰字小声说，
+    ' 一律不弹窗——开机自动跑的东西不该打断人，但也不能让人以为自动检测没生效
     Sub UpdApplySilent(strStatus, strLocal, strRemote)
         ' 检测跑的过程中把开关关掉了：结论不再展示（这条提示只属于开了自动检测的人）
         If Not updAutoOn Then
@@ -4712,12 +4741,16 @@
         End If
         If strStatus = "available" Or strStatus = "manual" Then
             If strRemote = "" Then
-                UpdNewHint ""
+                UpdNewHintQuiet "自动检测：没读到远程版本，稍后可点“检查更新”"
             Else
                 UpdNewHint "有新版本 v" & strRemote & "（当前 v" & strLocal & "），点“检查更新”"
             End If
+        ElseIf strStatus = "latest" Then
+            UpdNewHintQuiet "自动检测：已是最新 v" & strLocal
+        ElseIf strStatus = "local_newer" Then
+            UpdNewHintQuiet "自动检测：本机 v" & strLocal & " 比远程 v" & strRemote & " 新"
         Else
-            UpdNewHint ""
+            UpdNewHintQuiet "自动检测没连上，稍后可点“检查更新”"
         End If
     End Sub
     Sub UpdApply(dic)
@@ -6403,14 +6436,9 @@ function OcrUrlEncodeJs(s) { return encodeURIComponent(String(s)); }
         <div style="cursor: pointer;" onclick="ToggleGemResult"><label style="width: auto; text-align: left;">💎 成本计算结果：</label><span class="sq-toggle" id="gemResultToggleHint">▼ 展开</span></div>
     </div>
     <div id="resultArea" style="display: none;"></div>
-    <div class="input-bar">
-        <div>
-            <label>🔄 工具箱更新：</label><span class="tip" id="updVer">版本 —</span>
-            <button class="pet-secondary-btn" id="btnUpdCheck" onclick="UpdCheck" style="margin-left: 4px;">检查更新</button>
-            <span class="tip" id="updNewHint"></span>
-            <label class="upd-auto-option"><input type="checkbox" id="chkUpdAuto" onclick="UpdAutoToggle">自动检测更新</label>
-            <span class="tip" id="updStatus"></span>
-        </div>
+    <div class="input-bar upd-bar">
+        <div class="upd-line"><label class="upd-title">🔄 工具箱更新：</label><span class="tip" id="updVer">版本 —</span><button class="pet-secondary-btn" id="btnUpdCheck" onclick="UpdCheck">检查更新</button><label class="upd-auto-option"><input type="checkbox" id="chkUpdAuto" onclick="UpdAutoToggle">自动检测更新</label></div>
+        <div class="upd-msg"><span class="tip" id="updNewHint"></span> <span class="tip" id="updStatus"></span></div>
     </div>
     <div id="petCostOverlay" onclick="PetCostCancel"></div>
     <div id="petCostDialog">

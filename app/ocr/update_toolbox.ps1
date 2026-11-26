@@ -28,9 +28,9 @@
 # -CloudOnly does the opposite (share only), -VersionUrl/-PackageUrl pin plain url mode.
 #
 # app\data\update_source.txt can move or pin the sources, one key=value per line:
-#   share=<share path or https://pan.baidu.com/s/xxxx>  default 1jMjWXBqNIAm1qwaGaBkJ4w
-#   pwd=<access code of that share>                     default 8iif
-#   folder=<folder inside the share>                    default MengHuanToolbox
+#   share=<share path or https://pan.baidu.com/s/xxxx>  default 1PPAo-s-AXvYV6QssWiAy7Q
+#   pwd=<access code of that share>                     default ttcj
+#   folder=<folder inside the share>                    default MHToolbox
 #   version=<url or path of CHANGELOG.md>               read the version from here only
 #   package=<url or path of the release zip>            override the download source
 # A version= line switches the whole check to plain url mode (used by the offline test).
@@ -70,9 +70,9 @@ try {
 
 $defaultVersionUrl = 'https://raw.githubusercontent.com/nhy920930/Gadget/master/CHANGELOG.md'
 $defaultPackageUrl = 'https://codeload.github.com/nhy920930/Gadget/zip/refs/heads/master'
-$defaultShare = '1jMjWXBqNIAm1qwaGaBkJ4w'
-$defaultSharePwd = '8iif'
-$defaultShareFolder = 'MengHuanToolbox'
+$defaultShare = '1PPAo-s-AXvYV6QssWiAy7Q'
+$defaultSharePwd = 'ttcj'
+$defaultShareFolder = 'MHToolbox'
 # Baidu Pan answers the listing to a client that only knows the access code; everything goes
 # through pan.baidu.com with the same app_id the web page uses. -PanHost points the same code at
 # a local stand-in during tests, so the share path can be exercised without the live service.
@@ -169,10 +169,13 @@ function Get-PanText {
 }
 
 function Get-PanList {
-    param([string]$Uk, [string]$ShareId, [string]$Dir, $Sess, [string]$SharePath)
+    param([string]$Uk, [string]$ShareId, [string]$Dir, $Sess, [string]$SharePath, [switch]$Root)
     $t = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
+    # root=1 lists the shared folder itself; a plain dir=/ listing of such a share answers errno=2.
+    $extra = ''
+    if ($Root) { $extra = '&root=1' }
     $Url = $panBase + '/share/list?uk=' + $Uk + '&shareid=' + $ShareId + '&order=other&desc=1' +
-        '&showempty=0&page=1&num=100&dir=' + [Uri]::EscapeDataString($Dir) + '&t=' + $t + $panCommon
+        '&showempty=0&page=1&num=100&dir=' + [Uri]::EscapeDataString($Dir) + '&t=' + $t + $extra + $panCommon
     return ((Get-PanText $Url $Sess $SharePath) | ConvertFrom-Json)
 }
 
@@ -213,41 +216,79 @@ function Get-CloudVersion {
     $shareId = $mShare.Groups[1].Value
     $uk = $mUk.Groups[1].Value
 
-    # 4. the release folder, or the share root when the share points at the folder itself
-    $dirs = @('/' + $Folder.Trim('/'))
-    if ($dirs[0] -eq '/') { $dirs = @('/') } else { $dirs += '/' }
+    # 4. where the packages live. Candidates, in order: the folder named by -ShareFolder, the
+    #    paths the share page itself prints, the share root. The page list matters because a
+    #    "multi file" share keeps its entries under a pseudo root "/sharelink<uk>-<shareid>/<name>",
+    #    and that path is the only way to list inside the shared folder (dir=/<name> answers
+    #    errno=2 on such a share).
+    $pageDirs = New-Object System.Collections.Generic.List[string]
+    $pageFiles = New-Object System.Collections.Generic.List[string]
+    $fl = [regex]::Match($html, '"file_list":\s*\[(.*?)\]\s*,\s*"errortype"',
+        [Text.RegularExpressions.RegexOptions]::Singleline)
+    if ($fl.Success) {
+        foreach ($o in [regex]::Matches($fl.Groups[1].Value, '\{[^{}]*\}')) {
+            $n = [regex]::Match($o.Value, '"server_filename":"([^"]*)"')
+            if (-not $n.Success) { continue }
+            if ($o.Value -match '"isdir":\s*1\b') {
+                $p = [regex]::Match($o.Value, '"path":"([^"]*)"')
+                if ($p.Success) { $pageDirs.Add($p.Groups[1].Value) }
+            } else {
+                $pageFiles.Add($n.Groups[1].Value)
+            }
+        }
+    }
+    $dirs = New-Object System.Collections.Generic.List[string]
+    $wantedDir = '/' + $Folder.Trim('/')
+    if ($wantedDir -ne '/') { $dirs.Add($wantedDir) }
+    foreach ($pd in $pageDirs) { if (-not $dirs.Contains($pd)) { $dirs.Add($pd) } }
+    if (-not $dirs.Contains('/')) { $dirs.Add('/') }
     $best = ''
+    # Files the page listed itself count too: a share of plain files has no folder to list.
+    foreach ($n in $pageFiles) {
+        $m = [regex]::Match($n, '_v([0-9]+(\.[0-9]+)*)\.(zip|exe)$')
+        if (-not $m.Success) { continue }
+        $v = $m.Groups[1].Value
+        if ($best -eq '' -or (Compare-VersionText $v $best) -gt 0) { $best = $v }
+    }
     $lastErr = ''
     # "listed fine, but no package inside" must not be reported as "the listing failed": the
     # fallback dir '/' answers errno=2 on the live service even when the real folder was just
     # read, so remember whether any dir answered at all.
     $listed = $false
     foreach ($dir in $dirs) {
-        # The listing endpoint now and then answers errno=2 to a burst of requests (risk
-        # control); one short retry is enough, and it keeps "the folder is empty"
-        # distinguishable from "the API refused".
-        $json = $null
-        for ($attempt = 0; $attempt -lt 2; $attempt++) {
-            try {
-                $json = Get-PanList $uk $shareId $dir $Sess $SharePath
-            } catch {
-                $json = $null
-                $lastErr = 'no answer for ' + $dir + ': ' + $_.Exception.Message
+        # A share that points AT the release folder (instead of at its parent) answers the plain
+        # dir=/ listing with errno=2 ("the link is broken"); the same listing with root=1 walks the
+        # shared folder and returns its contents, so try both before giving up on '/'.
+        $variants = @($false)
+        if ($dir -eq '/') { $variants = @($false, $true) }
+        foreach ($useRoot in $variants) {
+            # The listing endpoint now and then answers errno=2 to a burst of requests (risk
+            # control); one short retry is enough, and it keeps "the folder is empty"
+            # distinguishable from "the API refused".
+            $json = $null
+            for ($attempt = 0; $attempt -lt 2; $attempt++) {
+                try {
+                    $json = Get-PanList $uk $shareId $dir $Sess $SharePath -Root:$useRoot
+                } catch {
+                    $json = $null
+                    $lastErr = 'no answer for ' + $dir + ': ' + $_.Exception.Message
+                }
+                if ($null -ne $json -and [string]$json.errno -eq '0') { break }
+                if ($null -ne $json) { $lastErr = 'errno=' + $json.errno + ' for ' + $dir }
+                if ($attempt -eq 0) { Start-Sleep -Milliseconds 800 }
             }
-            if ($null -ne $json -and [string]$json.errno -eq '0') { break }
-            if ($null -ne $json) { $lastErr = 'errno=' + $json.errno + ' for ' + $dir }
-            if ($attempt -eq 0) { Start-Sleep -Milliseconds 800 }
-        }
-        if ($null -eq $json -or [string]$json.errno -ne '0') { continue }
-        $listed = $true
-        $lastErr = ''
-        foreach ($it in @($json.list)) {
-            if ($null -eq $it) { continue }
-            if ($it.isdir -ne 0) { continue }
-            $m = [regex]::Match($it.server_filename, '_v([0-9]+(\.[0-9]+)*)\.(zip|exe)$')
-            if (-not $m.Success) { continue }
-            $v = $m.Groups[1].Value
-            if ($best -eq '' -or (Compare-VersionText $v $best) -gt 0) { $best = $v }
+            if ($null -eq $json -or [string]$json.errno -ne '0') { continue }
+            $listed = $true
+            $lastErr = ''
+            foreach ($it in @($json.list)) {
+                if ($null -eq $it) { continue }
+                if ($it.isdir -ne 0) { continue }
+                $m = [regex]::Match($it.server_filename, '_v([0-9]+(\.[0-9]+)*)\.(zip|exe)$')
+                if (-not $m.Success) { continue }
+                $v = $m.Groups[1].Value
+                if ($best -eq '' -or (Compare-VersionText $v $best) -gt 0) { $best = $v }
+            }
+            if ($best -ne '') { break }
         }
         if ($best -ne '') { break }
     }
