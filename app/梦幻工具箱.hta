@@ -4372,7 +4372,7 @@
             Err.Clear
             On Error GoTo 0
         Else
-            ' GitHub 不通时还要接着去读网盘，两段网络请求串起来，40 秒不够用
+            ' GitHub 15 秒没响应就直接转网盘，两段网络请求串起来也要留够时间
             updTimeoutMs = 120000
             UpdSetStatus "正在检查更新…", ""
         End If
@@ -4523,7 +4523,7 @@
         End If
         ' GitHub 连不上时版本只能从网盘读，而网盘不给匿名下载：直接告诉玩家去分享页手动拿包
         If strStatus = "manual" Then
-            UpdSetStatus "百度网盘上已经有 v" & strRemote & "，需要手动下载", "#b33"
+            UpdSetStatus "自动更新失败，请重新检查并手动下载更新", "#b33"
             strAsk = "发现新版本 v" & strRemote & "（当前 v" & strLocal & "）。" & vbCrLf & vbCrLf & _
                 "不过这次 GitHub 没连上，工具箱没法自己下载，只能手动更新：" & vbCrLf & _
                 "打开下面的分享页，下载 v" & strRemote & " 的 zip 或 exe——" & vbCrLf & _

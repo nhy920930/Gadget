@@ -78,6 +78,13 @@ $panBase = 'https://pan.baidu.com'
 if ($PanHost -ne '') { $panBase = $PanHost.TrimEnd('/') }
 $panCommon = '&channel=chunlei&web=1&app_id=250528&clienttype=0'
 $panUa = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+# Baidu Pan answers in one or two seconds when it answers at all. 12 s keeps a dead network from
+# eating the whole budget: the HTA gives up after 120 s, and the version read may already have
+# spent 15 s on GitHub before this point.
+$panTimeoutSec = 12
+# GitHub is asked first and gets 15 s only: if it has not answered by then, the share check takes
+# over instead of making the player wait on a hung connection.
+$versionTimeoutSec = 15
 
 # ---------------------------------------------------------------- result file
 
@@ -148,10 +155,10 @@ function Get-PanText {
         Referer = $panBase + '/s/' + $SharePath
     }
     if ($null -eq $Sess) {
-        $resp = Invoke-WebRequest -Uri $Url -Headers $hdr -UserAgent $panUa -UseBasicParsing -TimeoutSec 25
+        $resp = Invoke-WebRequest -Uri $Url -Headers $hdr -UserAgent $panUa -UseBasicParsing -TimeoutSec $panTimeoutSec
     } else {
         $resp = Invoke-WebRequest -Uri $Url -Headers $hdr -UserAgent $panUa -WebSession $Sess `
-            -UseBasicParsing -TimeoutSec 25
+            -UseBasicParsing -TimeoutSec $panTimeoutSec
     }
     # Raw bytes decoded as UTF-8: the listing carries Chinese file names and promises no charset.
     return [Text.Encoding]::UTF8.GetString($resp.RawContentStream.ToArray())
@@ -177,7 +184,7 @@ function Get-CloudVersion {
 
     # 1. the share page itself, so the calls below run with the cookies it sets
     $null = Invoke-WebRequest -Uri ($panBase + '/s/' + $SharePath + '?pwd=' + $Pwd) -UseBasicParsing `
-        -UserAgent $panUa -WebSession $Sess -TimeoutSec 25
+        -UserAgent $panUa -WebSession $Sess -TimeoutSec $panTimeoutSec
 
     # 2. submit the access code; the short form drops the leading 1 of the /s/ path
     $short = $SharePath
@@ -186,7 +193,7 @@ function Get-CloudVersion {
     $verifyUrl = $panBase + '/share/verify?surl=' + $short + '&t=' + $t + $panCommon
     $vr = Invoke-WebRequest -Uri $verifyUrl -Method POST -Body ('pwd=' + $Pwd) `
         -ContentType 'application/x-www-form-urlencoded' -Headers @{ Referer = $panBase + '/s/' + $SharePath } `
-        -UserAgent $panUa -WebSession $Sess -UseBasicParsing -TimeoutSec 25
+        -UserAgent $panUa -WebSession $Sess -UseBasicParsing -TimeoutSec $panTimeoutSec
     $vj = ([Text.Encoding]::UTF8.GetString($vr.RawContentStream.ToArray())) | ConvertFrom-Json
     if ($vj.errno -ne 0) {
         throw ('The share rejected the access code (errno=' + $vj.errno + ').')
@@ -252,9 +259,9 @@ function Test-RemoteUrl {
 }
 
 function Get-RemoteText {
-    param([string]$Url)
+    param([string]$Url, [int]$TimeoutSec = 25)
     if (Test-RemoteUrl $Url) {
-        $resp = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 25 `
+        $resp = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec $TimeoutSec `
             -UserAgent 'Mozilla/5.0 (compatible; MengHuanToolbox)'
         # Decode the raw bytes as UTF-8: a response without a charset header would otherwise be
         # read as Latin-1 and turn the Chinese notes into noise (irrelevant for the version
@@ -384,7 +391,7 @@ try {
         $readErr = ''
         $remoteText = ''
         try {
-            $remoteText = Get-RemoteText $VersionUrl
+            $remoteText = Get-RemoteText $VersionUrl $versionTimeoutSec
         } catch {
             $readErr = $_.Exception.Message
         }
@@ -399,7 +406,7 @@ try {
     } else {
         $gitErr = ''
         try {
-            $S.remote = Get-VersionFromText (Get-RemoteText $VersionUrl)
+            $S.remote = Get-VersionFromText (Get-RemoteText $VersionUrl $versionTimeoutSec)
             if ($S.remote -eq '') { throw ('no "## x.y.z" line in ' + $VersionUrl) }
             $S.source = 'github'
         } catch {
