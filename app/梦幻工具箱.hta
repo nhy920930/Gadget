@@ -4258,9 +4258,10 @@
         EnvReport strProblems
     End Sub
     ' ===== 在线更新 =====
-    ' ocr\update_toolbox.ps1 先读发布的版本：默认看百度网盘共享目录里的文件名，读不到才退回
-    ' GitHub 上的 CHANGELOG.md；只有它比本地 CHANGELOG.md 里的版本新才下载整包，一致或更老
-    ' 什么都不做，所以连点几次也不会重复下载。
+    ' ocr\update_toolbox.ps1 先问 GitHub 要版本：连得上就能顺手把整包下来，全程自动；连不上
+    ' （网络不通、被墙、或远端还没发布）才去看百度网盘共享目录里的文件名。网盘只肯说“有哪个
+    ' 版本”，不给匿名客户端下载链接，所以那条路只能提示手动下载，弹框里附分享页地址。
+    ' 只有远程版本比本地 CHANGELOG.md 里的版本新才有动作，一致或更老什么都不做。
     ' 替换文件时保留 app\data：锁定的角色、框选区域、自检签名、宠环历史都还在。题库会被新包
     ' 的换掉（题库本可自己编辑/导入，否则新版题库永远到不了），换之前备份成 app\data\ocr_tiku.prev.txt。
     updBusy = False
@@ -4329,14 +4330,17 @@
         document.getElementById("btnUpdCheck").disabled = bBusy
         On Error GoTo 0
     End Sub
-    ' 版本比对看的是百度网盘共享目录，下载仍走 GitHub；两者都不可用时就只能手动下载，
-    ' 所以把分享页地址集中在这一处，弹框里点“是”直接打开
+    ' 自动下载走不通时（GitHub 连不上，或远端还没发布新包），只能让玩家自己去分享页拿：
+    ' 脚本结果里的 link= 优先（它会跟着 update_source.txt 里的 share= / pwd= 变），拿不到才用这里的默认值
     Function UpdShareUrl
         UpdShareUrl = "https://pan.baidu.com/s/1jMjWXBqNIAm1qwaGaBkJ4w?pwd=8iif"
     End Function
-    Sub UpdOpenShare
+    Sub UpdOpenLink(strUrl)
+        Dim strGo
+        strGo = Trim(strUrl)
+        If strGo = "" Then strGo = UpdShareUrl()
         On Error Resume Next
-        CreateObject("WScript.Shell").Run UpdShareUrl()
+        CreateObject("WScript.Shell").Run strGo
         Err.Clear
         On Error GoTo 0
     End Sub
@@ -4368,7 +4372,8 @@
             Err.Clear
             On Error GoTo 0
         Else
-            updTimeoutMs = 40000
+            ' GitHub 不通时还要接着去读网盘，两段网络请求串起来，40 秒不够用
+            updTimeoutMs = 120000
             UpdSetStatus "正在检查更新…", ""
         End If
         strOut = fso.GetSpecialFolder(2) & "\gadget_update.txt"
@@ -4412,9 +4417,9 @@
             updBusy = False
             UpdBusyUI False
             If updMode = "apply" Then
-                UpdSetStatus "更新超时：网络太慢或被安全软件拦了 PowerShell，可重试（见 README）", "#b33"
+                UpdSetStatus "更新还没完成：网络太慢，或被安全软件拦了 PowerShell，隔一会儿再点“检查更新”", "#b33"
             Else
-                UpdSetStatus "检查超时：网络不通或被安全软件拦了 PowerShell，点按钮重试", "#b33"
+                UpdSetStatus "检查超时了：网络有点慢，或被安全软件拦了 PowerShell，隔一会儿再点一次", "#b33"
             End If
             Exit Sub
         End If
@@ -4441,7 +4446,7 @@
         End If
     End Function
     Sub UpdApply(dic)
-        Dim strStatus, strLocal, strRemote, strDetail, strAsk, lngFiles, strMsg, strSource, strWhere
+        Dim strStatus, strLocal, strRemote, strDetail, strAsk, lngFiles, strMsg, strSource, strWhere, strLink
         strStatus = ""
         strLocal = ""
         strRemote = ""
@@ -4449,6 +4454,7 @@
         strMsg = ""
         strSource = ""
         strWhere = ""
+        strLink = ""
         lngFiles = 0
         On Error Resume Next
         strStatus = dic("status")
@@ -4458,8 +4464,10 @@
         strMsg = dic("msg")
         strSource = dic("source")
         If dic("files") <> "" Then lngFiles = CLng(dic("files"))
+        If dic.Exists("link") Then strLink = dic("link")
         Err.Clear
         On Error GoTo 0
+        If strLink = "" Then strLink = UpdShareUrl()
         If strSource = "cloud" Then
             strWhere = "百度网盘"
         ElseIf strSource = "github" Then
@@ -4513,21 +4521,48 @@
             UpdSetStatus "本地 v" & strLocal & " 比远程 v" & strRemote & " 新，不更新", ""
             Exit Sub
         End If
-        ' 云盘已发布、但自动下载源还没跟上：宁可不动文件，也不能把本地换成旧包
-        If strMsg = "package_stale" Then
-            UpdSetStatus "云盘已有 v" & strRemote & "，但自动下载源还是旧包", "#b33"
-            strAsk = "百度网盘分享里已经有 v" & strRemote & "，但自动下载源（GitHub）还没同步到这个版本，所以这次没有自动替换，免得把本地文件换回旧版。" & vbCrLf & vbCrLf & _
-                "可以现在打开云盘分享页手动下载；也可以等发布同步后再点一次“检查更新”。" & vbCrLf & vbCrLf & _
-                "要现在打开分享页吗？"
-            If MsgBox(strAsk, vbYesNo + vbQuestion, "检查更新") = vbYes Then UpdOpenShare
+        ' GitHub 连不上时版本只能从网盘读，而网盘不给匿名下载：直接告诉玩家去分享页手动拿包
+        If strStatus = "manual" Then
+            UpdSetStatus "百度网盘上已经有 v" & strRemote & "，需要手动下载", "#b33"
+            strAsk = "发现新版本 v" & strRemote & "（当前 v" & strLocal & "）。" & vbCrLf & vbCrLf & _
+                "不过这次 GitHub 没连上，工具箱没法自己下载，只能手动更新：" & vbCrLf & _
+                "打开下面的分享页，下载 v" & strRemote & " 的 zip 或 exe——" & vbCrLf & _
+                "zip 解压后覆盖原来的文件夹，exe 直接替换原来的 exe 就行。" & vbCrLf & vbCrLf & _
+                "分享链接（也可以在浏览器里打开）：" & vbCrLf & strLink & vbCrLf & vbCrLf & _
+                "要现在打开吗？"
+            If MsgBox(strAsk, vbYesNo + vbQuestion, "检查更新") = vbYes Then UpdOpenLink strLink
             Exit Sub
         End If
-        UpdSetStatus "更新失败：" & UpdErrorText(strDetail), "#b33"
-        strAsk = "检查/下载更新失败：" & vbCrLf & vbCrLf & UpdErrorText(strDetail) & vbCrLf & vbCrLf & _
-            "常见原因：网络不通、百度网盘分享读不到、或安全软件拦了 PowerShell。" & vbCrLf & _
-            "也可以在 app\data\update_source.txt 里换源（share= / pwd= / folder= / version= / package=，写法见 README）。" & vbCrLf & vbCrLf & _
-            "要现在打开云盘分享页手动下载吗？"
-        If MsgBox(strAsk, vbYesNo + vbExclamation, "更新失败") = vbYes Then UpdOpenShare
+        ' GitHub 连不上、网盘里又还没传包：这是发布那边没传完，不怪玩家网络，得换个说法
+        If strMsg = "pan_empty" Then
+            UpdSetStatus "GitHub 没连上，网盘里也还没传上新包", "#b33"
+            strAsk = "这次 GitHub 没连上，百度网盘里又还没看到新版本，所以先没动你的文件。" & vbCrLf & vbCrLf & _
+                "多半是刚发布、包还没传完，过十分钟再点一次“检查更新”就行。" & vbCrLf & _
+                "你自己的网要是也断着，先连上网再点。" & vbCrLf & vbCrLf & _
+                "想先去分享页扫一眼也可以：" & vbCrLf & strLink & vbCrLf & vbCrLf & _
+                "要现在打开吗？"
+            If MsgBox(strAsk, vbYesNo + vbQuestion, "检查更新") = vbYes Then UpdOpenLink strLink
+            Exit Sub
+        End If
+        ' 网盘已发布、但自动下载源还没跟上：宁可不动文件，也不能把本地换成旧包
+        If strMsg = "package_stale" Then
+            UpdSetStatus "百度网盘上已经是 v" & strRemote & "，但能自动下载的包还是旧的", "#b33"
+            strAsk = "百度网盘分享里已经有 v" & strRemote & "，但自动下载的包还没跟上，所以这次没动你的文件，免得把本地换回旧版。" & vbCrLf & vbCrLf & _
+                "想现在就用新版的话，可以打开分享页手动下载；也可以等发布那边同步好，再点一次“检查更新”。" & vbCrLf & vbCrLf & _
+                "要现在打开分享页吗？"
+            If MsgBox(strAsk, vbYesNo + vbQuestion, "检查更新") = vbYes Then UpdOpenLink strLink
+            Exit Sub
+        End If
+        UpdSetStatus "没能检查更新，稍后再点一次试试", "#b33"
+        strAsk = "这次没检查成功，多半是这两种情况：" & vbCrLf & _
+            "· 网络不通：浏览器也打不开 GitHub 或百度网盘" & vbCrLf & _
+            "· 安全软件把工具箱偷偷调起的 PowerShell 拦了" & vbCrLf & vbCrLf & _
+            "连着网再点一次“检查更新”通常就好了。" & vbCrLf & _
+            "也可以直接去百度网盘分享页下载新版（zip 解压覆盖，或者换掉 exe）：" & vbCrLf & _
+            strLink & vbCrLf & vbCrLf & _
+            "技术细节（给排查用，看不懂没关系）：" & vbCrLf & UpdErrorText(strDetail) & vbCrLf & vbCrLf & _
+            "要现在打开分享页吗？"
+        If MsgBox(strAsk, vbYesNo + vbExclamation, "更新失败") = vbYes Then UpdOpenLink strLink
     End Sub
     Sub OcrLoadConfig
         Dim fso, f, strLine, arrPart, arrSeg

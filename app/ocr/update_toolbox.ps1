@@ -11,30 +11,31 @@
 #           by the one from the package (the question bank can be edited in the toolbox, so a
 #           hand-edited copy would otherwise be lost without trace).
 #
-# Where the version comes from (default: the release folder shared on Baidu Pan):
-#   The share folder is readable without logging in - submit the access code, take the cookie it
-#   sets, then ask for the listing - so the newest "_v<version>.zip" (or ".exe") name in the
-#   folder IS the published version. That matters because Baidu will not give a download link to
-#   an anonymous client (sharedownload answers errno=118 "illegal operation"): players download
-#   the file from the share page in a browser, while the toolbox itself still takes the zip from
-#   public GitHub. When the shared copy is ahead of that zip, apply stops with
-#   msg=package_stale instead of silently installing an older package over a newer one; the
-#   caller then offers the share link for a manual download. When the share cannot be read at all
-#   (offline, API change, empty folder) the check falls back to the GitHub CHANGELOG so updates
-#   keep working.
+# Where the version comes from (default: public GitHub):
+#   GitHub carries both the version record and the package, so while it answers the update is
+#   fully automatic. When it is unreachable (no network, blocked, or the CHANGELOG is not
+#   published yet) the check falls back to the release folder shared on Baidu Pan: that folder
+#   is readable without logging in - submit the access code, take the cookie it sets, then ask
+#   for the listing - so the newest "_v<version>.zip" (or ".exe") name in it IS the published
+#   version. Baidu gives an anonymous client no download link (sharedownload answers errno=118
+#   "illegal operation"), so a version found only there is reported as status=manual: the caller
+#   hands the share link to the player and they download by hand. A package= override (or
+#   -PackageUrl) is still fetched in that case, because it is not the dead GitHub default.
+#   When only one of the two is readable the other one is simply skipped, never fatal.
 #
 # app\data\update_source.txt can move or pin the sources, one key=value per line:
 #   share=<share path or https://pan.baidu.com/s/xxxx>  default 1jMjWXBqNIAm1qwaGaBkJ4w
 #   pwd=<access code of that share>                     default 8iif
 #   folder=<folder inside the share>                    default MengHuanToolbox
-#   version=<url or path of CHANGELOG.md>               compare against this instead of the share
+#   version=<url or path of CHANGELOG.md>               read the version from here only
 #   package=<url or path of the release zip>            override the download source
 # A version= line switches the whole check to plain url mode (used by the offline test).
 #
 # Progress goes to -OutFile as plain key=value lines, rewritten in full after every step, so
 # the caller can show "downloading..." and then pick up the final status without a protocol:
-#   status=checking|downloading|extracting|applying|available|latest|local_newer|applied|error
-#   local=1.2.2  remote=1.2.3  cloud=1.2.3  source=cloud|github|url  files=13  msg=...  detail=...
+#   status=checking|downloading|extracting|applying|available|manual|latest|local_newer|applied|error
+#   local=1.2.2  remote=1.2.3  cloud=1.2.3  source=github|cloud|url  files=13  msg=...  detail=...
+#   link=https://pan.baidu.com/s/<share>?pwd=<code>   (handed to the player when manual)
 # Every value sits on its own line and is only ever written by a whole-file replace, so the
 # reader never sees a half-written file.
 #
@@ -48,7 +49,9 @@ param(
     [string]$Share = '',
     [string]$SharePwd = '',
     [string]$ShareFolder = '',
-    [switch]$NoCloud
+    [string]$PanHost = '',
+    [switch]$NoCloud,
+    [switch]$CloudOnly
 )
 
 $ErrorActionPreference = 'Stop'
@@ -67,8 +70,12 @@ $defaultShare = '1jMjWXBqNIAm1qwaGaBkJ4w'
 $defaultSharePwd = '8iif'
 $defaultShareFolder = 'MengHuanToolbox'
 # Baidu Pan answers the listing to a client that only knows the access code; everything goes
-# through pan.baidu.com with the same app_id the web page uses.
+# through pan.baidu.com with the same app_id the web page uses. -PanHost points the same code at
+# a local stand-in during tests, so the share path can be exercised without the live service.
+# (The parameter cannot be called -PanBase: PowerShell variable names are case-insensitive, so
+# $PanBase and $panBase below would be the same variable and the default would win.)
 $panBase = 'https://pan.baidu.com'
+if ($PanHost -ne '') { $panBase = $PanHost.TrimEnd('/') }
 $panCommon = '&channel=chunlei&web=1&app_id=250528&clienttype=0'
 $panUa = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 
@@ -80,6 +87,7 @@ $S = @{
     remote = ''
     cloud  = ''
     source = ''
+    link   = ''
     files  = 0
     msg    = ''
     detail = ''
@@ -92,6 +100,7 @@ function Save-State {
             'remote=' + $S.remote + "`r`n" +
             'cloud=' + $S.cloud + "`r`n" +
             'source=' + $S.source + "`r`n" +
+            'link=' + $S.link + "`r`n" +
             'files=' + $S.files + "`r`n" +
             'msg=' + ('' + $S.msg -replace "`r?`n", ' ') + "`r`n" +
             'detail=' + ('' + $S.detail -replace "`r?`n", ' | ') + "`r`n"
@@ -197,9 +206,30 @@ function Get-CloudVersion {
     $dirs = @('/' + $Folder.Trim('/'))
     if ($dirs[0] -eq '/') { $dirs = @('/') } else { $dirs += '/' }
     $best = ''
+    $lastErr = ''
+    # "listed fine, but no package inside" must not be reported as "the listing failed": the
+    # fallback dir '/' answers errno=2 on the live service even when the real folder was just
+    # read, so remember whether any dir answered at all.
+    $listed = $false
     foreach ($dir in $dirs) {
-        $json = Get-PanList $uk $shareId $dir $Sess $SharePath
-        if ($null -eq $json -or $json.errno -ne 0) { continue }
+        # The listing endpoint now and then answers errno=2 to a burst of requests (risk
+        # control); one short retry is enough, and it keeps "the folder is empty"
+        # distinguishable from "the API refused".
+        $json = $null
+        for ($attempt = 0; $attempt -lt 2; $attempt++) {
+            try {
+                $json = Get-PanList $uk $shareId $dir $Sess $SharePath
+            } catch {
+                $json = $null
+                $lastErr = 'no answer for ' + $dir + ': ' + $_.Exception.Message
+            }
+            if ($null -ne $json -and [string]$json.errno -eq '0') { break }
+            if ($null -ne $json) { $lastErr = 'errno=' + $json.errno + ' for ' + $dir }
+            if ($attempt -eq 0) { Start-Sleep -Milliseconds 800 }
+        }
+        if ($null -eq $json -or [string]$json.errno -ne '0') { continue }
+        $listed = $true
+        $lastErr = ''
         foreach ($it in @($json.list)) {
             if ($null -eq $it) { continue }
             if ($it.isdir -ne 0) { continue }
@@ -210,6 +240,7 @@ function Get-CloudVersion {
         }
         if ($best -ne '') { break }
     }
+    if ($best -eq '' -and -not $listed) { throw ('The share listing failed: ' + $lastErr) }
     return $best
 }
 
@@ -298,9 +329,13 @@ if ($Share -match '^https?://') { throw ('Not a share path: ' + $Share) }
 
 # A version= line (file or switch) means plain url mode: the share is then never touched.
 $urlMode = ($VersionUrl -ne '')
-$useCloud = (-not $NoCloud) -and (-not $urlMode)
+# A package that was named explicitly is not the dead GitHub default, so it can still be fetched
+# when only the share knows a version (a mirror, or the offline test, looks exactly like that).
+$pkgExplicit = ($PackageUrl -ne '')
 if ($VersionUrl -eq '') { $VersionUrl = $defaultVersionUrl }
 if ($PackageUrl -eq '') { $PackageUrl = $defaultPackageUrl }
+# The share page itself, so a manual download needs no link hard-coded in the caller.
+$S.link = $panBase + '/s/' + $Share + '?pwd=' + $SharePwd
 
 $S.local = ''
 $localChangeLog = Join-Path $Root 'CHANGELOG.md'
@@ -314,9 +349,6 @@ Save-State
 $tmpRoot = Join-Path $dataDir 'update_tmp'
 $pkgRoot = $null
 $zipPath = $null
-# Kept across the whole run: a failure while reaching the package source should still say why
-# the share was not used, otherwise the only visible error is the fallback one.
-$cloudErr = ''
 
 try {
     if ($S.local -eq '') {
@@ -328,30 +360,67 @@ try {
     }
 
     # ---- where is the published version?
-    # The share folder is the intended answer; the public GitHub record is only a fallback, so a
-    # share that cannot be read (offline, API change, still empty) never blocks updating.
-    if ($useCloud) {
+    # GitHub first: it hands over the package too, so while it answers the update stays automatic.
+    # Only when it does not answer does the share get asked, and then only for the version.
+    if ($CloudOnly -and -not $NoCloud) {
+        # Test hook: behave as if GitHub were down, so the share path can be exercised offline.
         try {
             $S.cloud = Get-CloudVersion $Share $SharePwd $ShareFolder
-            if ($S.cloud -eq '') { $cloudErr = 'no *_v<version>.zip or .exe in the share folder' }
+            if ($S.cloud -eq '') { throw 'no *_v<version>.zip or .exe in the share folder' }
+            $S.source = 'cloud'
+            $S.remote = $S.cloud
         } catch {
-            $cloudErr = $_.Exception.Message
+            $panErr = $_.Exception.Message
+            $S.status = 'error'
+            # An empty share folder is a release-side problem, not a network one: keep it apart so
+            # the dialog can say "try again later" instead of blaming the player's network.
+            if ($panErr.Contains('in the share folder')) { $S.msg = 'pan_empty' } else { $S.msg = 'pan_unreachable' }
+            $S.detail = 'Baidu Pan: ' + $panErr
+            Save-State
+            exit 3
         }
-    }
-    if ($S.cloud -ne '') {
-        $S.source = 'cloud'
-        $S.remote = $S.cloud
-    } else {
+    } elseif ($urlMode -or $NoCloud) {
         $S.source = $(if ($urlMode) { 'url' } else { 'github' })
-        if ($cloudErr -ne '') { $S.detail = 'cloud share unreadable: ' + $cloudErr }
-        $remoteText = Get-RemoteText $VersionUrl
+        $readErr = ''
+        $remoteText = ''
+        try {
+            $remoteText = Get-RemoteText $VersionUrl
+        } catch {
+            $readErr = $_.Exception.Message
+        }
         $S.remote = Get-VersionFromText $remoteText
         if ($S.remote -eq '') {
             $S.status = 'error'
-            $S.msg = 'remote_version_missing'
-            $S.detail = 'No "## x.y.z" line in ' + $VersionUrl + '. ' + $S.detail
+            $S.msg = 'remote_unreachable'
+            $S.detail = 'Version record unreadable (' + $VersionUrl + '): ' + $readErr
             Save-State
             exit 3
+        }
+    } else {
+        $gitErr = ''
+        try {
+            $S.remote = Get-VersionFromText (Get-RemoteText $VersionUrl)
+            if ($S.remote -eq '') { throw ('no "## x.y.z" line in ' + $VersionUrl) }
+            $S.source = 'github'
+        } catch {
+            $gitErr = $_.Exception.Message
+            $S.remote = ''
+        }
+        if ($S.source -eq '') {
+            try {
+                $S.cloud = Get-CloudVersion $Share $SharePwd $ShareFolder
+                if ($S.cloud -eq '') { throw 'no *_v<version>.zip or .exe in the share folder' }
+                $S.source = 'cloud'
+                $S.remote = $S.cloud
+                $S.detail = 'GitHub not reachable, the version came from the Baidu Pan share.'
+            } catch {
+                $panErr = $_.Exception.Message
+                $S.status = 'error'
+                if ($panErr.Contains('in the share folder')) { $S.msg = 'pan_empty' } else { $S.msg = 'sources_unreachable' }
+                $S.detail = 'GitHub: ' + $gitErr + ' | Baidu Pan: ' + $panErr
+                Save-State
+                exit 3
+            }
         }
     }
     Save-State
@@ -362,6 +431,16 @@ try {
         $S.status = 'latest'
         if ($cmp -lt 0) { $S.status = 'local_newer' }
         $S.msg = 'up_to_date'
+        Save-State
+        exit 0
+    }
+
+    # The share can announce a version but cannot hand over the file: unless a package source
+    # was named explicitly there is nothing to download, so say so and let the caller offer the
+    # share link. Never pretend the update happened.
+    if ($S.source -eq 'cloud' -and -not $pkgExplicit) {
+        $S.status = 'manual'
+        $S.msg = 'manual_update'
         Save-State
         exit 0
     }
@@ -505,7 +584,6 @@ try {
     $S.status = 'error'
     $S.msg = 'failed'
     $S.detail = $_.Exception.Message
-    if ($cloudErr -ne '') { $S.detail = $S.detail + ' | cloud: ' + $cloudErr }
     Save-State
     exit 1
 } finally {

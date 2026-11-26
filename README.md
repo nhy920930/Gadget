@@ -28,7 +28,7 @@
 | 🎯 坐标实时监控 | 自动 OCR 读取游戏窗口左上角的 `X:196 Y:64`，超出搜索范围时在游戏窗口顶部贴横幅，左侧大箭头指明该往哪走；点一次会先自动读右侧任务栏里的捉鬼 / 鬼王任务、选好场景并回填假坐标（红字与色弱模式的黄字都认，两种任务都在时先弹框让你选，电脑版专属） |
 | 💰 金价换算 | 元/千万梦幻币 ↔ 万梦幻币 双向换算 |
 | 💎 宝石成本 | 按 2 个 N 级合成 1 个 N+1 级，勾选目标等级算合计成本 |
-| 🔄 在线更新 | 界面底部显示当前版本，点「检查更新」比对百度网盘分享目录里的版本（读不到退回 GitHub）：远程更新才下载整包替换程序文件（`app\data` 保留），一致或更老不下载 |
+| 🔄 在线更新 | 界面底部显示当前版本，点「检查更新」先问 GitHub，连不上再比对百度网盘分享目录里的版本：能自动下载时直接替换程序文件（`app\data` 保留），只能手动时弹框给出分享页链接；一致或更老不下载 |
 | 🎨 主题 / 窗口 | 日间 / 夜间切换，窗口尺寸与位置自动记忆 |
 
 ---
@@ -144,10 +144,10 @@ Gadget/
 
 ## 在线更新
 
-界面最下方多一行「🔄 工具箱更新：版本 v1.3.1 ｜ 检查更新」：左边是本地版本，点按钮才会去比对远程版本。
+界面最下方多一行「🔄 工具箱更新：版本 v1.3.2 ｜ 检查更新」：左边是本地版本，点按钮才会去比对远程版本。
 
-1. **先比对，再决定下不下**。远程版本默认看百度网盘分享目录 `MengHuanToolbox` 里的文件名（`梦幻工具箱_v<版本>.zip` / `.exe`，取其中最高的版本号），与本地 `CHANGELOG.md` 逐段数字比较；分享目录读不到（离线、目录还空着、提取码变了）时自动退回 `https://raw.githubusercontent.com/nhy920930/Gadget/master/CHANGELOG.md` 的第一条 `## x.y.z`。远程更新 → 弹框问你要不要下载；版本一致 →「已是最新版本」；本地更新（比如你自己改过一份）→「本地比远程新，不更新」。**一致或更老都不下载**，连点几次也不会重复下载。
-2. **为什么比对和下载不是一个地方**：百度网盘不给未登录的客户端下载链接（接口直接回「违规操作，无法下载」），所以「比对版本」用网盘、「拿整包」仍走 GitHub 公开仓库（`codeload` 的 master 压缩包）。两边版本对不上时宁可不动：网盘已经发了新版本、GitHub 还停在旧包，会提示「云盘已有 vX，但自动下载源还是旧包」并可以直接点开分享页手动下载，不会把本地换回旧版。
+1. **先比对，再决定下不下**。远程版本默认取 `https://raw.githubusercontent.com/nhy920930/Gadget/master/CHANGELOG.md` 的第一条 `## x.y.z`，与本地 `CHANGELOG.md` 逐段数字比较；GitHub 读不到（没网、被墙、远端还没发布）才去看百度网盘分享目录 `MengHuanToolbox` 里的文件名（`梦幻工具箱_v<版本>.zip` / `.exe`，取其中最高的版本号）。远程更新 → 弹框问你要不要下载；版本一致 →「已是最新版本」；本地更新（比如你自己改过一份）→「本地比远程新，不更新」。**一致或更老都不下载**，连点几次也不会重复下载。
+2. **为什么有时只能手动下载**：百度网盘不给未登录的客户端下载链接（接口直接回「违规操作，无法下载」），所以网盘这条路只能告诉你「有哪个版本」。GitHub 连不上、版本又是在网盘上读到的，弹框就会写明「需要手动下载」并附上分享页地址（点「是」直接打开浏览器）；GitHub 能连上时照常自动下载替换。两边对不上（GitHub 已发版、但整包还是旧版）时宁可不动，提示「百度网盘上已经是 vX，但能自动下载的包还是旧的」，不会把本地换回旧版。
 3. **替换哪些文件**：`.hta`、`梦幻工具箱移动版.html`、`app\ocr\*.ps1`、`app\ocr\ghost_texts.txt`、`app\ocr_tiku.txt`、根目录的 `*.md` 与 `启动工具箱.bat`（打包按钮 `打包发布.bat` 带着 `gadget-devtool` 标记，会被跳过）、`docs\`、`tools\`。
 4. **本机数据不动**：`app\data\` 整目录不碰——锁定角色、框选区域、7 天自检标记、宠环历史都照旧。
 5. **题库会被新版取代**（不取代的话新版题目永远到不了），替换前自动备份成 `app\data\ocr_tiku.prev.txt`；自己手动加过词条想找回，就从这份备份里复制。
@@ -170,7 +170,7 @@ Gadget/
    `package` 要指向**包含 `app\` 的整包 zip**（GitHub 的 `Code → Download ZIP` 那一种，外面多套一层目录也能识别）；写了 `version=` 就不再读网盘。
 10. **移动版没有这个按钮**：浏览器打开的单文件 HTML 拿不到本地脚本和文件，升级仍需重新下载；版本号同样看 `CHANGELOG.md` 最新一节。
 
-失败时状态行会写原因（超时 / 404 / 解压失败等），弹框里也会说明，并问你要不要直接打开网盘分享页手动下载；最常见的是网络不通（百度网盘与 GitHub 两边都要能访问）或被安全软件拦了 PowerShell（见下一节）。
+失败时状态行会写一句「没能检查更新」，弹框先用大白话说明怎么办（多半是网络不通，或安全软件拦了 PowerShell），再附「技术细节」给排查用，并问你要不要直接打开网盘分享页手动下载。
 
 ---
 
@@ -220,7 +220,7 @@ Gadget/
 - 「实时识别已中断（后台识别脚本无响应）」
 - 「监控已中断（后台脚本无响应）」
 - 「框选已超时结束（若每次都这样…）」
-- 「检查超时：…」/「更新超时：…」
+- 「检查超时了…」/「更新还没完成…」
 
 这些都是「启动成功但没拿到结果」的形状：进程被拦下后不会写结果文件，轮询超时后落到这些文案。计算类功能（属性换算、修炼消耗、宠环记录）不依赖 PowerShell，不受影响。
 
@@ -243,7 +243,7 @@ Gadget/
 exe 没有代码签名，Windows 会对从网络下来的 exe 弹这个提示：点「更多信息」→「仍要运行」。不放心就别运行它，改用同版本的 zip——里面是同一批文件，功能没有区别。安全软件直接把 exe 隔离时同理：解压 zip 后双击「启动工具箱.bat」即可。exe 解包出来的文件**不带**下载标记，所以不会有 `.hta` 被拦的问题。
 
 **点「检查更新」提示失败 / 超时**
-先看弹框里的原因：只读不到网盘时会自动退回 GitHub，两边都读不到才会失败——确认浏览器能打开百度网盘分享页和 GitHub 仓库主页；能打开但仍然超时，多半是安全软件拦了这次隐藏的 PowerShell（见「被安全软件拦住怎么办」）。下载到一半断网也不会留下半个文件：包先下到 `app\data\update_tmp\`，解压、校验通过才开始替换，失败会自动清掉这个临时目录，本机文件一个都没动。
+先看弹框里的大白话说明：GitHub 读不到会自动去看网盘，两边都读不到才会失败——确认浏览器能打开 GitHub 仓库主页和百度网盘分享页；能打开但仍然超时，多半是安全软件拦了这次隐藏的 PowerShell（见「被安全软件拦住怎么办」）。下载到一半断网也不会留下半个文件：包先下到 `app\data\update_tmp\`，解压、校验通过才开始替换，失败会自动清掉这个临时目录，本机文件一个都没动。
 
 **OCR 一直提示「没识别到坐标 / 没识别到题目」**
 依次检查：① `app\ocr\` 目录是否完整；② 系统是否装了中文 OCR 语言包；③ 游戏窗口是否在前台可见；④ 识别区域是否偏移（重新框选 / 微调）。
@@ -291,7 +291,7 @@ exe 没有代码签名，Windows 会对从网络下来的 exe 弹这个提示：
 - **发布与入口**：项目根目录的 `打包发布.bat` 是**双击即打包**的入口（它是开发用文件，首行带 `gadget-devtool` 标记，白名单打包时会被跳过，不会混进发布包）；它只调 `tools\make-exe.ps1`，一次出齐目录 + zip + exe，结束后自动打开 `dist\`，并把这一版收进 `dist\_cloud`、拉起百度网盘客户端再打开那个文件夹（见下一条「发布到网盘」）。`tools\make-release.ps1` 用**白名单**打包，产出**只带版本号**的一对产物：`dist\<名称>_v<版本>\`（可直接双击启动器的独立目录）与同名 `.zip`——版本号已经能唯一标识一次发布，再叠时间戳只会把文件名拉长到影响使用。名字里没有时间戳，所以**同一版本重新打包会原地替换**那三件产物（先删同名目录 / zip / exe 再重建，否则 `dist\` 里会留下两份同版本、又无法分辨先后的包；exe 还在运行时脚本会提示先关掉）；**其它版本**不受影响，可以继续在 `dist\` 里并存。版本号不单独存文件：`CHANGELOG.md` **最新一节 `## <版本号>`** 就是当前版本，同一份文件也随包发出当更新说明，改一处就够（`-Version 1.1.0` 可临时覆盖，但会在没写说明时给出警告）。流程是先把选中文件按原相对路径复制到版本目录，再把这个目录压成 zip，两者内容始终一致。只装 `*.md`、`*.bat`、`docs\*.png`、`app\*.hta`、`app\*.html`、`app\ocr\*.ps1`、`app\ocr\ghost_texts.txt`、`app\ocr_tiku.txt`，`app\data\`（锁定角色 ID、框选区域、自检签名、宠环历史）与 `tools\`（开发脚本）整目录不进包，本机状态不可能被误打进去。入口是 `启动工具箱.bat`：先找 `app\*.hta`，找不到再回退到自身目录（兼容旧的平铺结构）；按通配找主程序（中文名被解压工具弄乱也照样能找到；多个 `.hta` 时取体积最大的那个）、首次运行时用 `Unblock-File` 清一遍下载标记（成功后在 `app\data\.unblocked` 留标记，之后不再重复跑隐藏 PowerShell）、粗检 `app\ocr\` 与题库，最后交给 `mshta`。`启动工具箱.bat` 与 `tools\*.ps1` **内容必须是纯 ASCII**——`cmd.exe` 按 OEM/ANSI 代码页解析批处理，中文字面量会乱码甚至打断解析（行尾符也必须是 CRLF）；中文提示一律放在 HTA（自检）与 README 里。
 - **单文件 exe**：`tools\make-exe.ps1` 先调 `make-release.ps1`，再把刚产出的目录内嵌进一个 C# 小启动器（用 `%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\csc.exe`，.NET Framework 4 自带，不需要装 SDK），产出同名的 `dist\<名称>_v<版本>.exe`，同版本重打会替换旧 exe（其它版本的 exe 不动）。exe 只是壳：首次运行在**自己所在目录**建 `MengHuanToolbox\`，解开内嵌内容后交给 `mshta`；`.version` 记录的是 `<版本>+<打包时间>`（例如 `1.2.2+20261126-143739`），一致就跳过解包；不一致——包括同版本重打出来的新包——就清空工作目录后重新解包，但**保留 `app\data\`**。文件名只带版本号，靠这个标记才分得清「同版本的另一份构建」，否则用户换了新 exe 也会因为版本号没变而继续跑旧的解包结果。加 `--extract` 只解包并打开目录。载荷是自己拼的容器（`[int32 清单长度][name|size 清单][原始字节]`，整体 gzip），因为启动器只引用 `System.dll` 与 `System.Windows.Forms.dll`，不依赖 `System.IO.Compression.FileSystem` 的 GAC 路径。中文文案在 `tools\launcher-texts.txt`（UTF-8，`|` 分段），C# 源码与脚本本身保持纯 ASCII。程序集带 `AssemblyTitle` / `AssemblyProduct` / `AssemblyVersion` 等文件属性（`make-exe.ps1` 里的 `__ASMVERSION__` 由版本号前三段补 `.0` 得出，格式不对时回退 `1.0.0.0`），属性页不再是「0.0.0.0 / 无描述」，也少一条「无信息二进制」的可疑特征。改完 HTA 记得重打 exe。
 - **发布到网盘**：`tools\sync-cloud.ps1`（打包脚本末尾自动调，`-NoCloud` 跳过）把 `CHANGELOG.md` 和本次的 `<名称>_v<版本>.zip` / `.exe` 收进 `dist\_cloud`，并把里面**其它版本**的清掉——网盘目录里永远只该有一个版本，否则玩家拿错包就成了答疑问题。然后它找百度网盘客户端（先取正在运行的进程路径，再找常见安装位置与卸载登记），没开就拉起来，并打开 `dist\_cloud`。**最后把文件拖进「我的网盘 / MengHuanToolbox」还得手动**：百度网盘既没有命令行上传器，网页接口也不给脚本发上传令牌，这是唯一一步自动化不了的地方。`-NoOpen` 只准备目录、不动客户端（测试用）。
-- **在线更新**：`app\ocr\update_toolbox.ps1` 两个模式共用一套流程——`-Mode check` 只比版本，`-Mode apply` 比完版本再下载（`status` 覆盖 `checking / downloading / extracting / applying / available / latest / local_newer / applied / error`，结果文件每步整份重写，HTA 的 `UpdPoll` 只在终态结算）。版本号从 `CHANGELOG.md` 第一条 `## x.y.z` 取，两边同源；**版本默认看百度网盘分享目录**（`-Share` / `-SharePwd` / `-ShareFolder`，默认是分享 `1jMjWXBqNIAm1qwaGaBkJ4w` 提取码 `8iif` 下的 `MengHuanToolbox`）：先 `GET /s/<分享>` 拿 cookie，`POST /share/verify` 提交提取码，从分享页 HTML 里正则取 `shareid` / `share_uk`，再问 `/share/list` 拿文件名——**只看文件名里的 `_v<版本>.zip|exe`，从不下载**，因为匿名请求 `/api/sharedownload` 只会得到 `errno=118`（违规操作）。读不到才退回 GitHub 的 raw CHANGELOG 取版本，整包始终从 `codeload` 拉。`app\data\update_source.txt`（`share=` / `pwd=` / `folder=` / `version=` / `package=`）可以整体换源，`-VersionUrl` / `-PackageUrl` 可临时覆盖（离线测试用），写了 `version=` 就不再读网盘；命令行 `-NoCloud` 直接跳过网盘。复制白名单与打包脚本同源（`app\*.hta` / `app\*.html` / `app\ocr\*.ps1` / `app\ocr\ghost_texts.txt` / `app\ocr_tiku.txt` / 根 `*.md` / 根 `*.bat`（跳过带 `gadget-devtool` 的打包按钮）/ `docs\` / `tools\`），**`app\data\` 永远跳过**；zip 里的 `..` 越界条目由 `ZipFile.ExtractToDirectory` 在 .NET 4.6.1+ 拒绝。题库替换前备份到 `app\data\ocr_tiku.prev.txt`。exe 壳的 `.version` 不在白名单里，所以就地升级后下次启动不会被重解包回滚。脚本本身纯 ASCII、不写中文字面量（与 `ghost_monitor.ps1` 同一约束），错误原因交给 HTA 拼中文；结果文件放 `%TEMP%`，与 `env_check` 一致，不往工具箱里写临时状态。
+- **在线更新**：`app\ocr\update_toolbox.ps1` 两个模式共用一套流程——`-Mode check` 只比版本，`-Mode apply` 比完版本再下载（`status` 覆盖 `checking / downloading / extracting / applying / available / manual / latest / local_newer / applied / error`，结果文件每步整份重写，HTA 的 `UpdPoll` 只在终态结算）。版本号从 `CHANGELOG.md` 第一条 `## x.y.z` 取，两边同源；**先问 GitHub**（raw CHANGELOG 取版本、`codeload` 取整包，两样都在，所以这条路是自动的），**只有读不到时才看百度网盘分享目录**（`-Share` / `-SharePwd` / `-ShareFolder`，默认是分享 `1jMjWXBqNIAm1qwaGaBkJ4w` 提取码 `8iif` 下的 `MengHuanToolbox`）：先 `GET /s/<分享>` 拿 cookie，`POST /share/verify` 提交提取码，从分享页 HTML 里正则取 `shareid` / `share_uk`，再问 `/share/list` 拿文件名——**只看文件名里的 `_v<版本>.zip|exe`，从不下载**，因为匿名请求 `/api/sharedownload` 只会得到 `errno=118`（违规操作）。这种情况返回 `status=manual` 并把 `link=<分享页>` 交给 HTA，弹框让玩家自己下（网盘目录里还没有包时是 `status=error` + `msg=pan_empty`——发布侧没传完，不是网络问题，HTA 会单独说这句）；显式配了 `package=`（或 `-PackageUrl`）仍会用它下载，不受影响。`app\data\update_source.txt`（`share=` / `pwd=` / `folder=` / `version=` / `package=`）可以整体换源，`-VersionUrl` / `-PackageUrl` 可临时覆盖（离线测试用），写了 `version=` 就不再读网盘；命令行 `-NoCloud` 直接跳过网盘，`-CloudOnly` 反过来只走网盘（离线验证用），`-PanHost` 把网盘主机换成别的地址——`.check\cloud_e2e_test.ps1` 用它指向本机假网盘，既不联网也不碰真分享（参数不能叫 `-PanBase`：PowerShell 变量名不区分大小写，会被脚本里的 `$panBase` 默认值盖掉）。复制白名单与打包脚本同源（`app\*.hta` / `app\*.html` / `app\ocr\*.ps1` / `app\ocr\ghost_texts.txt` / `app\ocr_tiku.txt` / 根 `*.md` / 根 `*.bat`（跳过带 `gadget-devtool` 的打包按钮）/ `docs\` / `tools\`），**`app\data\` 永远跳过**；zip 里的 `..` 越界条目由 `ZipFile.ExtractToDirectory` 在 .NET 4.6.1+ 拒绝。题库替换前备份到 `app\data\ocr_tiku.prev.txt`。exe 壳的 `.version` 不在白名单里，所以就地升级后下次启动不会被重解包回滚。脚本本身纯 ASCII、不写中文字面量（与 `ghost_monitor.ps1` 同一约束），错误原因交给 HTA 拼中文；结果文件放 `%TEMP%`，与 `env_check` 一致，不往工具箱里写临时状态。
 - **目录约定**：`app\` 是运行根——`.hta` 通过 `window.location.pathname` 取自身所在目录，再去找 `ocr\`、`ocr_tiku.txt`，所以三者必须同级；改了层级就要同步改 `OcrRoot()`。运行时数据统一走 `OcrDataDir()`（`app\data\`）：`ghost_config.txt`、`ocr_config.txt`、`env_warn.txt`、`env_ok.txt`、`pet_cost_history.txt` 都在那里，写入前调 `OcrEnsureData` 建目录，整个目录已 gitignore。开发用脚本一律放 `tools\`，不随发布包分发。
 - **环境自检**：`app\ocr\env_check.ps1` 输出 `META` 行（`psver` / `psbits` / `mshta` / `files` / `tiku` / `ocr` / `ocrlang`），HTA 的 `EnvCheckRun → EnvCheckPoll → EnvCheckApply` 翻成中文。弹窗去重用 `app\data\env_warn.txt` 存「上一组问题」的签名：同一组问题只弹一次，问题修好后该文件自动删除；自检超时（10s）或脚本本身缺失时只写状态行、不弹窗。自检**通过**后在 `app\data\env_ok.txt` 写当天日期（`yyyyMMdd`），`EnvOkFresh` 判断 7 天内直接复用结果、不再起 PowerShell（每次开机少一个可能被拦的进程）；状态行是 `onclick="EnvCheckForce"`，先删标记再重查，保证手动点击一定真跑一遍；一旦查出问题，旧标记立即作废。
 - **PowerShell 启动入口**：HTA 里不再手写命令行，统一走 `PsCmdFile(strPs1, blnSta)`（`PsExePath()` 拼全路径 `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe`，固定 `-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden [-STA] -File`）。新增调用一律用它：无路径的 `powershell`、缺 `-WindowStyle Hidden`、「隐藏窗口 + 内联 `-Command`」都是安全软件的重点规则。定时提醒就是因此从内联 `-Command` 改成了固定脚本 `app\ocr\remind_notify.ps1`（缺这个脚本时退回系统提示音，不漏提醒）。
@@ -317,13 +317,13 @@ exe 没有代码签名，Windows 会对从网络下来的 exe 弹这个提示：
   - 移动版 JS 段用 `node --check` 校验
   - HTA 内 VBScript 段用 `powershell -ExecutionPolicy Bypass -File tools\check-vbs.ps1` 做**静态结构检查**（块配对 Sub / Function / If / For / Do / While / With / Select / Class / Property / Enum、未闭合字符串、`EndIf` 这类拼写、`&&` / `==` / `//` 这类 JS 写法），输出 `RESULT = PASS` 即通过。**不要再把 VBScript 段抽成 `.vbs` 交给 `cscript` 校验**：把脚本写进 `%TEMP%` 再让脚本解释器去执行，正好是「脚本解释器 + 临时目录」的无文件攻击特征，奇安信天擎这类 EDR 会直接弹「发现可疑的无文件攻击行为」并拦截，弹框指向的临时文件又跟工具箱本身无关，很容易让人误以为工具箱在作怪。静态检查不起脚本引擎、不写任何文件；改动较大时再用 mshta 真跑一次（见下面的发布包 / exe 验证）覆盖运行期问题。
   - 开发期脚本的临时产物一律落在仓库内已 gitignore 的 `.check\`（如窗口尺寸轨迹采样 `win_trace.ps1`、摆位后截图核对 `shot_check.ps1`），不写 `%TEMP%`——同样是避开「隐藏 PowerShell 执行临时目录脚本」这个被拦特征。
-  - 在线更新：`powershell -ExecutionPolicy Bypass -File app\ocr\update_toolbox.ps1 -Mode check -Root . -OutFile "%TEMP%\upd.txt"` 输出 `status / local / remote`（远程分支还没提交时得到 `status=error` + 404 属正常）。端到端离线验证用 `.check\update_test.ps1`：起一个本地 HTTP 服务当伪远程（CHANGELOG 9.9.9 + 整包 zip），在沙盒目录跑 check → apply → 再 check，断言 `app\data` 保留、exe 壳 `.version` 未动、题库已备份、打包按钮没被覆盖、`update_tmp` 已清理；`.check\click_upd.ps1` 用 Win32 点击真窗口里的「检查更新」并抓图确认状态行
+  - 在线更新：`powershell -ExecutionPolicy Bypass -File app\ocr\update_toolbox.ps1 -Mode check -Root . -OutFile "%TEMP%\upd.txt"` 输出 `status / local / remote / source`（GitHub 读不到时会自动降级到网盘，得到 `status=manual` + `link=`；两边都读不到才是 `status=error`）。网盘那条路用 `.check\cloud_e2e_test.ps1`（`-CloudOnly` 加 `-PanHost` 指向本机假网盘，只借用 `dist\` 里最新那个包的文件名，不联网）。端到端离线验证用 `.check\update_test.ps1`：起一个本地 HTTP 服务当伪远程（CHANGELOG 9.9.9 + 整包 zip），在沙盒目录跑 check → apply → 再 check，断言 `app\data` 保留、exe 壳 `.version` 未动、题库已备份、打包按钮没被覆盖、`update_tmp` 已清理；`.check\click_upd.ps1` 用 Win32 点击真窗口里的「检查更新」并抓图确认状态行
   - 环境自检：`powershell -ExecutionPolicy Bypass -File app\ocr\env_check.ps1` 直接打印 `META` 行；`启动工具箱.bat --check` 只跑启动器粗检、不开窗口
   - 自检缓存：删掉 `app\data\env_ok.txt` 后开工具箱，状态行应短暂显示「环境检查中…」再变「环境检查通过」且文件重新生成；再开一次应直接显示「环境检查通过」（全程不出现新的 powershell 进程）；点状态行应强制重跑一遍
   - 提醒气泡：`powershell -ExecutionPolicy Bypass -File app\ocr\remind_notify.ps1 -Title t -Message m -Seconds 1` 应弹出一条气泡；工具箱里点「测试」走的是同一条命令行
   - 命令行形态：任何 PowerShell 调用都能在 `wmic process where "name='powershell.exe'" get commandline` 里看到全路径 + 固定参数，不应再出现光秃的 `powershell -Command ...`
   - 发布包：双击根目录 `打包发布.bat`，或 `powershell -ExecutionPolicy Bypass -File tools\make-release.ps1` 只出目录 + zip（`tools\make-exe.ps1` 连 exe 一起出）→ `dist\<名称>_v<版本>\` 与同名 zip（同版本替换、其它版本目录不被动）。核对四点：① 目录名里的版本与 `CHANGELOG.md` 最新一节一致，且包内有这份文件；② 目录和 zip 里都没有 `data\` 与 `cap_quest.ps1` / `crop_strip.ps1`；③ 版本目录不用解压，直接双击 `启动工具箱.bat --check` 能认出 `app\`；④ 包里 `docs\preview.png` 与 `app\` 的界面一致（看日志里的 `Preview:` 行：`refreshed from the current window` 表示刚重截过）
-  - 单文件 exe：`powershell -ExecutionPolicy Bypass -File tools\make-exe.ps1 -OutDir dist-test` 后，把它拷到一个**空目录**双击，应出现 `MengHuanToolbox\`（14 个文件 + `.version`，内容形如 `1.3.1+20261126-160433`）并拉起工具箱（窗口标题「梦幻工具箱」）；再双击一次不应重新解包；`exe --extract` 只解包并打开目录。核对完删掉 `dist-test\`
+  - 单文件 exe：`powershell -ExecutionPolicy Bypass -File tools\make-exe.ps1 -OutDir dist-test` 后，把它拷到一个**空目录**双击，应出现 `MengHuanToolbox\`（14 个文件 + `.version`，内容形如 `1.3.2+20261126-164134`）并拉起工具箱（窗口标题「梦幻工具箱」）；再双击一次不应重新解包；`exe --extract` 只解包并打开目录。核对完删掉 `dist-test\`
 
 ---
 

@@ -199,7 +199,8 @@ Write-Output ('Stamp  : ' + $stamp)
 Write-Output 'Other versions in dist are untouched.'
 
 # ---- stage 3: publish into the cloud sync folder -------------------------------
-# The Aliyun Drive client mirrors dist\_cloud to the public share, so packing also publishes.
+# sync-cloud stages this release for the Baidu Pan share folder, so packing already gets the
+# upload ready (the last drag into the client stays manual).
 # Only the real dist\ is published: a test build in another folder must never reach players.
 # A problem here never fails the release - the files are already complete in dist\.
 if ($OutDir -ne 'dist') {
