@@ -64,6 +64,12 @@
     }
     #btnCalcAttr, #btnCalcGold, #btnCalculate, #btnCalcXiu { width: 120px; padding: 0; }
     .tip { color: #70787f; margin-left: 10px; font-size: 13px; vertical-align: middle; }
+    /* 不能拆的词组：一行摆不下时整段换到下一行，不要只剩一个“石”字 */
+    .tip-nowrap { white-space: nowrap; }
+    /* 合成规则单独占一行：缩进到输入框内文字的位置（label 220px + 输入框 8px 内边距），不再贴着面板左边缘 */
+    .tip-rule { display: block; margin-left: 228px; margin-top: 6px; }
+    /* 宝石 / 精魄灵石下拉：嵌在“1级…单价”标签里，按选项文字自适应，不套用输入框的 150px 宽 */
+    .input-bar .gem-kind { width: auto; height: 26px; padding: 0 2px; font-size: 13px; }
     #goldResult, #xiuResult, #gemSumResult { margin-top: 10px; font-size: 13px; color: #70787f; }
     #goldResult b, #xiuResult b, #gemSumResult b { color: #c0392b; }
     .hist-del-btn {
@@ -119,6 +125,7 @@
     th.g3 { background-color: #6e58f4; border-left-color: #6e58f4; border-right-color: #6764f3; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF6E58F4', endColorstr='#FF6764F3'); }
     th.g4 { background-color: #6764f3; border-left-color: #6764f3; border-right-color: #577cf1; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF6764F3', endColorstr='#FF577CF1'); }
     th.g5 { background-color: #577cf1; border-left-color: #577cf1; border-right-color: #4895ef; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF577CF1', endColorstr='#FF4895EF'); }
+    th.g6 { background-color: #4895ef; border-left-color: #4895ef; border-right-color: #3ea3f0; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF4895EF', endColorstr='#FF3EA3F0'); }
     th.h1 { background-color: #7b43f5; border-left-color: #7b43f5; border-right-color: #754cf4; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7B43F5', endColorstr='#FF754CF4'); }
     th.h2 { background-color: #754cf4; border-left-color: #754cf4; border-right-color: #7055f4; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF754CF4', endColorstr='#FF7055F4'); }
     th.h3 { background-color: #7055f4; border-left-color: #7055f4; border-right-color: #6a5ef3; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7055F4', endColorstr='#FF6A5EF3'); }
@@ -157,16 +164,16 @@
     td.pet-hist-today { font-weight: bold; color: #7b43f5; }
     td.pet-hist-has { font-weight: bold; color: #ffffff; background-color: #7b43f5; cursor: pointer; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF7B43F5', endColorstr='#FF4895EF'); }
     /* 历史记录查看弹窗：点击日历日期弹出该日汇总与明细 */
-    #petHistOverlay, #petCostOverlay, #petIoOverlay { position: absolute; left: 0; top: 0; display: none; background-color: #000000; filter: progid:DXImageTransform.Microsoft.Alpha(opacity=40); }
+    #petHistOverlay, #petCostOverlay, #petIoOverlay, #updOverlay { position: absolute; left: 0; top: 0; display: none; background-color: #000000; filter: progid:DXImageTransform.Microsoft.Alpha(opacity=40); }
     #petHistOverlay { z-index: 970; }
     #petHistDialog { z-index: 971; width: 460px; }
-    #petHistDialog, #petCostDialog, #petIoDialog {
+    #petHistDialog, #petCostDialog, #petIoDialog, #updDialog {
         position: absolute; display: none; padding: 12px 14px;
         background-color: #e8eaee;
         border: 2px solid; border-color: #f8fafc #a2a8b2 #a2a8b2 #f8fafc;
         filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#F2FFFFFF', endColorstr='#D8D8DCE4');
     }
-    #petHistTitle, #petCostTitle, #petIoTitle { font-weight: bold; font-size: 13px; color: #3d444d; margin-bottom: 8px; }
+    #petHistTitle, #petCostTitle, #petIoTitle, #updTitle { font-weight: bold; font-size: 13px; color: #3d444d; margin-bottom: 8px; }
     #petHistBody { max-height: 380px; overflow-y: auto; }
     /* 宠环成本录入弹窗：点击 + 时弹出，登记本次成本（万梦幻币，非必填），样式沿用攻略弹窗 */
     #petCostOverlay { z-index: 960; }
@@ -189,16 +196,34 @@
         background-color: #eef0f3; color: #2f353c;
         border: 2px solid; border-color: #9aa2ac #ffffff #ffffff #9aa2ac;
     }
-    body.dark #petIoDialog, body.dark #petHistDialog, body.dark #petCostDialog {
+    body.dark #petIoDialog, body.dark #petHistDialog, body.dark #petCostDialog, body.dark #updDialog {
         background-color: #2b2f35;
         border-color: #4a5058 #0e1013 #0e1013 #4a5058;
         filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr='#C8333740', endColorstr='#B0252930');
     }
-    body.dark #petIoTitle, body.dark #petHistTitle, body.dark #petCostTitle { color: #aeb4bc; }
+    body.dark #petIoTitle, body.dark #petHistTitle, body.dark #petCostTitle, body.dark #updTitle { color: #aeb4bc; }
     body.dark #petIoText {
         background-color: #292d33; color: #d2d6da;
         border-color: #0e1013 #3c424a #3c424a #0e1013;
     }
+    /* 检查更新弹窗：网盘上先看到新版本时弹出，链接可点，另一个按钮改走 GitHub 自动下载 */
+    #updOverlay { z-index: 990; }
+    #updDialog { z-index: 991; width: 460px; }
+    #updTitle { margin-bottom: 6px; }
+    #updBody { font-size: 13px; color: #3d444d; line-height: 1.55; }
+    #updBody b { color: #7b43f5; }
+    #updLink { color: #2f6fd0; text-decoration: underline; cursor: pointer; word-break: break-all; }
+    #updNote { margin-top: 6px; font-size: 12px; color: #70787f; }
+    body.dark #updBody { color: #c6cad0; }
+    body.dark #updBody b { color: #8b5cf6; }
+    body.dark #updLink { color: #6fa8f5; }
+    body.dark #updNote { color: #7c828a; }
+    /* 自动检测更新开关：勾选框按原生大小显示（.input-bar input 默认 150×30 会把它撑大） */
+    .input-bar .upd-auto-option { width: auto; margin-left: 10px; margin-right: 0; font-size: 13px; font-weight: normal; text-align: left; cursor: pointer; }
+    .input-bar .upd-auto-option input { width: 16px; height: 16px; padding: 0; margin: 0 4px 0 0; border: 0; background: transparent; filter: none; vertical-align: middle; }
+    /* 自动检测发现新版本时只亮按钮旁这一行，不弹窗 */
+    #updNewHint { color: #c0392b; font-weight: bold; }
+    body.dark #updNewHint { color: #f0a050; }
     .history-header { margin-top: 14px; font-weight: bold; font-size: 14px; color: #3d444d; padding-bottom: 6px; }
     .history-table td.hist-time { text-align: center; white-space: nowrap; font-size: 12px; color: #70787f; }
     .history-table td.hist-info { text-align: left; font-size: 13px; }
@@ -318,7 +343,7 @@
     body.dark td.pet-hist-day { color: #b6bcc2; }
     body.dark td.pet-hist-today { color: #8b5cf6; }
     body.dark td.pet-hist-has { color: #ffffff; background-color: #8b5cf6; filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#FF8B5CF6', endColorstr='#FF5BA8F5'); }
-    body.dark #petHistOverlay, body.dark #petCostOverlay { filter: progid:DXImageTransform.Microsoft.Alpha(opacity=55); }
+    body.dark #petHistOverlay, body.dark #petCostOverlay, body.dark #updOverlay { filter: progid:DXImageTransform.Microsoft.Alpha(opacity=55); }
     body.dark #petCostDialog label { color: #aeb4bc; }
     body.dark #petCostDialog input {
         background-color: #292d33; color: #d2d6da;
@@ -650,39 +675,115 @@
     ' ===================== 宝石成本 =====================
     ' 宝石成本多选合计：gemCosts(i) 为 i 级单个成本；gemPicked 记录选中等级；各等级个数填在 gemQty{等级} 输入框中（空=1个）
     ' gemResultOn：结果区展开状态（默认折叠，生成表格或点击切换时展开）
-    Dim gemSelectOn, gemResultOn, gemPicked, gemCosts(15)
+    ' gemKind：0=宝石（1~15级）1=精魄灵石（同样 2 个 N 级合 1 个 N+1 级，最高 10 级），下拉切换后表格行数、表头与提示文案一起变
+    Dim gemSelectOn, gemResultOn, gemPicked, gemCosts(15), gemKind
     Set gemPicked = CreateObject("Scripting.Dictionary")
     gemSelectOn = False
     gemResultOn = False
+    gemKind = 0
+    Function GemKindName()
+        If gemKind = 1 Then GemKindName = "精魄灵石" Else GemKindName = "宝石"
+    End Function
+    Function GemMaxLevel()
+        If gemKind = 1 Then GemMaxLevel = 10 Else GemMaxLevel = 15
+    End Function
+    ' 规则说明跟着类型走，顺带写明各自算到几级
+    Sub UpdateGemRuleTip
+        If gemKind = 1 Then
+            document.getElementById("gemRuleTip").innerText = "合成规则：2个N级精魄灵石 = 1个(N+1)级精魄灵石，合成到N级另收N万梦幻币（最高10级）"
+        Else
+            document.getElementById("gemRuleTip").innerText = "合成规则：2个N级宝石 = 1个(N+1)级宝石（最高15级）"
+        End If
+    End Sub
+    ' 切换计算对象：两种物品等级上限不同（15 / 10 级），旧表格的行数和文案都不再对应，
+    ' 因此先退出选择模式、丢掉已选金额，再按新类型重算；单价还没填或填错就清空，等用户重新输入
+    Sub OnGemKindChange
+        Dim objSel, dblPrice, strVal, bOk
+        Set objSel = document.getElementById("selGemKind")
+        If objSel.value = "1" Then gemKind = 1 Else gemKind = 0
+        UpdateGemRuleTip
+        If gemSelectOn Then ToggleGemSelect
+        strVal = Trim(document.getElementById("txtPrice").value)
+        bOk = False
+        dblPrice = 0
+        If strVal <> "" Then
+            If TryNumber(strVal, dblPrice) Then
+                If dblPrice > 0 Then bOk = True
+            End If
+        End If
+        If bOk Then
+            Calculate
+        Else
+            document.getElementById("resultArea").innerHTML = ""
+            document.getElementById("gemSumResult").innerHTML = ""
+            SetGemResultVisible False
+        End If
+    End Sub
     Sub CheckEnter
         If window.event.keyCode = 13 Then Calculate
     End Sub
     Function CalculateGemCost(level, price)
-        Dim required, cumulative
+        Dim required, cumulative, fee, feeSum
         required = 2 ^ (level - 1)
         cumulative = 2 ^ level - 1
-        Set CalculateGemCost = MakeRecord(Array("required", "cumulative", "cost", "total"), Array(required, cumulative, required * price, cumulative * price))
+        ' 精魄灵石合成另收固定费，宝石为 0，口径统一成“万”
+        fee = 0 : feeSum = 0
+        If gemKind = 1 Then
+            fee = GemMergeFee(level)
+            feeSum = GemMergeFeeSum(level)
+        End If
+        Set CalculateGemCost = MakeRecord(Array("required", "cumulative", "fee", "cost", "total"), Array(required, cumulative, fee, required * price + fee, cumulative * price + feeSum))
+    End Function
+    ' 精魄灵石每合成一次另收固定费：合成到 N 级收 N 万梦幻币（2→1 收 2 万 … 10→9 收 10 万）。
+    ' 得到 1 个 N 级要 2 个 N-1 级再加一次合成，所以合成费逐级翻倍累加：fee(N) = fee(N-1) * 2 + N 万，fee(1) = 0
+    Function GemMergeFee(level)
+        Dim k, fee
+        fee = 0
+        For k = 2 To level
+            fee = fee * 2 + k
+        Next
+        GemMergeFee = fee
+    End Function
+    ' 1~N 级各留一个时累积的合成费（每级各自从 1 级合上去）：2 级 2 万、3 级 9 万、10 级 2994 万
+    Function GemMergeFeeSum(level)
+        Dim k, total
+        total = 0
+        For k = 2 To level
+            total = total + GemMergeFee(k)
+        Next
+        GemMergeFeeSum = total
     End Function
     Sub Calculate
-        Dim dblPrice, level, rows(15)
+        Dim dblPrice, level, maxLv, rows(15)
         If Not ReadInputNumber("txtPrice", Null, "positive", -1, "请输入大于0的有效数字！", dblPrice) Then Exit Sub
-        For level = 1 To 15
+        maxLv = GemMaxLevel()
+        For level = 1 To maxLv
             Set rows(level) = CalculateGemCost(level, dblPrice)
         Next
-        RenderGemCosts rows
+        RenderGemCosts rows, maxLv
     End Sub
-    Sub RenderGemCosts(rows)
-        Dim i, row, lngNeed, lngCum, dblCost, dblCumCost, strHtml, strCls
-        strHtml = "<table><tr><th class=""g1"" width=""10%"">等级</th><th class=""g2"" width=""15%"">需要1级宝石(个)</th><th class=""g3"" width=""15%"">累计1级宝石(个)</th><th class=""g4"" width=""30%"">单个成本(万)</th><th class=""g5"" width=""30%"">累计成本(万)</th></tr>"
-        For i = 1 To 15
+    Sub RenderGemCosts(rows, maxLv)
+        Dim i, row, strKind, strTh, strFeeCell, lngNeed, lngCum, dblFee, dblCost, dblCumCost, strHtml, strCls
+        strKind = GemKindName()
+        ' 精魄灵石多一列合成消耗（万），成本列相应收窄；宝石没有这项开销，保持原五列
+        If gemKind = 1 Then
+            strTh = "<th class=""g1"" width=""9%"">等级</th><th class=""g2"" width=""15%"">需要1级" & strKind & "(个)</th><th class=""g3"" width=""15%"">累计1级" & strKind & "(个)</th><th class=""g4"" width=""14%"">合成消耗(万)</th><th class=""g5"" width=""23%"">单个成本(万)</th><th class=""g6"" width=""24%"">累计成本(万)</th>"
+        Else
+            strTh = "<th class=""g1"" width=""10%"">等级</th><th class=""g2"" width=""15%"">需要1级" & strKind & "(个)</th><th class=""g3"" width=""15%"">累计1级" & strKind & "(个)</th><th class=""g4"" width=""30%"">单个成本(万)</th><th class=""g5"" width=""30%"">累计成本(万)</th>"
+        End If
+        strHtml = "<table><tr>" & strTh & "</tr>"
+        For i = 1 To maxLv
             Set row = rows(i)
             lngNeed = row("required")
             lngCum = row("cumulative")
+            dblFee = row("fee")
             dblCost = row("cost")
             dblCumCost = row("total")
             gemCosts(i) = dblCost
             If i Mod 2 = 0 Then strCls = " class=""alt""" Else strCls = ""
-            strHtml = strHtml & "<tr" & strCls & "><td class=""lv"">" & i & "级</td><td class=""num"">" & lngNeed & "</td><td class=""num"">" & lngCum & "</td><td class=""cost"" onclick=""ToggleGemPick " & i & """>" & FormatNumber(dblCost, 2) & "</td><td>" & FormatNumber(dblCumCost, 2) & "</td></tr>"
+            ' 合成费按整数万显示：它本身就是整万，带两位小数反而像估算值
+            If gemKind = 1 Then strFeeCell = "<td>" & FormatNumber(dblFee, 0) & "</td>" Else strFeeCell = ""
+            strHtml = strHtml & "<tr" & strCls & "><td class=""lv"">" & i & "级</td><td class=""num"">" & lngNeed & "</td><td class=""num"">" & lngCum & "</td>" & strFeeCell & "<td class=""cost"" onclick=""ToggleGemPick " & i & """>" & FormatNumber(dblCost, 2) & "</td><td>" & FormatNumber(dblCumCost, 2) & "</td></tr>"
         Next
         document.getElementById("resultArea").innerHTML = strHtml & "</table>"
         ' 表格重新生成后重置多选与合计结果，并自动展开结果区
@@ -699,7 +800,7 @@
     Sub ToggleGemResult
         If Not gemResultOn Then
             If document.getElementById("resultArea").innerHTML = "" Then
-                MsgBox "请先输入宝石单价并点击“确认换算”生成表格！", vbExclamation, "提示"
+                MsgBox "请先输入1级" & GemKindName() & "单价并点击“确认换算”生成表格！", vbExclamation, "提示"
                 Exit Sub
             End If
             SetGemResultVisible True
@@ -711,14 +812,14 @@
     Sub ToggleGemSelect
         If Not gemSelectOn Then
             If document.getElementById("resultArea").innerHTML = "" Then
-                MsgBox "请先输入宝石单价并点击“确认换算”生成表格！", vbExclamation, "提示"
+                MsgBox "请先输入1级" & GemKindName() & "单价并点击“确认换算”生成表格！", vbExclamation, "提示"
                 Exit Sub
             End If
             gemSelectOn = True
             SetGemResultVisible True
             document.getElementById("btnGemSelect").innerText = "退出选择"
             document.getElementById("resultArea").className = "pick"
-            document.getElementById("gemSumResult").innerHTML = "选择模式：点击表格中“单个成本(万)”列的金额选中该等级，在出现的输入框中填写宝石个数（不填默认1个），选好后点击“计算”按钮合计。"
+            document.getElementById("gemSumResult").innerHTML = "选择模式：点击表格中“单个成本(万)”列的金额选中该等级，在出现的输入框中填写" & GemKindName() & "个数（不填默认1个），选好后点击“计算”按钮合计。"
         Else
             gemSelectOn = False
             document.getElementById("btnGemSelect").innerText = "选择"
@@ -742,7 +843,7 @@
         Else
             gemPicked(idx) = True
             objTd.className = "cost picked"
-            objTd.innerHTML = FormatNumber(gemCosts(idx), 2) & " <input type=""text"" class=""gem-qty"" id=""gemQty" & idx & """ value="""" placeholder=""1"" title=""该等级宝石个数，不填默认1个"" />"
+            objTd.innerHTML = FormatNumber(gemCosts(idx), 2) & " <input type=""text"" class=""gem-qty"" id=""gemQty" & idx & """ value="""" placeholder=""1"" title=""该等级" & GemKindName() & "个数，不填默认1个"" />"
             Set objInputs = objTd.getElementsByTagName("INPUT")
             If objInputs.length > 0 Then objInputs(0).focus
         End If
@@ -751,7 +852,7 @@
     Sub CalcGemSum
         Dim k, dblSum, dblQty, objInp, strVal, strDetail
         If gemPicked.Count = 0 Then
-            MsgBox "尚未选择任何宝石成本！请先点击“选择”按钮进入选择模式，再点击表格中的金额多选。", vbExclamation, "提示"
+            MsgBox "尚未选择任何" & GemKindName() & "成本！请先点击“选择”按钮进入选择模式，再点击表格中的金额多选。", vbExclamation, "提示"
             Exit Sub
         End If
         dblSum = 0
@@ -768,7 +869,7 @@
                     If dblQty < 1 Or dblQty <> Fix(dblQty) Then dblQty = 0
                 End If
                 If dblQty = 0 Then
-                    MsgBox "“" & k & "级”宝石的个数须为大于等于1的整数（不填默认1）！", vbExclamation, "输入错误"
+                    MsgBox "“" & k & "级”" & GemKindName() & "的个数须为大于等于1的整数（不填默认1）！", vbExclamation, "输入错误"
                     If Not objInp Is Nothing Then objInp.focus
                     Exit Sub
                 End If
@@ -777,7 +878,7 @@
             If strDetail <> "" Then strDetail = strDetail & "、"
             strDetail = strDetail & k & "级×" & dblQty
         Next
-        document.getElementById("gemSumResult").innerHTML = "已选 <b>" & gemPicked.Count & "</b> 项（" & strDetail & "），合计：<b>" & FormatNumber(dblSum, 2) & "</b> 万梦幻币"
+        document.getElementById("gemSumResult").innerHTML = "已选 <b>" & gemPicked.Count & "</b> 项（" & strDetail & "），合计（" & GemKindName() & "）：<b>" & FormatNumber(dblSum, 2) & "</b> 万梦幻币"
     End Sub
     ' ===================== 捉鬼省眼：按假坐标推真坐标大致方位 =====================
     ' 规律来自玩家经验总结（约 70% 准确），真坐标始终落在假坐标 ±50 内；坐标按小地图 X 向右、Y 向上增大。
@@ -4258,9 +4359,11 @@
         EnvReport strProblems
     End Sub
     ' ===== 在线更新 =====
-    ' ocr\update_toolbox.ps1 先问 GitHub 要版本：连得上就能顺手把整包下来，全程自动；连不上
-    ' （网络不通、被墙、或远端还没发布）才去看百度网盘共享目录里的文件名。网盘只肯说“有哪个
-    ' 版本”，不给匿名客户端下载链接，所以那条路只能提示手动下载，弹框里附分享页地址。
+    ' ocr\update_toolbox.ps1 先看百度网盘共享目录里的文件名：网盘一两秒就回，不用等 GitHub，
+    ' 也不用翻墙；读到的新版本比本地新，就在 upd 弹窗里给出分享链接，另配一个“自动更新”按钮。
+    ' 网盘只肯说“有哪个版本”、不给匿名客户端下载链接，所以弹窗里的自动更新改走 GitHub
+    ' （-NoCloud）：读 GitHub 上的版本并整包下载替换；连不上或还没推上去，就留在弹窗里说明
+    ' 只能手动下载。网盘读不到（网络不通、被墙、目录还没传）才回退去问 GitHub。
     ' 只有远程版本比本地 CHANGELOG.md 里的版本新才有动作，一致或更老什么都不做。
     ' 替换文件时保留 app\data：锁定的角色、框选区域、自检签名、宠环历史都还在。题库会被新包
     ' 的换掉（题库本可自己编辑/导入，否则新版题库永远到不了），换之前备份成 app\data\ocr_tiku.prev.txt。
@@ -4271,6 +4374,61 @@
     updMode = ""
     updLocal = ""
     updRemote = ""
+    ' updOffer = 弹窗里正在推荐的那个版本（网盘读到的），自动更新失败时用来报“哪个版本没下成”
+    updOffer = ""
+    updLink = ""
+    updDlgShown = False
+    updDlgScroll = 0
+    ' 自动检测更新：勾选后每次打开工具箱都静默查一次版本（只比对、不下载），
+    ' 有新版本才在“检查更新”按钮旁亮一行字，不弹窗、不写状态行。开关存在 app\data，默认关闭。
+    updAutoOn = False
+    Function UpdAutoFile
+        UpdAutoFile = OcrDataDir() & "\update_auto.txt"
+    End Function
+    Sub UpdAutoLoad
+        Dim fso
+        updAutoOn = False
+        Set fso = CreateObject("Scripting.FileSystemObject")
+        If Not fso.FileExists(UpdAutoFile()) Then Exit Sub
+        If Trim(OcrReadFileSmart(UpdAutoFile())) = "1" Then updAutoOn = True
+    End Sub
+    Sub UpdAutoSave
+        OcrEnsureData
+        On Error Resume Next
+        If updAutoOn Then
+            OcrWriteText UpdAutoFile(), "1"
+        Else
+            OcrWriteText UpdAutoFile(), "0"
+        End If
+        Err.Clear
+        On Error GoTo 0
+    End Sub
+    ' 开关状态回写到勾选框：没存过（或存的是 0）就是默认不勾
+    Sub UpdAutoPaint
+        On Error Resume Next
+        document.getElementById("chkUpdAuto").checked = updAutoOn
+        Err.Clear
+        On Error GoTo 0
+    End Sub
+    Sub UpdNewHint(strText)
+        On Error Resume Next
+        document.getElementById("updNewHint").innerText = strText
+        Err.Clear
+        On Error GoTo 0
+    End Sub
+    ' 勾选/取消：改动立刻落盘；勾上时顺手查一次，不然得重开工具箱才看得出效果
+    Sub UpdAutoToggle
+        On Error Resume Next
+        updAutoOn = document.getElementById("chkUpdAuto").checked
+        Err.Clear
+        On Error GoTo 0
+        UpdAutoSave
+        UpdNewHint ""
+        If updAutoOn And Not updBusy Then window.setTimeout "UpdSilentCheck", 300
+    End Sub
+    Sub UpdSilentCheck
+        If updAutoOn Then UpdRun "silent"
+    End Sub
     Function UpdPs1
         UpdPs1 = OcrRoot() & "\ocr\update_toolbox.ps1"
     End Function
@@ -4327,7 +4485,13 @@
     End Sub
     Sub UpdBusyUI(bBusy)
         On Error Resume Next
-        document.getElementById("btnUpdCheck").disabled = bBusy
+        ' 静默检测可能在后台跑很久（甚至超时），这段时间不锁“检查更新”：点了能接管，也不至于点不动
+        If updMode = "silent" Then
+            document.getElementById("btnUpdCheck").disabled = False
+        Else
+            document.getElementById("btnUpdCheck").disabled = bBusy
+        End If
+        document.getElementById("btnUpdAuto").disabled = bBusy
         On Error GoTo 0
     End Sub
     ' 自动下载走不通时（GitHub 连不上，或远端还没发布新包），只能让玩家自己去分享页拿：
@@ -4344,16 +4508,77 @@
         Err.Clear
         On Error GoTo 0
     End Sub
-    ' 点“检查更新”：只比对版本，不下载；有新版本再问要不要下
+    ' 点“检查更新”：先看网盘、只比对版本不下载；有新版本就弹窗，自动还是手动在窗里选
     Sub UpdCheck
+        ' 静默检测还没回来：这次点击直接接管它，按手动检查展示结论（同一次查询，不再多发一个进程）
+        If updBusy And updMode = "silent" Then
+            updMode = "check"
+            UpdNote "正在检查更新…", ""
+            Exit Sub
+        End If
         UpdRun "check"
     End Sub
+    ' 进度只写一处：弹窗开着就写在窗里那行（状态行清空，免得两处重复、关窗后还留一行），
+    ' 弹窗没开（检查中、没有新版本、检查失败）才写在状态行
+    Sub UpdNote(strText, strColor)
+        ' 静默检测不写底部状态行：脚本每改一次 status 都会走到这里，“正在检查更新…”会一直留在最右边
+        If updMode = "silent" Then Exit Sub
+        If updDlgShown Then
+            On Error Resume Next
+            document.getElementById("updNote").innerText = strText
+            document.getElementById("updNote").style.color = strColor
+            Err.Clear
+            On Error GoTo 0
+            UpdSetStatus "", ""
+        Else
+            UpdSetStatus strText, strColor
+        End If
+    End Sub
+    ' 网盘上先看到新版本时用这个弹窗：链接可点（交给默认浏览器，不在 HTA 里跳走），
+    ' 旁边一个“自动更新”按钮改走 GitHub 下载，下载不成就留在窗里说明只能手动下载
+    Sub UpdDlgShow(strTitle, strBody)
+        On Error Resume Next
+        document.getElementById("updTitle").innerText = strTitle
+        document.getElementById("updBody").innerHTML = strBody
+        document.getElementById("updLink").innerText = updLink
+        document.getElementById("updNote").innerText = ""
+        Err.Clear
+        On Error GoTo 0
+        If Not updDlgShown Then
+            updDlgShown = True
+            OpenPetDialog "upd", updDlgScroll, False
+        End If
+    End Sub
+    Sub UpdDlgClose
+        If Not updDlgShown Then Exit Sub
+        updDlgShown = False
+        On Error Resume Next
+        ClosePetDialog "upd", updDlgScroll
+        Err.Clear
+        On Error GoTo 0
+    End Sub
+    ' 链接和“打开下载页”按钮共用：<a> 的默认跳转要取消，否则整个工具箱会跳去分享页
+    Sub UpdDlgOpen
+        On Error Resume Next
+        window.event.returnValue = False
+        Err.Clear
+        On Error GoTo 0
+        UpdOpenLink updLink
+    End Sub
+    Sub UpdDlgAuto
+        If updBusy Then Exit Sub
+        UpdRun "auto"
+    End Sub
+    ' strMode：check 只查（网盘优先）、silent 开机静默只查（结论写按钮旁一行）、
+    ' apply 确认后直接更新、auto 弹窗里的自动更新。后两种只走 GitHub：整包只有在 GitHub 上拿得到，网盘只肯报版本。
     Sub UpdRun(strMode)
         Dim fso, strPs1, strOut, strCmd
         If updBusy Then Exit Sub
         Set fso = CreateObject("Scripting.FileSystemObject")
         strPs1 = UpdPs1()
         If Not fso.FileExists(strPs1) Then
+            ' 缺脚本是包没解压全，静默检测不该为这个弹红字，安静跳过
+            If strMode = "silent" Then Exit Sub
             UpdSetStatus "缺少更新脚本 ocr\update_toolbox.ps1（多半是压缩包没解压完整）", "#b33"
             Exit Sub
         End If
@@ -4361,27 +4586,42 @@
         updMode = strMode
         updTry = 0
         updRemote = ""
+        ' 手动检查的结论写在状态行，先把上次自动检测留下的提示清掉，免得同一条版本说两遍；
+        ' 自动检测反过来：结论只落在按钮旁那一行，底部状态行全程清空
+        If strMode <> "silent" Then
+            UpdNewHint ""
+        Else
+            UpdSetStatus "", ""
+        End If
         UpdBusyUI True
-        If strMode = "apply" Then
+        If strMode = "check" Or strMode = "silent" Then
+            ' 网盘一般一两秒就回，GitHub 只是兜底；15 秒读不到版本就算失败，两段串起来也够
+            updTimeoutMs = 120000
+            ' 静默检测不写状态行，结论只落在“检查更新”旁那一行
+            If strMode = "check" Then UpdNote "正在检查更新…", ""
+        Else
+            ' 下载 + 解压 + 替换，留足 5 分钟
             updTimeoutMs = 300000
-            UpdSetStatus "正在下载并替换文件，请不要关闭工具箱…", ""
+            UpdNote "正在连 GitHub 下载新版本，请不要关闭工具箱…", ""
             ' 识别/监控还开着的话先停掉：它们正占着 ocr 目录里的脚本，正在运行的脚本可能替换失败
             On Error Resume Next
             If ocrWatchOn Then OcrWatchStop
             GhostMonStopQuiet
             Err.Clear
             On Error GoTo 0
-        Else
-            ' GitHub 15 秒没响应就直接转网盘，两段网络请求串起来也要留够时间
-            updTimeoutMs = 120000
-            UpdSetStatus "正在检查更新…", ""
         End If
         strOut = fso.GetSpecialFolder(2) & "\gadget_update.txt"
         updOutFile = strOut
         On Error Resume Next
         If fso.FileExists(strOut) Then fso.DeleteFile strOut, True
         strCmd = PsCmdFile(strPs1, False)
-        strCmd = strCmd & " -Mode " & strMode & " -Root " & ocrQuote & UpdRootDir() & ocrQuote & " -OutFile " & ocrQuote & strOut & ocrQuote
+        If strMode = "check" Or strMode = "silent" Then
+            strCmd = strCmd & " -Mode check"
+        Else
+            ' 自动更新这条永远带 -NoCloud：包只有 GitHub 有，别再去网盘绕一圈
+            strCmd = strCmd & " -Mode apply -NoCloud"
+        End If
+        strCmd = strCmd & " -Root " & ocrQuote & UpdRootDir() & ocrQuote & " -OutFile " & ocrQuote & strOut & ocrQuote
         CreateObject("WScript.Shell").Run strCmd, 0, False
         Err.Clear
         On Error GoTo 0
@@ -4399,13 +4639,13 @@
             Err.Clear
             On Error GoTo 0
             If strStatus = "checking" Then
-                UpdSetStatus "正在检查更新…", ""
+                UpdNote "正在检查更新…", ""
             ElseIf strStatus = "downloading" Then
-                UpdSetStatus "正在下载新版本…", ""
+                UpdNote "正在下载新版本…", ""
             ElseIf strStatus = "extracting" Then
-                UpdSetStatus "正在解压…", ""
+                UpdNote "正在解压…", ""
             ElseIf strStatus = "applying" Then
-                UpdSetStatus "正在替换文件…", ""
+                UpdNote "正在替换文件…", ""
             ElseIf strStatus <> "" Then
                 updBusy = False
                 UpdBusyUI False
@@ -4416,10 +4656,16 @@
         If updTry * 500 >= updTimeoutMs Then
             updBusy = False
             UpdBusyUI False
-            If updMode = "apply" Then
-                UpdSetStatus "更新还没完成：网络太慢，或被安全软件拦了 PowerShell，隔一会儿再点“检查更新”", "#b33"
+            ' 静默检测失败不打扰：清掉按钮旁的旧提示，下次开工具箱再试，不写红字
+            If updMode = "silent" Then
+                UpdNewHint ""
+                UpdSetStatus "", ""
+                Exit Sub
+            End If
+            If updMode = "check" Then
+                UpdNote "检查超时了：网络有点慢，或被安全软件拦了 PowerShell，隔一会儿再点一次", "#b33"
             Else
-                UpdSetStatus "检查超时了：网络有点慢，或被安全软件拦了 PowerShell，隔一会儿再点一次", "#b33"
+                UpdNote "更新还没完成：网络太慢，或被安全软件拦了 PowerShell，隔一会儿再点“检查更新”", "#b33"
             End If
             Exit Sub
         End If
@@ -4445,8 +4691,37 @@
             UpdErrorText = strDetail
         End If
     End Function
+    ' 自动更新没成功（GitHub 上还没发布、连不上、或包不对）：弹窗不关，原因写在窗里，
+    ' 链接还在，玩家可以再点一次或直接手动下载
+    Sub UpdAutoFail(strWhy)
+        Dim strBody
+        strBody = strWhy & "。<br><br>" & _
+            "可以隔一会儿再点一次「自动更新」，或者用下面的链接手动下载——" & _
+            "zip 解压后覆盖原来的文件夹，exe 直接替换原来的 exe。"
+        UpdDlgShow "自动更新失败", strBody
+        ' 先摆好弹窗再写红字：UpdDlgShow 会清空窗内那行提示
+        UpdNote "自动更新失败，请重新检查并手动下载更新", "#b33"
+    End Sub
+    ' 静默检测的结论只写按钮旁那一行：有新版本就亮出来，其余（已最新/本地更新/读不到）一律清空，
+    ' 不弹窗、不写红字——开机自动跑的东西不该打断人
+    Sub UpdApplySilent(strStatus, strLocal, strRemote)
+        ' 检测跑的过程中把开关关掉了：结论不再展示（这条提示只属于开了自动检测的人）
+        If Not updAutoOn Then
+            UpdNewHint ""
+            Exit Sub
+        End If
+        If strStatus = "available" Or strStatus = "manual" Then
+            If strRemote = "" Then
+                UpdNewHint ""
+            Else
+                UpdNewHint "有新版本 v" & strRemote & "（当前 v" & strLocal & "），点“检查更新”"
+            End If
+        Else
+            UpdNewHint ""
+        End If
+    End Sub
     Sub UpdApply(dic)
-        Dim strStatus, strLocal, strRemote, strDetail, strAsk, lngFiles, strMsg, strSource, strWhere, strLink
+        Dim strStatus, strLocal, strRemote, strDetail, strAsk, lngFiles, strMsg, strSource, strWhere, strLink, strBody
         strStatus = ""
         strLocal = ""
         strRemote = ""
@@ -4480,6 +4755,13 @@
             UpdShowVersionText strLocal
         End If
         updRemote = strRemote
+        ' 静默检测到此为止：不弹窗、不弹询问，也不替玩家下载
+        If updMode = "silent" Then
+            ' 底部状态行不留字：开机时不该出现“正在检查更新…”或上次手动检查的旧结论
+            UpdSetStatus "", ""
+            UpdApplySilent strStatus, updLocal, strRemote
+            Exit Sub
+        End If
         If strStatus = "available" Then
             If updMode = "check" Then
                 ' 拼成变量再问：多行 If 条件（续行）在静态校验里数不准缩进层次
@@ -4494,11 +4776,13 @@
                     UpdSetStatus "有新版本 v" & strRemote & "，想更新时再点“检查更新”", ""
                 End If
             Else
-                UpdSetStatus "正在更新…", ""
+                UpdNote "正在更新…", ""
             End If
             Exit Sub
         End If
         If strStatus = "applied" Then
+            ' 自动更新成功后先关弹窗，把位置让给“更新完成”的提示
+            If updMode = "auto" Then UpdDlgClose
             If strDetail <> "" Then
                 UpdSetStatus "已更新到 v" & strRemote & "，但有文件没能替换（重开工具箱后再点一次检查更新）", "#b33"
                 MsgBox "更新完成，但下面这些文件被占用没能替换：" & vbCrLf & vbCrLf & strDetail & vbCrLf & vbCrLf & _
@@ -4513,30 +4797,44 @@
             Exit Sub
         End If
         If strStatus = "latest" Then
-            UpdSetStatus "已是最新版本 v" & strLocal, "#2e8b57"
+            If updMode = "auto" Then
+                ' 网盘说有新版本，GitHub 上却还是旧的（多半还没推上去）：自动这条路走不通
+                UpdAutoFail "GitHub 上现在还是 v" & strRemote & "，新版本多半还没推上去"
+                Exit Sub
+            End If
+            UpdNote "已是最新版本 v" & strLocal, "#2e8b57"
             If updMode = "apply" Then MsgBox "已经是最新版本 v" & strLocal & "，无需更新。", vbInformation, "检查更新"
             Exit Sub
         End If
         If strStatus = "local_newer" Then
-            UpdSetStatus "本地 v" & strLocal & " 比远程 v" & strRemote & " 新，不更新", ""
+            If updMode = "auto" Then
+                UpdAutoFail "GitHub 上的版本 v" & strRemote & " 比本地的 v" & strLocal & " 还旧"
+                Exit Sub
+            End If
+            UpdNote "本地 v" & strLocal & " 比远程 v" & strRemote & " 新，不更新", ""
             Exit Sub
         End If
-        ' GitHub 连不上时版本只能从网盘读，而网盘不给匿名下载：直接告诉玩家去分享页手动拿包
+        ' 网盘只肯报版本、不给匿名下载：弹窗里给分享链接，旁边的“自动更新”改走 GitHub
         If strStatus = "manual" Then
-            UpdSetStatus "自动更新失败，请重新检查并手动下载更新", "#b33"
-            strAsk = "发现新版本 v" & strRemote & "（当前 v" & strLocal & "）。" & vbCrLf & vbCrLf & _
-                "不过这次 GitHub 没连上，工具箱没法自己下载，只能手动更新：" & vbCrLf & _
-                "打开下面的分享页，下载 v" & strRemote & " 的 zip 或 exe——" & vbCrLf & _
-                "zip 解压后覆盖原来的文件夹，exe 直接替换原来的 exe 就行。" & vbCrLf & vbCrLf & _
-                "分享链接（也可以在浏览器里打开）：" & vbCrLf & strLink & vbCrLf & vbCrLf & _
-                "要现在打开吗？"
-            If MsgBox(strAsk, vbYesNo + vbQuestion, "检查更新") = vbYes Then UpdOpenLink strLink
+            updOffer = strRemote
+            updLink = strLink
+            strBody = "现在用的是 v" & strLocal & "，<b>" & strWhere & "</b>上已经有 <b>v" & strRemote & "</b>。" & "<br><br>" & _
+                "· 点「自动更新」：去 GitHub 查一遍并自动下载替换，约 1~2 分钟；锁定的角色、框选区域、宠环记录都保留。" & "<br>" & _
+                "· GitHub 连不上、或者还没推上去时会在这里说明，那就用下面的链接手动下载：" & _
+                "zip 解压后覆盖原文件夹，exe 直接替换原来的 exe。"
+            UpdDlgShow "发现新版本 v" & strRemote, strBody
+            ' 窗里已经把版本和怎么更新都说全了，状态行不再重复一条
+            UpdSetStatus "", ""
             Exit Sub
         End If
-        ' GitHub 连不上、网盘里又还没传包：这是发布那边没传完，不怪玩家网络，得换个说法
+        ' 网盘目录还是空的、GitHub 也没读到版本：多半是发布那边没传完，不怪玩家网络
         If strMsg = "pan_empty" Then
-            UpdSetStatus "GitHub 没连上，网盘里也还没传上新包", "#b33"
-            strAsk = "这次 GitHub 没连上，百度网盘里又还没看到新版本，所以先没动你的文件。" & vbCrLf & vbCrLf & _
+            If updMode = "auto" Then
+                UpdAutoFail "GitHub 上没读到 v" & updOffer & "，网盘里也还没看到新包"
+                Exit Sub
+            End If
+            UpdSetStatus "网盘里还没看到新包，GitHub 也没读到新版本", "#b33"
+            strAsk = "百度网盘里还没看到新版本，GitHub 那边也没读到，所以先没动你的文件。" & vbCrLf & vbCrLf & _
                 "多半是刚发布、包还没传完，过十分钟再点一次“检查更新”就行。" & vbCrLf & _
                 "你自己的网要是也断着，先连上网再点。" & vbCrLf & vbCrLf & _
                 "想先去分享页扫一眼也可以：" & vbCrLf & strLink & vbCrLf & vbCrLf & _
@@ -4546,11 +4844,19 @@
         End If
         ' 网盘已发布、但自动下载源还没跟上：宁可不动文件，也不能把本地换成旧包
         If strMsg = "package_stale" Then
+            If updMode = "auto" Then
+                UpdAutoFail "能自动下载的包还是旧的，装了会把你本地换回旧版，所以没动文件"
+                Exit Sub
+            End If
             UpdSetStatus "百度网盘上已经是 v" & strRemote & "，但能自动下载的包还是旧的", "#b33"
             strAsk = "百度网盘分享里已经有 v" & strRemote & "，但自动下载的包还没跟上，所以这次没动你的文件，免得把本地换回旧版。" & vbCrLf & vbCrLf & _
                 "想现在就用新版的话，可以打开分享页手动下载；也可以等发布那边同步好，再点一次“检查更新”。" & vbCrLf & vbCrLf & _
                 "要现在打开分享页吗？"
             If MsgBox(strAsk, vbYesNo + vbQuestion, "检查更新") = vbYes Then UpdOpenLink strLink
+            Exit Sub
+        End If
+        If updMode = "auto" Then
+            UpdAutoFail "没连上 GitHub，或者被安全软件拦了 PowerShell（" & UpdErrorText(strDetail) & "）"
             Exit Sub
         End If
         UpdSetStatus "没能检查更新，稍后再点一次试试", "#b33"
@@ -4638,7 +4944,8 @@
         If ocrRelW > 0 Then
             strInfo = strInfo & "区域 " & ocrRelW & "×" & ocrRelH
         Else
-            strInfo = strInfo & "整窗识别"
+            ' 不框选时脚本只取窗口中间那块（题目对话框所在位置），不再整窗扫
+            strInfo = strInfo & "中间区域识别（自动）"
         End If
         If ocrTikuCount = 0 Then strInfo = strInfo & " · 未命中时用网页搜索"
         On Error Resume Next
@@ -5161,7 +5468,7 @@
         ocrRelH = 0
         OcrSaveConfig
         OcrRefreshStatus
-        document.getElementById("ocrAnswer").innerHTML = "<span class=""tip"">已切换为整窗识别。</span>"
+        document.getElementById("ocrAnswer").innerHTML = "<span class=""tip"">已恢复自动模式：只识别游戏窗口中间那块（题目与选项所在区域）。</span>"
     End Sub
     Sub OcrEditTiku
         Dim fso, objShell, strPath
@@ -5801,6 +6108,10 @@
         EnvCheckRun
         ' 版本号只读本地 CHANGELOG.md，不联网；点“检查更新”才会去比对远程版本
         UpdShowVersion
+        ' 勾了“自动检测更新”就在窗口摆好之后静默查一次；延后 3 秒，避开启动时那次环境自检
+        UpdAutoLoad
+        UpdAutoPaint
+        If updAutoOn Then window.setTimeout "UpdSilentCheck", 3000
         ' 标题栏/边框补偿 = 临时窗口高 - 客户区高（quirks 模式下 documentElement.clientHeight 恒为 0，须用 body.clientHeight 读取视口高）；窗口高 = 内容高 + 补偿 + 少量余量
         chromeH = 600 - document.body.clientHeight
         If chromeH < 0 Or chromeH > 200 Then chromeH = 72
@@ -6009,11 +6320,11 @@ function OcrUrlEncodeJs(s) { return encodeURIComponent(String(s)); }
                 <button id="btnOcrWatch" onclick="OcrWatchToggle">▶ 实时识别</button>
                 <button id="btnOcrRun" onclick="OcrRun">识别游戏画面</button>
                 <button id="btnOcrCal" class="pet-secondary-btn" onclick="OcrCalibrate">框选识别区域</button>
-                <button class="pet-secondary-btn" onclick="OcrClearRegion">整窗识别</button>
+                <button class="pet-secondary-btn" onclick="OcrClearRegion" title="清除框选，恢复为只识别窗口中间那块">自动区域</button>
                 <button class="pet-secondary-btn" onclick="OcrCopyAnswer">复制答案</button>
                 <button class="pet-secondary-btn" onclick="OcrOpenSearch">网页搜索</button>
             </div>
-            <div class="ocr-bar"><span class="tip" id="ocrStatus">题库 0 条 · 整窗识别</span><span class="tip" id="envStatus" style="margin-left: 10px; cursor: pointer;" onclick="EnvCheckForce" title="点一下重新检查本机环境（缺文件 / 缺 OCR 语言包 / PowerShell 版本；自检 7 天内通过过会走缓存，点这里强制重查）"></span></div>
+            <div class="ocr-bar"><span class="tip" id="ocrStatus">题库 0 条 · 中间区域识别（自动）</span><span class="tip" id="envStatus" style="margin-left: 10px; cursor: pointer;" onclick="EnvCheckForce" title="点一下重新检查本机环境（缺文件 / 缺 OCR 语言包 / PowerShell 版本；自检 7 天内通过过会走缓存，点这里强制重查）"></span></div>
             <div class="ocr-bar">
                 <input type="text" id="txtOcrSearch" placeholder="搜索题目（片段/缺字/错字都能模糊匹配；也支持拼音首字母或全拼，如 zxd，输入即搜）" onkeyup="OcrSearchKey">
                 <button class="pet-secondary-btn" onclick="OcrSearchTiku">搜索题库</button>
@@ -6028,7 +6339,7 @@ function OcrUrlEncodeJs(s) { return encodeURIComponent(String(s)); }
                 <input type="file" id="fileOcrTiku" style="display: none;" onchange="OcrImportFile">
             </div>
             <div id="ocrAnswer"></div>
-            <div class="pet-note">★题库为工具箱目录下的 ocr_tiku.txt，每行「题目|答案」；点“编辑题库”用记事本维护（保存为 UTF-8 编码）。<br>★“实时识别”开一次就长期生效：切到游戏窗口答题，换题后自动刷新答案（每轮约 2s，不抢游戏焦点）；本窗口被聚焦时自动暂停，切回游戏自动继续；切回本窗口时自动定位到答案。改过题库后需重新点一次“实时识别”。<br>★识别做的是模糊匹配，允许个别错别字；未命中时可点“网页搜索”直接搜题目，或补进题库后再识别。<br>★首次使用建议先点“框选识别区域”，只框住题目与选项：识别更快更准（游戏窗口大小变化后需重新框选）。</div>
+            <div class="pet-note">★题库为工具箱目录下的 ocr_tiku.txt，每行「题目|答案」；点“编辑题库”用记事本维护（保存为 UTF-8 编码）。<br>★“实时识别”开一次就长期生效：切到游戏窗口答题，换题后自动刷新答案（每轮约 2s，不抢游戏焦点）；本窗口被聚焦时自动暂停，切回游戏自动继续；切回本窗口时自动定位到答案。改过题库后需重新点一次“实时识别”。<br>★识别做的是模糊匹配，允许个别错别字；未命中时可点“网页搜索”直接搜题目，或补进题库后再识别。<br>★不框选时自动只识别游戏窗口中间那块（题目与选项所在位置），不会整窗扫；想更快更准可再点“框选识别区域”只框住题目与选项（游戏窗口大小变化后需重新框选）。</div>
         </div>
     </div>
     <div class="input-bar">
@@ -6086,18 +6397,21 @@ function OcrUrlEncodeJs(s) { return encodeURIComponent(String(s)); }
         <div id="goldResult"></div>
     </div>
     <div class="input-bar">
-        <label>1级宝石单价（万）：</label><input type="text" id="txtPrice" onkeydown="CheckEnter"><button id="btnCalculate" onclick="Calculate">确认换算</button><button id="btnGemSelect" onclick="ToggleGemSelect">选择</button><button id="btnGemSum" onclick="CalcGemSum">计算</button><span class="tip">合成规则：2个N级宝石 = 1个(N+1)级宝石</span>
+        <label>1级<select class="gem-kind" id="selGemKind" onchange="OnGemKindChange"><option value="0">宝石</option><option value="1">精魄灵石</option></select>单价（万）：</label><input type="text" id="txtPrice" onkeydown="CheckEnter"><button id="btnCalculate" onclick="Calculate">确认换算</button><button id="btnGemSelect" onclick="ToggleGemSelect">选择</button><button id="btnGemSum" onclick="CalcGemSum">计算</button>
+        <div class="tip tip-rule tip-nowrap" id="gemRuleTip">合成规则：2个N级宝石 = 1个(N+1)级宝石（最高15级）</div>
         <div id="gemSumResult"></div>
         <div style="cursor: pointer;" onclick="ToggleGemResult"><label style="width: auto; text-align: left;">💎 成本计算结果：</label><span class="sq-toggle" id="gemResultToggleHint">▼ 展开</span></div>
     </div>
+    <div id="resultArea" style="display: none;"></div>
     <div class="input-bar">
         <div>
             <label>🔄 工具箱更新：</label><span class="tip" id="updVer">版本 —</span>
             <button class="pet-secondary-btn" id="btnUpdCheck" onclick="UpdCheck" style="margin-left: 4px;">检查更新</button>
+            <span class="tip" id="updNewHint"></span>
+            <label class="upd-auto-option"><input type="checkbox" id="chkUpdAuto" onclick="UpdAutoToggle">自动检测更新</label>
             <span class="tip" id="updStatus"></span>
         </div>
     </div>
-    <div id="resultArea" style="display: none;"></div>
     <div id="petCostOverlay" onclick="PetCostCancel"></div>
     <div id="petCostDialog">
         <div id="petCostTitle"></div>
@@ -6117,6 +6431,14 @@ function OcrUrlEncodeJs(s) { return encodeURIComponent(String(s)); }
         <div class="pet-cost-note" id="petIoNote"></div>
         <textarea id="petIoText" wrap="off"></textarea>
         <div class="pet-cost-btns"><button class="sq-dialog-btn" id="petIoOkBtn" onclick="PetIoOk">导入</button><button class="sq-dialog-btn" id="petIoCopyBtn" onclick="PetIoCopyAll">全选复制</button><button class="sq-dialog-btn" onclick="PetIoClose">✕ 关闭</button></div>
+    </div>
+    <div id="updOverlay" onclick="UpdDlgClose"></div>
+    <div id="updDialog">
+        <div id="updTitle"></div>
+        <div id="updBody"></div>
+        <div class="pet-cost-note">下载页（点链接用浏览器打开）：<a id="updLink" href="#" onclick="UpdDlgOpen" title="点击用默认浏览器打开分享页">—</a></div>
+        <div id="updNote"></div>
+        <div class="pet-cost-btns"><button class="sq-dialog-btn" id="btnUpdAuto" onclick="UpdDlgAuto">自动更新</button><button class="sq-dialog-btn" onclick="UpdDlgOpen">打开下载页</button><button class="sq-dialog-btn" onclick="UpdDlgClose">稍后再说</button></div>
     </div>
     <div id="sqOverlay" onclick="CloseSq"></div>
     <div id="sqDialog">

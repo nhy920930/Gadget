@@ -422,9 +422,16 @@ if ($TikuFile.Length -gt 0 -and (Test-Path -LiteralPath $TikuFile)) {
 $tikuLoaded = $true
 
 # A cropped answer box is static text, so a small change there is meaningful;
-# the full window also contains animation, which needs a looser gate
+# the auto middle band still shows animated scenery behind the dialog, so it keeps the looser gate
+$picked = ($RelW -gt 0 -and $RelH -gt 0 -and $RelX -ge 0 -and $RelY -ge 0)
 $diffMin = 0.02
-if ($RelW -gt 0 -and $RelH -gt 0 -and $RelX -ge 0 -and $RelY -ge 0) { $diffMin = 0.012 }
+if ($picked) { $diffMin = 0.012 }
+
+# No user-picked area: read only the middle band where the question dialog lives instead of the
+# whole window. Measured on an 800x565 client the dialog spans 132..672 x 337..505, i.e. 16%~84%
+# wide and 60%~89% high; the band below is centered and slightly more generous so other
+# resolutions / UI scales still fit, while the top HUD, task panel and bottom bar stay out.
+$autoL = 0.10; $autoW = 0.80; $autoT = 0.46; $autoH = 0.48
 
 if ($Watch -gt 0 -and $PidFile.Length -gt 0) {
     try { [System.IO.File]::WriteAllText($PidFile, [string]$PID, (New-Object System.Text.UTF8Encoding $false)) } catch { }
@@ -442,6 +449,7 @@ do {
     $wx = 0; $wy = 0; $ww = 0; $wh = 0
     $cx = 0; $cy = 0; $cw = 0; $ch = 0
     $imgW = 0; $imgH = 0
+    $area = ""
     $prevFg = [IntPtr]::Zero
     $hitQ = ""
     $hitA = ""
@@ -473,10 +481,16 @@ do {
     $wx = $r.Left; $wy = $r.Top
     $ww = $r.Right - $r.Left; $wh = $r.Bottom - $r.Top
 
-    if ($RelW -gt 0 -and $RelH -gt 0 -and $RelX -ge 0 -and $RelY -ge 0) {
+    if ($picked) {
         $cx = $wx + $RelX; $cy = $wy + $RelY; $cw = $RelW; $ch = $RelH
+        $area = "region"
     } else {
-        $cx = $wx; $cy = $wy; $cw = $ww; $ch = $wh
+        # middle band, relative to the window rect so it follows the window around
+        $cx = $wx + [int][Math]::Round($ww * $autoL)
+        $cy = $wy + [int][Math]::Round($wh * $autoT)
+        $cw = [int][Math]::Round($ww * $autoW)
+        $ch = [int][Math]::Round($wh * $autoH)
+        $area = "middle"
     }
 
     $vx = [GadgetWin]::GetSystemMetrics(76); $vy = [GadgetWin]::GetSystemMetrics(77)
@@ -621,6 +635,7 @@ do {
     $meta.Insert(1, "title`t" + $title)
     $meta.Add("window`t" + $wx + "," + $wy + "," + $ww + "," + $wh)
     $meta.Add("crop`t" + $cx + "," + $cy + "," + $cw + "," + $ch)
+    $meta.Add("area`t" + $area)
     $meta.Add("image`t" + $imgW + "x" + $imgH)
     $meta.Add("shot`t" + $ShotFile)
     $meta.Add("tiku`t" + $tikuCount)

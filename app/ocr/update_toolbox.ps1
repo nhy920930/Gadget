@@ -11,17 +11,21 @@
 #           by the one from the package (the question bank can be edited in the toolbox, so a
 #           hand-edited copy would otherwise be lost without trace).
 #
-# Where the version comes from (default: public GitHub):
-#   GitHub carries both the version record and the package, so while it answers the update is
-#   fully automatic. When it is unreachable (no network, blocked, or the CHANGELOG is not
-#   published yet) the check falls back to the release folder shared on Baidu Pan: that folder
-#   is readable without logging in - submit the access code, take the cookie it sets, then ask
-#   for the listing - so the newest "_v<version>.zip" (or ".exe") name in it IS the published
-#   version. Baidu gives an anonymous client no download link (sharedownload answers errno=118
-#   "illegal operation"), so a version found only there is reported as status=manual: the caller
-#   hands the share link to the player and they download by hand. A package= override (or
-#   -PackageUrl) is still fetched in that case, because it is not the dead GitHub default.
+# Where the version comes from (default: the Baidu Pan share first, GitHub as the fallback):
+#   The release folder shared on Baidu Pan is asked first. That folder is readable without
+#   logging in - submit the access code, take the cookie it sets, then ask for the listing - so
+#   the newest "_v<version>.zip" (or ".exe") name in it IS the published version, and it answers
+#   in a second or two instead of depending on GitHub being reachable. Baidu gives an anonymous
+#   client no download link (sharedownload answers errno=118 "illegal operation"), so a version
+#   found only there is reported as status=manual: the caller shows the share link and offers
+#   the GitHub route as a button, which is exactly -NoCloud.
+#   GitHub carries both the version record and the package, so it is asked whenever the share
+#   cannot be read, and it is the only side that can hand the package over. A package= override
+#   (or -PackageUrl) is still fetched when only the share knows a version.
 #   When only one of the two is readable the other one is simply skipped, never fatal.
+#
+# -NoCloud skips the share entirely (GitHub only: the HTA auto-update button, the offline test),
+# -CloudOnly does the opposite (share only), -VersionUrl/-PackageUrl pin plain url mode.
 #
 # app\data\update_source.txt can move or pin the sources, one key=value per line:
 #   share=<share path or https://pan.baidu.com/s/xxxx>  default 1jMjWXBqNIAm1qwaGaBkJ4w
@@ -79,11 +83,11 @@ if ($PanHost -ne '') { $panBase = $PanHost.TrimEnd('/') }
 $panCommon = '&channel=chunlei&web=1&app_id=250528&clienttype=0'
 $panUa = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 # Baidu Pan answers in one or two seconds when it answers at all. 12 s keeps a dead network from
-# eating the whole budget: the HTA gives up after 120 s, and the version read may already have
-# spent 15 s on GitHub before this point.
+# eating the whole budget: the share is asked first and the HTA gives up after 120 s.
 $panTimeoutSec = 12
-# GitHub is asked first and gets 15 s only: if it has not answered by then, the share check takes
-# over instead of making the player wait on a hung connection.
+# GitHub is only the fallback now, so it gets 15 s: if it has not answered by then the check fails
+# instead of making the player wait on a hung connection. The same 15 s covers the auto-update
+# path (-NoCloud), where GitHub is the only source.
 $versionTimeoutSec = 15
 
 # ---------------------------------------------------------------- result file
@@ -367,10 +371,10 @@ try {
     }
 
     # ---- where is the published version?
-    # GitHub first: it hands over the package too, so while it answers the update stays automatic.
-    # Only when it does not answer does the share get asked, and then only for the version.
+    # The share first: it answers in a second or two and does not depend on GitHub being
+    # reachable. GitHub is the fallback, and the only side that can hand the package over.
     if ($CloudOnly -and -not $NoCloud) {
-        # Test hook: behave as if GitHub were down, so the share path can be exercised offline.
+        # Test hook: the share only, so a release-side problem can be shown without a mirror.
         try {
             $S.cloud = Get-CloudVersion $Share $SharePwd $ShareFolder
             if ($S.cloud -eq '') { throw 'no *_v<version>.zip or .exe in the share folder' }
@@ -404,27 +408,28 @@ try {
             exit 3
         }
     } else {
-        $gitErr = ''
+        $panErr = ''
         try {
-            $S.remote = Get-VersionFromText (Get-RemoteText $VersionUrl $versionTimeoutSec)
-            if ($S.remote -eq '') { throw ('no "## x.y.z" line in ' + $VersionUrl) }
-            $S.source = 'github'
+            $S.cloud = Get-CloudVersion $Share $SharePwd $ShareFolder
+            if ($S.cloud -eq '') { throw 'no *_v<version>.zip or .exe in the share folder' }
+            $S.source = 'cloud'
+            $S.remote = $S.cloud
         } catch {
-            $gitErr = $_.Exception.Message
-            $S.remote = ''
+            $panErr = $_.Exception.Message
+            $S.cloud = ''
         }
         if ($S.source -eq '') {
             try {
-                $S.cloud = Get-CloudVersion $Share $SharePwd $ShareFolder
-                if ($S.cloud -eq '') { throw 'no *_v<version>.zip or .exe in the share folder' }
-                $S.source = 'cloud'
-                $S.remote = $S.cloud
-                $S.detail = 'GitHub not reachable, the version came from the Baidu Pan share.'
+                $S.remote = Get-VersionFromText (Get-RemoteText $VersionUrl $versionTimeoutSec)
+                if ($S.remote -eq '') { throw ('no "## x.y.z" line in ' + $VersionUrl) }
+                $S.source = 'github'
+                $S.detail = 'Baidu Pan: ' + $panErr + ' | GitHub answered instead.'
             } catch {
-                $panErr = $_.Exception.Message
                 $S.status = 'error'
+                # An empty share folder is a release-side problem, not a network one: keep it apart
+                # so the dialog can say "try again later" instead of blaming the player's network.
                 if ($panErr.Contains('in the share folder')) { $S.msg = 'pan_empty' } else { $S.msg = 'sources_unreachable' }
-                $S.detail = 'GitHub: ' + $gitErr + ' | Baidu Pan: ' + $panErr
+                $S.detail = 'Baidu Pan: ' + $panErr + ' | GitHub: ' + $_.Exception.Message
                 Save-State
                 exit 3
             }

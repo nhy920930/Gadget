@@ -37,6 +37,8 @@
     .btn:disabled { background: linear-gradient(90deg, #d8dade, #c0c4ca); color: #9aa2ac; cursor: default; }
     .btn-full { width: 100%; flex: none; }
     .tip { color: #888; font-size: 13px; display: block; margin-top: 2px; }
+    /* 宝石 / 精魄灵石下拉：嵌在“1级…单价”标签里，按选项文字自适应，不套用输入框的 100% 宽 */
+    .form-group label .gem-kind { width: auto; height: 30px; padding: 0 2px; font-size: 13px; margin: 0 2px; vertical-align: middle; }
     .result { color: #d35400; font-weight: bold; font-size: 14px; display: block; margin-top: 8px; line-height: 1.6; }
     #goldResult, #xiuResult, #gemSumResult { margin-top: 8px; font-size: 13px; color: #70787f; }
     #goldResult b, #xiuResult b, #gemSumResult b { color: #c0392b; }
@@ -56,6 +58,7 @@
     th.g3 { background: linear-gradient(90deg, #6e58f4, #6764f3); border-left-color: #6e58f4; border-right-color: #6764f3; }
     th.g4 { background: linear-gradient(90deg, #6764f3, #577cf1); border-left-color: #6764f3; border-right-color: #577cf1; }
     th.g5 { background: linear-gradient(90deg, #577cf1, #4895ef); border-left-color: #577cf1; border-right-color: #4895ef; }
+    th.g6 { background: linear-gradient(90deg, #4895ef, #3ea3f0); border-left-color: #4895ef; border-right-color: #3ea3f0; }
     th.h1 { background: linear-gradient(90deg, #7b43f5, #754cf4); border-left-color: #7b43f5; border-right-color: #754cf4; }
     th.h2 { background: linear-gradient(90deg, #754cf4, #7055f4); border-left-color: #754cf4; border-right-color: #7055f4; }
     th.h3 { background: linear-gradient(90deg, #7055f4, #6a5ef3); border-left-color: #7055f4; border-right-color: #6a5ef3; }
@@ -211,6 +214,7 @@
     body.dark th.g3 { background: linear-gradient(90deg, #7f6ff6, #787af6); border-left-color: #7f6ff6; border-right-color: #787af6; }
     body.dark th.g4 { background: linear-gradient(90deg, #787af6, #6991f5); border-left-color: #787af6; border-right-color: #6991f5; }
     body.dark th.g5 { background: linear-gradient(90deg, #6991f5, #5ba8f5); border-left-color: #6991f5; border-right-color: #5ba8f5; }
+    body.dark th.g6 { background: linear-gradient(90deg, #5ba8f5, #52aef5); border-left-color: #5ba8f5; border-right-color: #52aef5; }
     body.dark th.h1 { background: linear-gradient(90deg, #8b5cf6, #8664f6); border-left-color: #8b5cf6; border-right-color: #8664f6; }
     body.dark th.h2 { background: linear-gradient(90deg, #8664f6, #806df6); border-left-color: #8664f6; border-right-color: #806df6; }
     body.dark th.h3 { background: linear-gradient(90deg, #806df6, #7b75f6); border-left-color: #806df6; border-right-color: #7b75f6; }
@@ -513,13 +517,13 @@
     </div>
     <div class="card">
         <div class="card-title">💠 宝石成本计算</div>
-        <div class="form-group"><label>1级宝石单价（万）</label><input type="number" step="any" id="txtPrice" onkeydown="onEnter(event,calculate)"></div>
+        <div class="form-group"><label>1级<select id="selGemKind" class="gem-kind" onchange="gemKindChanged()"><option value="0">宝石</option><option value="1">精魄灵石</option></select>单价（万）</label><input type="number" step="any" id="txtPrice" onkeydown="onEnter(event,calculate)"></div>
         <button class="btn btn-full" onclick="calculate()">确认换算</button>
         <div class="btn-row">
             <button class="btn" id="btnGemSelect" onclick="toggleGemSelect()">选择</button>
             <button class="btn" id="btnGemSum" onclick="calcGemSum()">计算</button>
         </div>
-        <span class="tip">合成规则：2个N级宝石 = 1个(N+1)级宝石</span>
+        <span class="tip" id="gemRuleTip">合成规则：2个N级宝石 = 1个(N+1)级宝石（最高15级）</span>
         <div id="gemSumResult"></div>
         <div class="gem-result-toggle" onclick="toggleGemResult()"><span>💎 成本计算结果</span><span class="sq-toggle" id="gemResultToggleHint">▼</span></div>
         <div class="table-wrap" id="resultArea" style="display:none"></div>
@@ -873,12 +877,50 @@ function renderGoldResult(gold, coin, rmb) {
 }
 
 // ================== 宝石成本 ==================
-var gemSelectOn = false, gemResultOn = false, gemPicked = {}, gemCosts = [];
+// gemKind：0=宝石（1~15级）1=精魄灵石（同样 2 个 N 级合 1 个 N+1 级，最高 10 级），切换后表格行数、表头与提示文案一起变
+var gemSelectOn = false, gemResultOn = false, gemPicked = {}, gemCosts = [], gemKind = 0;
+function gemKindName() { return gemKind === 1 ? '精魄灵石' : '宝石'; }
+function gemMaxLevel() { return gemKind === 1 ? 10 : 15; }
+function updateGemRuleTip() {
+    document.getElementById('gemRuleTip').textContent = gemKind === 1
+        ? '合成规则：2个N级精魄灵石 = 1个(N+1)级精魄灵石，合成到N级另收N万梦幻币（最高10级）'
+        : '合成规则：2个N级宝石 = 1个(N+1)级宝石（最高15级）';
+}
+// 切换计算对象：等级上限不同（15 / 10 级），旧的选中与合计作废；已有合法单价就按新类型重算
+function gemKindChanged() {
+    gemKind = gv('selGemKind') === '1' ? 1 : 0;
+    updateGemRuleTip();
+    if (gemSelectOn) toggleGemSelect();
+    var price = isNum(gv('txtPrice')) ? Number(gv('txtPrice')) : NaN;
+    if (isFinite(price) && price > 0) {
+        calculate();
+    } else {
+        document.getElementById('resultArea').innerHTML = '';
+        document.getElementById('gemSumResult').innerHTML = '';
+        setGemResultVisible(false);
+    }
+}
+// 精魄灵石每合成一次另收固定费：合成到 N 级收 N 万梦幻币（2→1 收 2 万 … 10→9 收 10 万）。
+// 得到 1 个 N 级要 2 个 N-1 级再加一次合成，所以合成费逐级翻倍累加：fee(N) = fee(N-1) * 2 + N 万，fee(1) = 0
+function gemMergeFee(level) {
+    var fee = 0;
+    for (var k = 2; k <= level; k++) fee = fee * 2 + k;
+    return fee;
+}
+// 1~N 级各留一个时累积的合成费（每级各自从 1 级合上去）：2 级 2 万、3 级 9 万、10 级 2994 万
+function gemMergeFeeSum(level) {
+    var total = 0;
+    for (var k = 2; k <= level; k++) total += gemMergeFee(k);
+    return total;
+}
 function calculateGemCosts(price) {
     var rows = [];
-    for (var level = 1; level <= 15; level++) {
+    for (var level = 1; level <= gemMaxLevel(); level++) {
         var required = Math.pow(2, level - 1), cumulative = Math.pow(2, level) - 1;
-        rows[level] = { required: required, cumulative: cumulative, cost: required * price, total: cumulative * price };
+        // 精魄灵石合成另收固定费，宝石为 0，口径统一成“万”
+        var fee = gemKind === 1 ? gemMergeFee(level) : 0;
+        var feeSum = gemKind === 1 ? gemMergeFeeSum(level) : 0;
+        rows[level] = { required: required, cumulative: cumulative, fee: fee, cost: required * price + fee, total: cumulative * price + feeSum };
     }
     return rows;
 }
@@ -888,11 +930,18 @@ function calculate() {
     renderGemCosts(calculateGemCosts(price));
 }
 function renderGemCosts(rows) {
-    var h = '<table><tr><th class="g1" width="10%">等级</th><th class="g2" width="15%">需要1级宝石</th><th class="g3" width="15%">累计1级宝石</th><th class="g4" width="30%">单个成本(万)</th><th class="g5" width="30%">累计成本(万)</th></tr>';
-    for (var i = 1; i <= 15; i++) {
+    var kind = gemKindName(), maxLv = gemMaxLevel(), spirit = gemKind === 1;
+    // 精魄灵石多一列合成消耗（万），成本列相应收窄；宝石没有这项开销，保持原五列
+    var h = spirit
+        ? '<table><tr><th class="g1" width="9%">等级</th><th class="g2" width="15%">需要1级' + kind + '</th><th class="g3" width="15%">累计1级' + kind + '</th><th class="g4" width="14%">合成消耗(万)</th><th class="g5" width="23%">单个成本(万)</th><th class="g6" width="24%">累计成本(万)</th></tr>'
+        : '<table><tr><th class="g1" width="10%">等级</th><th class="g2" width="15%">需要1级' + kind + '</th><th class="g3" width="15%">累计1级' + kind + '</th><th class="g4" width="30%">单个成本(万)</th><th class="g5" width="30%">累计成本(万)</th></tr>';
+    for (var i = 1; i <= maxLv; i++) {
         var row = rows[i], cls = i % 2 === 0 ? ' class="alt"' : '';
         gemCosts[i] = row.cost;
-        h += '<tr' + cls + '><td class="lv">' + i + '级</td><td class="num">' + row.required + '</td><td class="num">' + row.cumulative + '</td><td class="cost" onclick="toggleGemPick(' + i + ',this,event)">' + fmt(row.cost, 2) + '</td><td>' + fmt(row.total, 2) + '</td></tr>';
+        // 合成费按整数万显示：它本身就是整万，带两位小数反而像估算值
+        h += '<tr' + cls + '><td class="lv">' + i + '级</td><td class="num">' + row.required + '</td><td class="num">' + row.cumulative + '</td>'
+            + (spirit ? '<td>' + fmt(row.fee, 0) + '</td>' : '')
+            + '<td class="cost" onclick="toggleGemPick(' + i + ',this,event)">' + fmt(row.cost, 2) + '</td><td>' + fmt(row.total, 2) + '</td></tr>';
     }
     document.getElementById('resultArea').innerHTML = h + '</table>';
     // 表格重新生成后重置多选与合计结果，并自动展开结果区
@@ -908,7 +957,7 @@ function setGemResultVisible(on) {
 // 结果区默认折叠，点击标题行展开/收起（与神器攻略一致）
 function toggleGemResult() {
     if (!gemResultOn && !document.getElementById('resultArea').innerHTML) {
-        alert('请先输入宝石单价并点击“确认换算”生成表格！');
+        alert('请先输入1级' + gemKindName() + '单价并点击“确认换算”生成表格！');
         return;
     }
     setGemResultVisible(!gemResultOn);
@@ -917,14 +966,14 @@ function toggleGemResult() {
 function toggleGemSelect() {
     if (!gemSelectOn) {
         if (!document.getElementById('resultArea').innerHTML) {
-            alert('请先输入宝石单价并点击“确认换算”生成表格！');
+            alert('请先输入1级' + gemKindName() + '单价并点击“确认换算”生成表格！');
             return;
         }
         gemSelectOn = true;
         setGemResultVisible(true);
         document.getElementById('btnGemSelect').textContent = '退出选择';
         document.getElementById('resultArea').className = 'table-wrap pick-mode';
-        document.getElementById('gemSumResult').innerHTML = '选择模式：点击表格中“单个成本(万)”列的金额选中该等级，在出现的输入框中填写宝石个数（不填默认1个），选好后点击“计算”按钮合计。';
+        document.getElementById('gemSumResult').innerHTML = '选择模式：点击表格中“单个成本(万)”列的金额选中该等级，在出现的输入框中填写' + gemKindName() + '个数（不填默认1个），选好后点击“计算”按钮合计。';
     } else {
         gemSelectOn = false;
         document.getElementById('btnGemSelect').textContent = '选择';
@@ -944,14 +993,14 @@ function toggleGemPick(level, cell, event) {
     } else {
         gemPicked[level] = true;
         cell.className = 'cost picked';
-        cell.innerHTML = fmt(gemCosts[level], 2) + ' <input type="text" class="gem-qty" id="gemQty' + level + '" value="" placeholder="1" inputmode="numeric" title="该等级宝石个数，不填默认1个">';
+        cell.innerHTML = fmt(gemCosts[level], 2) + ' <input type="text" class="gem-qty" id="gemQty' + level + '" value="" placeholder="1" inputmode="numeric" title="该等级' + gemKindName() + '个数，不填默认1个">';
     }
 }
 // 合计已选成本（个数取自各等级输入框，不填默认1）
 function calcGemSum() {
     var keys = Object.keys(gemPicked);
     if (!keys.length) {
-        alert('尚未选择任何宝石成本！请先点击“选择”按钮进入选择模式，再点击表格中的金额多选。');
+        alert('尚未选择任何' + gemKindName() + '成本！请先点击“选择”按钮进入选择模式，再点击表格中的金额多选。');
         return;
     }
     var s = 0, detail = [];
@@ -960,7 +1009,7 @@ function calcGemSum() {
         var v = inp ? inp.value.replace(/\s/g, '') : '', q = 1;
         if (v !== '') {
             if (!isNum(v) || parseFloat(v) < 1 || Math.floor(parseFloat(v)) !== parseFloat(v)) {
-                alert('“' + lv + '级”宝石的个数须为大于等于1的整数（不填默认1）！');
+                alert('“' + lv + '级”' + gemKindName() + '的个数须为大于等于1的整数（不填默认1）！');
                 if (inp) inp.focus();
                 return;
             }
@@ -969,7 +1018,7 @@ function calcGemSum() {
         s += gemCosts[lv] * q;
         detail.push(lv + '级×' + q);
     }
-    document.getElementById('gemSumResult').innerHTML = '已选 <b>' + keys.length + '</b> 项（' + detail.join('、') + '），合计：<b>' + fmt(s, 2) + '</b> 万梦幻币';
+    document.getElementById('gemSumResult').innerHTML = '已选 <b>' + keys.length + '</b> 项（' + detail.join('、') + '），合计（' + gemKindName() + '）：<b>' + fmt(s, 2) + '</b> 万梦幻币';
 }
 
 // ================== 属性换算 ==================
