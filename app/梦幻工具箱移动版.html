@@ -94,6 +94,16 @@
     /* 汇总分层层级：号名行浅紫底 / 小计行浅黄底 / 全部号合计行紫底白字（与表头呼应） */
     td.pet-subtotal { text-align: center; font-weight: bold; background: #fff3d6; }
     td.pet-grand { text-align: center; font-weight: bold; color: #fff; background: linear-gradient(90deg, #7b43f5, #4895ef); }
+    /* 历史弹窗里号名行的小按钮：只回填这一个号 */
+    .pet-mini-btn { height: 20px; padding: 0 6px; margin-left: 6px; font-size: 11px; font-weight: normal; color: #3d444d; background-color: #eef0f3; border: 1px solid #a2a8b2; border-radius: 3px; cursor: pointer; vertical-align: middle; }
+    .pet-mini-btn:active { background-color: #dce0e6; }
+    body.dark .pet-mini-btn { color: #d2d6da; background-color: #292d33; border-color: #4a5058; }
+    body.dark .pet-mini-btn:active { background-color: #3c424a; }
+    /* 汇总矩阵：任务为行、号为列，窄屏横向滑动也能直接对比 5 个号 */
+    .pet-hist-mx th { padding: 4px 2px; font-size: 12px; white-space: nowrap; }
+    .pet-hist-mx td { padding: 4px 3px; font-size: 12px; white-space: nowrap; }
+    .pet-hist-mx td.pet-hist-none { color: #a2a8b2; }
+    body.dark .pet-hist-mx td.pet-hist-none { color: #5c646c; }
     /* 明细表固定高度滚动区：超出约 5 条后内部滚动，避免掉长页面影响其他功能 */
     .pet-detail-scroll { max-height: 210px; overflow-y: auto; }
     /* 历史记录日历：有记录日期紫底白字可点，今天紫字标出 */
@@ -104,15 +114,18 @@
     .pet-hist-cal td.pet-hist-has { font-weight: bold; color: #fff; background: linear-gradient(90deg, #7b43f5, #4895ef); cursor: pointer; }
     /* 历史记录查看弹窗：点击日历日期弹出该日汇总与明细 */
     #petHistOverlay, #petCostOverlay, #petIoOverlay { position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.45); z-index: 1000; display: none; }
-    #petHistDialog { top: 10%; }
     #petHistDialog, #petCostDialog, #petIoDialog {
         position: fixed; left: 50%; transform: translateX(-50%);
         width: 88%; max-width: 360px; z-index: 1001; display: none; box-sizing: border-box;
         background: #fff; border: 1px solid #d9dce3; border-radius: 8px; padding: 14px;
         box-shadow: 0 6px 24px rgba(0,0,0,0.25);
     }
+    /* 历史弹窗按攻略弹窗的规则来：铺满可视区（手机端攻略弹窗就是全屏），正文自己滚 */
+    #petHistDialog { top: 2%; width: 96%; max-width: 760px; height: 92%; padding: 12px; flex-direction: column; }
+    #petHistDialog #petHistTitle { flex-shrink: 0; }
+    #petHistDialog .pet-cost-btns { flex-shrink: 0; }
     #petHistTitle, #petCostTitle, #petIoTitle { font-weight: bold; font-size: 15px; color: #333; margin-bottom: 8px; }
-    #petHistBody { max-height: 50vh; overflow-y: auto; }
+    #petHistBody { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
     /* 常用操作常显，撤销与记录管理按需展开。 */
     .pet-undo-btn { display: none; }
     .pet-action-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
@@ -128,6 +141,11 @@
     .pet-tools .pet-danger-btn { color: #a52f2b; border-color: #d7a3a0; background: transparent; }
     .pet-cost-summary { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; padding: 10px 0; border-bottom: 1px solid #eef1f8; }
     .pet-cost-summary .pet-cost-total { margin-left: 0; }
+    /* 本轮状态条：跨天续跑时变紫加粗，一眼看出不是今天新开的一轮 */
+    .pet-run-bar { margin-top: 8px; padding: 6px 10px; border: 1px solid #e2e6f0; border-radius: 6px; background: #f5f7fb; font-size: 13px; color: #5c646c; line-height: 1.6; }
+    .pet-run-bar-cont { border-color: #d5c8fb; background: #f5f1ff; color: #5b30c9; font-weight: bold; }
+    body.dark .pet-run-bar { border-color: #3c424a; background: #292d33; color: #aeb4bc; }
+    body.dark .pet-run-bar-cont { border-color: #5a4a90; background: #332d40; color: #c9b6ff; }
     body.dark .pet-secondary-btn { background: #292d33; border-color: #4a5058; color: #d2d6da; }
     body.dark .pet-secondary-btn:active { background: #3c424a; }
     body.dark .pet-tools { background: #292d33; border-color: #3c424a; }
@@ -430,8 +448,11 @@
                 </table>
             </div>
             <div class="pet-cost-summary"><span class="pet-cost-total">当前号成本：<b id="petTotalCost">0</b> 万梦幻币</span><span class="pet-cost-total">全部号合计：<b id="petAllCost">0</b> 万梦幻币</span></div>
+            <div class="pet-run-bar" id="petRunBar">本轮：未开始</div>
             <div class="pet-action-bar">
                 <button class="btn" onclick="savePetHistory()">保存当天记录</button>
+                <button class="pet-secondary-btn" onclick="endPetRun()">结束本轮</button>
+                <button class="pet-secondary-btn" onclick="endPetCharCurrent()">结束当前号</button>
                 <button class="pet-secondary-btn" id="btnPetTools" aria-expanded="false" aria-controls="petToolsSection" onclick="togglePetTools()">更多操作 <span id="petToolsToggleHint">▼</span></button>
             </div>
             <div class="pet-tools" id="petToolsSection" style="display:none">
@@ -451,7 +472,7 @@
             <div id="petDetailSection" style="display:none"></div>
             <div class="gem-result-toggle" onclick="togglePetHist()"><span>📅 历史记录查询</span><span class="sq-toggle" id="petHistToggleHint">▼</span></div>
             <div id="petHistSection" style="display:none"></div>
-            <div class="pet-note">★点击 “+” 记录一次任务，成本可不填（按 0 计入），取消则不计数。需要改错时，在“更多操作”中勾选“显示撤销按钮”，再点对应任务的 “-” 撤销最近一笔并扣回成本。<br>★1~5 号独立计数；每次 + / - / 清零都会自动保存当天记录（关页面也不会丢），“保存当天记录”保存全部号（平时不用点，存失败时用来重试），“更多操作”中的“清零当前号”不影响其他号。</div>
+            <div class="pet-note">★点 “+” 记一次任务，成本可以不填（按 0 算），取消不算数。记错了就在“更多操作”里勾“显示撤销按钮”，再点对应任务的 “-” 撤掉最近一笔，成本也一起扣回去。<br>★一轮跑不完没关系：次数和成本会存在浏览器本地存储里，第二天（隔两三天也行）打开会接着算，上面那行写着本轮第几天、一共多少；跑完点“结束本轮”，程序先把还在记的号写进今天的历史记录、再清零，下次点 + 就是新的一轮。<br>★只想收其中一个号？切到那个号点“结束本轮”旁边的“结束当前号”，它今天的记录就落好了，其他号照常接着记；已经单独结束的号再点“结束本轮”也不会重记一遍。<br>★以前哪一轮跑到一半没接上（换了设备、清过浏览器数据、点过清零）？打开“历史记录查询”点开那一天：想把 5 个号一起搬回来就点底下「回填全部号」；只补其中一个号，就点那个号右边的「回填此号」，别的号不动。回填只是把数字搬进计算区，那一天的历史一个字都不动，也不会顺手记成今天的记录。<br>★今天既存过“当天记录”、又回填了旧记录，算谁的？今天这一行永远等于计算区现在的样子——每点一次 + / -、点“保存当天记录”、点“结束本轮”，都会把今天整行重写，不会往上叠加。先记今天再回填：计算区整个换成旧那天的，今天之前记的那点东西会被顶掉，之后再保存或结束，今天这行就变成回填来的数字；先回填再记今天：计算区是“旧那天 + 今天新记的”，保存或结束本轮会整笔写进今天，旧那天照样原封不动。只回填一个号时只换那个号，其他号今天的数字不受影响。两边都想留，就回填前先把今天的记录导出（或者自己抄一下）。历史里看到两天数字差不多也别奇怪：一天是当时的原样，一天是这一轮的总账。<br>★1~5 号各算各的；每次 + / - 都会自动存一遍“当天记录”和本轮进度（关页面也不丢），“保存当天记录”是把 5 个号再整体存一遍（平时不用点，存失败时拿来重试），“清零当前号”只清当前号、不动别的号；已经单独结束的号今天那条记录不会因为清零消失（要重跑直接点 +）。同一天一个号只留一条记录，再记就会覆盖它今天那条。</div>
             <div class="pet-note">★上交烹饪、三药品质不满足要求，会扣除一定任务积分，修炼经验/修炼点不受影响<br>★烹饪三药扣分规则：（应交品质-实际品质）/2，积分向下取整<br>★实际积分：（应交品质-实际品质）/2+2，积分向下取整<br>例如需上交63品质的珍露酒，实际上交58品质的，相差5品，扣除2分加上本身应得2分（上交三级药/烹饪获得2分），实际不扣分（即-2分+2分）</div>
             <div class="pet-block-title" style="cursor: pointer;" onclick="togglePetReward()">【召唤兽修炼任务积分奖励】<span class="sq-toggle" id="petRewardToggleHint">▼</span></div>
             <div id="petRewardSection" style="display:none">
@@ -599,7 +620,7 @@
     <div id="petHistDialog">
         <div id="petHistTitle"></div>
         <div id="petHistBody"></div>
-        <div class="pet-cost-btns" style="flex-wrap:wrap;"><button class="btn pet-hist-danger" onclick="deletePetHistDay()">删除该日记录</button><button class="btn" onclick="closePetHist()">✕ 关闭</button></div>
+        <div class="pet-cost-btns" style="flex-wrap:wrap;"><button class="btn pet-hist-danger" onclick="deletePetHistDay()">删除该日记录</button><button class="btn" onclick="backfillPetHist()">回填全部号</button><button class="btn" onclick="closePetHist()">✕ 关闭</button></div>
     </div>
     <div id="petIoOverlay" onclick="closeHistIo()"></div>
     <div id="petIoDialog">
@@ -1255,7 +1276,13 @@ var PET_HIST_KEY = 'petCostHistory';
 var PET_CHAR_COUNT = 5, PET_TASK_COUNT = 13;
 var PET_TASK_NAMES = ['找人', '乐器', '60级装备', '花', '1级家具', '80级装备', '三级药', '2级家具', '烹饪', '非指定变异召唤兽', '70级装备', '指定变异召唤兽', '上交非变异召唤兽'];
 var petHistSelectedDate = ''; // 绑定当前详情日期，关闭时清除，避免误删上次查看的日期
-for (var pcI = 0; pcI < PET_CHAR_COUNT; pcI++) resetPetChar(pcI);
+// 今天已经单独结束的号（true = 已结束）：它今天那一行要原样保留，不能因为接着记别的号被快照删掉。
+// 标记只在当天有效（petFrozenDay 不是今天即作废），存在 petCostRun 的 fday / frozen，与工具箱 pet_run.txt 同构。
+var petFrozen = [];
+for (var pcI = 0; pcI < PET_CHAR_COUNT; pcI++) {
+    resetPetChar(pcI);
+    petFrozen[pcI] = false;
+}
 function resetPetChar(character) {
     petCostHist[character] = [];
     petCounts[character] = [];
@@ -1273,6 +1300,317 @@ function refreshPetSession() {
     }
     refreshPetCostTotal();
     refreshPetDetail();
+}
+// ================== 本轮（可跨天的同一轮宠环） ==================
+// 一轮宠环经常要分几天跑：次数与成本另存到 localStorage 的 petCostRun 里，隔天打开自动接着算，
+// 点“结束本轮”才清零；历史记录仍是每天一条快照（petCostHistory 格式不动，跨端导入导出不受影响）。
+var PET_RUN_KEY = 'petCostRun';
+var petRunId = '', petRunStart = '', petRunDays = [], petRunSaveOk = true, petFrozenDay = '';
+// 短日期（11-27）：状态条上省地方
+function petShortDate(ds) { return (typeof ds === 'string' && ds.length >= 10) ? ds.substring(5) : ds; }
+function petRunDate(ds) {
+    var p = ds.split('-').map(Number);
+    return new Date(p[0], p[1] - 1, p[2]);
+}
+function petTodayDate() {
+    var now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+// 今天距开始日第几天（按日历日算，中间断几天也算天数）
+function petRunDayNo() {
+    if (!petRunStart || petRunStart.length !== 10) return 1;
+    var diff = Math.round((petTodayDate() - petRunDate(petRunStart)) / 86400000) + 1;
+    return diff > 1 ? diff : 1;
+}
+function petRunLastDay() { return petRunDays.length ? petRunDays[petRunDays.length - 1] : ''; }
+// 距最近一次记数过了几天：太久没动时状态条会提一句，避免以为早就结束了还接着记
+function petRunIdleDays() {
+    var last = petRunLastDay(), diff;
+    if (!last || last.length !== 10) return 0;
+    diff = Math.round((petTodayDate() - petRunDate(last)) / 86400000);
+    return diff > 0 ? diff : 0;
+}
+// 有改动才推进这一轮：第一次记数开新一轮，换了日历日就把今天追加进 days
+function petRunTouch() {
+    var today = petToday();
+    if (!petRunId) {
+        petRunId = 'R' + today.replace(/-/g, '');
+        petRunStart = today;
+        petRunDays = [today];
+        return;
+    }
+    if (petRunLastDay() !== today) petRunDays.push(today);
+}
+// 该号今天是否已经单独结束（冻结）：冻结的号今天那行要原样保留，直到它重新记数或被清零
+function petFrozenOn(character) {
+    character = Number(character);
+    if (petFrozenDay !== petToday() || !(character >= 0 && character < PET_CHAR_COUNT)) return false;
+    return !!petFrozen[character];
+}
+// 有没有任何一个号今天已结束：决定 petCostRun 在轮次收尾后还要不要留着
+function petFrozenAny() {
+    var i;
+    if (petFrozenDay !== petToday()) return false;
+    for (i = 0; i < PET_CHAR_COUNT; i++) if (petFrozen[i]) return true;
+    return false;
+}
+// 标记某号今天已结束；换了一天先把上一轮的标记整体作废
+function petSetFrozen(character, on) {
+    var i;
+    character = Number(character);
+    if (!(character >= 0 && character < PET_CHAR_COUNT)) return;
+    if (petFrozenDay !== petToday()) {
+        petFrozenDay = petToday();
+        for (i = 0; i < PET_CHAR_COUNT; i++) petFrozen[i] = false;
+    }
+    petFrozen[character] = !!on;
+}
+// 取消某号的“今天已结束”标记（该号又记数、被清零或被回填）
+function petClearFrozen(character) {
+    var i;
+    character = Number(character);
+    if (!(character >= 0 && character < PET_CHAR_COUNT)) return;
+    petFrozen[character] = false;
+    if (!petFrozenAny()) {
+        petFrozenDay = '';
+        for (i = 0; i < PET_CHAR_COUNT; i++) petFrozen[i] = false;
+    }
+}
+function petClearAllFrozen() {
+    var i;
+    petFrozenDay = '';
+    for (i = 0; i < PET_CHAR_COUNT; i++) petFrozen[i] = false;
+}
+// 已结束号的名字串（状态条用，如“1号、4号”）
+function petFrozenNames() {
+    var i, names = [];
+    if (petFrozenDay !== petToday()) return '';
+    for (i = 0; i < PET_CHAR_COUNT; i++) if (petFrozen[i]) names.push(petCharName(i));
+    return names.join('、');
+}
+// 该号计算区有没有数据（次数 > 0 或成本栈非空）
+function petCharHasData(character) {
+    var t;
+    if (petCostTotal[character] > 0) return true;
+    for (t = 0; t < PET_TASK_COUNT; t++) {
+        if (petCounts[character][t] > 0 || petCostHist[character][t].length) return true;
+    }
+    return false;
+}
+function petRunTotals() {
+    var count = 0, cost = 0, i, task;
+    for (i = 0; i < PET_CHAR_COUNT; i++) {
+        cost += petCostTotal[i];
+        for (task = 0; task < PET_TASK_COUNT; task++) count += petCounts[i][task];
+    }
+    return { count: count, cost: cost };
+}
+function petRunSave() {
+    var i, task, chars = [], counts, details, data;
+    // 轮次已清空、但今天还有“已结束”的号：数据得留着，否则下次打开丢掉标记，第一次快照会删掉那些号今天的记录
+    if (!petRunId && !petFrozenAny()) return;
+    for (i = 0; i < PET_CHAR_COUNT; i++) {
+        counts = [];
+        for (task = 0; task < PET_TASK_COUNT; task++) counts.push(petCounts[i][task]);
+        details = petDetailList[i].map(function (item) { return { t: item.t, c: item.c }; });
+        chars.push({ c: counts, d: details, t: Math.round(petCostTotal[i] * 100) / 100 });
+    }
+    data = { run: petRunId, start: petRunStart, days: petRunDays, chars: chars };
+    if (petFrozenDay) {
+        data.fday = petFrozenDay;
+        data.frozen = petFrozen.slice();
+    }
+    try {
+        localStorage.setItem(PET_RUN_KEY, JSON.stringify(data));
+        petRunSaveOk = true;
+    } catch (e) {
+        // 由成功转失败那一瞬间提醒一次，免得连点刷屏
+        if (petRunSaveOk) alert('宠环本轮进度没能存到浏览器本地存储（可能空间已满），关掉页面后可能接不上这一轮。可以清理其他网站数据，稍后再点一次 + 重试。');
+        petRunSaveOk = false;
+    }
+}
+function petRunDelete() {
+    try { localStorage.removeItem(PET_RUN_KEY); } catch (e) { }
+}
+// 启动时把上次没结束的一轮读回来；没有数据或内容不认（半截/关键字段缺失）就保持空白
+function petRunLoad() {
+    var i, task, raw = null, data, rec, item, v;
+    petRunId = '';
+    petRunStart = '';
+    petRunDays = [];
+    petFrozenDay = '';
+    for (i = 0; i < PET_CHAR_COUNT; i++) {
+        resetPetChar(i);
+        petFrozen[i] = false;
+    }
+    try { raw = localStorage.getItem(PET_RUN_KEY); } catch (e) { raw = null; }
+    if (!raw) return;
+    try { data = JSON.parse(raw); } catch (e) { data = null; }
+    if (!data || typeof data !== 'object') {
+        petRunDelete();
+        return;
+    }
+    // 结束标记只在当天有效：隔天打开时上一轮的标记自动作废（昨天那些行本来就是历史）
+    if (typeof data.fday === 'string') petFrozenDay = data.fday;
+    if (Array.isArray(data.frozen)) {
+        for (i = 0; i < PET_CHAR_COUNT && i < data.frozen.length; i++) petFrozen[i] = !!data.frozen[i];
+    }
+    if (petFrozenDay !== petToday()) petClearAllFrozen();
+    // 关键字段缺失就当没这一轮：不拿半截数据接着记；今天还有结束标记时文件要留着
+    if (typeof data.run !== 'string' || !data.run || !validPetDate(data.start)) {
+        if (!petFrozenAny()) petRunDelete();
+        return;
+    }
+    petRunId = data.run;
+    petRunStart = data.start;
+    if (Array.isArray(data.days)) {
+        for (i = 0; i < data.days.length; i++) {
+            if (validPetDate(data.days[i])) petRunDays.push(data.days[i]);
+        }
+    }
+    if (!petRunDays.length) petRunDays.push(petRunStart);
+    if (Array.isArray(data.chars)) {
+        for (i = 0; i < PET_CHAR_COUNT && i < data.chars.length; i++) {
+            rec = data.chars[i];
+            if (!rec) continue;
+            if (Array.isArray(rec.c)) {
+                for (task = 0; task < PET_TASK_COUNT && task < rec.c.length; task++) {
+                    v = Number(rec.c[task]);
+                    petCounts[i][task] = (isFinite(v) && v > 0) ? Math.floor(v) : 0;
+                }
+            }
+            if (Array.isArray(rec.d)) {
+                for (task = 0; task < rec.d.length; task++) {
+                    item = rec.d[task];
+                    if (!item || !petInteger(item.t, PET_TASK_COUNT - 1)) continue;
+                    v = Number(item.c);
+                    if (isFinite(v)) petDetailList[i].push({ t: Number(item.t), c: v });
+                }
+            }
+            v = Number(rec.t);
+            if (isFinite(v) && v > 0) petCostTotal[i] = Math.round(v * 100) / 100;
+        }
+    }
+}
+// 本轮状态条：没开始 / 本轮第几天 + 合计次数与成本；今天有号单独结束时会写出来
+function refreshPetRunBar() {
+    var el = document.getElementById('petRunBar'), t, day, text, idle, frozen;
+    if (!el) return;
+    frozen = petFrozenNames();
+    if (!petRunId) {
+        el.className = 'pet-run-bar';
+        if (frozen) el.textContent = '本轮：今天 ' + frozen + ' 已结束（今天的记录已写入；再点 + 开始新一轮）';
+        else el.textContent = '本轮：未开始（点 + 自动开始；今天没跑完，隔一两天打开会接着算）';
+        return;
+    }
+    t = petRunTotals();
+    day = petRunDayNo();
+    text = '本轮 ' + petShortDate(petRunStart) + ' 开始 · 第 ' + day + ' 天 · 合计 ' + t.count + ' 次 / ' + fmtPetCost(t.cost) + ' 万梦幻币';
+    if (frozen) text += ' · 已结束：' + frozen;
+    el.className = 'pet-run-bar' + (day > 1 ? ' pet-run-bar-cont' : '');
+    if (day > 1) text = '🕒 ' + text;
+    idle = petRunIdleDays();
+    if (idle > 7) text += '（上次记数是 ' + petShortDate(petRunLastDay()) + '，已 ' + idle + ' 天；不是这一轮就点「结束本轮」）';
+    el.textContent = text;
+}
+// 结束本轮：把还在记的号一起结束——先把这一轮写成今天的历史，再清零并打上“今天已结束”标记。
+// 顺序不能反：先清零再快照会把当天那行改成全 0，等于抹掉这一轮的记录。
+// 已经单独结束过的号不动：它们今天那行就是当时留下的记录，不会被这一轮重复写或删掉。
+function endPetRun() {
+    var t, day, range, frozen, res, msg;
+    if (!petRunId) {
+        if (petFrozenAny()) alert('今天 ' + petFrozenNames() + ' 已经结束并写入记录了，没有还在记的号。\n\n要再跑一轮，直接点 + 就行（会从今天重新起算）。');
+        else alert('现在没有进行中的宠环轮次（点 + 会自动开始一轮）。');
+        return;
+    }
+    t = petRunTotals();
+    if (!t.count && !t.cost) {
+        alert('没有还在记的号可以结束。\n（已经单独结束过的号不会再记一遍，它们的记录就在「历史记录查询」今天那一行里。）');
+        return;
+    }
+    day = petRunDayNo();
+    range = petShortDate(petRunStart);
+    if (petRunLastDay() !== petRunStart) range += ' ~ ' + petShortDate(petRunLastDay());
+    frozen = petFrozenNames();
+    msg = '结束本轮：' + range + '，已跨 ' + day + ' 天，还在记的号合计 ' + t.count + ' 次 / ' + fmtPetCost(t.cost) + ' 万梦幻币。\n\n' +
+        '确认后先把这一轮写成「' + petToday() + '」的历史记录，再把还在记的号的计数与成本一起清零，下次点 + 开始新的一轮。\n';
+    if (frozen) msg += '今天已经单独结束的 ' + frozen + ' 保持原样，不会重复记录。\n';
+    msg += '已经保存到「历史记录查询」里的每天数据不受影响。\n\n要现在结束吗？';
+    if (!confirm(msg)) return;
+    // 清零前先落一条今天的历史：回填后没再点 +、或最后一次改动没存上，也能留下这一轮；
+    // 写失败就中止结束，数据还完整躺在内存与本轮存储里，处理完占用再点一次即可。
+    res = petHistorySnapshot();
+    if (res.status === 'error') {
+        alert('写入历史记录失败，本轮尚未结束：' + res.error + '\n\n可以清理其他网站数据（或换个浏览器）后，再点一次「结束本轮」。');
+        return;
+    }
+    endPetRunCore();
+    if (document.getElementById('petHistSection').style.display !== 'none') renderPetHistCalWith(res.data);
+    refreshPetSession();
+    refreshPetRunBar();
+    msg = '本轮已结束，还在记的号已清零。\n这一轮已经写成 ' + petToday() + ' 的历史记录（见「历史记录查询」）。';
+    if (frozen) msg += '\n今天单独结束过的 ' + frozen + ' 保持原样。';
+    alert(msg + '\n\n提示：同一天再开一轮并记数时，今天对应号的记录会更新成新的一轮。');
+}
+// 结束本轮的核心：快照写成功后，才结束所有“还在记”的号（打标记 + 清零），已单独结束的号不动
+function endPetRunCore() {
+    var i;
+    for (i = 0; i < PET_CHAR_COUNT; i++) {
+        if (!petFrozenOn(i) && petCharHasData(i)) {
+            petSetFrozen(i, true);
+            resetPetChar(i);
+        }
+    }
+    petRunId = '';
+    petRunStart = '';
+    petRunDays = [];
+    if (petFrozenAny()) petRunSave();
+    else petRunDelete();
+}
+// 结束当前号：只把这一号现在的数字写进今天的记录，然后清零；其他号（包括已单独结束的）不受影响
+function endPetCharCurrent() { endPetChar(petCurChar); }
+function endPetChar(character) {
+    var c = Number(character), t, res;
+    if (!(c >= 0 && c < PET_CHAR_COUNT)) return;
+    if (!petCharHasData(c)) {
+        if (petFrozenOn(c)) alert(petCharName(c) + ' 今天已经结束过了，记录就在「历史记录查询」今天那一行里。\n要重新跑这一号，直接点 + 就行（今天这一条会更新成新的数字）。');
+        else alert(petCharName(c) + ' 今天还没有可结束的记录（点 + 记一次再结束）。');
+        return;
+    }
+    t = petCharTotals(c);
+    if (!confirm('结束 ' + petCharName(c) + '：' + t.count + ' 次 / ' + fmtPetCost(t.cost) + ' 万梦幻币。\n\n' +
+        '确认后把这一号现在的数字写进「' + petToday() + '」的记录并清零，其他号照常接着记。\n' +
+        '已经保存到「历史记录查询」里的每天数据不受影响；同一天这一号再记，会更新它今天这一条。\n\n要现在结束吗？')) return;
+    res = petHistorySnapshot();
+    if (res.status === 'error') {
+        alert('写入历史记录失败，' + petCharName(c) + ' 尚未结束：' + res.error + '\n\n可以清理其他网站数据（或换个浏览器）后，再点一次「结束当前号」。');
+        return;
+    }
+    petSetFrozen(c, true);
+    resetPetChar(c);
+    // 其他号都结束了：轮次本身收尾，但结束标记要留着（见 petRunSave）
+    if (!petRunHasLive()) {
+        petRunId = '';
+        petRunStart = '';
+        petRunDays = [];
+    }
+    petRunSave();
+    if (document.getElementById('petHistSection').style.display !== 'none') renderPetHistCalWith(res.data);
+    refreshPetSession();
+    refreshPetRunBar();
+    alert(petCharName(c) + ' 已结束，计数与成本已清零。\n这一号今天的记录已写入（点开「历史记录查询」的今天就能看到）。\n\n提示：其他号照常接着记；同一天这一号再记，会更新它今天这一条。');
+}
+// 该号本轮次数与成本（结束当前号的确认框用）
+function petCharTotals(character) {
+    var n, count = 0;
+    for (n = 0; n < PET_TASK_COUNT; n++) count += petCounts[character][n];
+    return { count: count, cost: petCostTotal[character] };
+}
+// 还有没有没结束、且计算区有数据的号
+function petRunHasLive() {
+    var i;
+    for (i = 0; i < PET_CHAR_COUNT; i++) if (!petFrozenOn(i) && petCharHasData(i)) return true;
+    return false;
 }
 // 号名（1~5号）
 function petCharName(c) { return (c + 1) + '号'; }
@@ -1348,8 +1686,10 @@ function petCostOk() {
     petRecordCost(petCostIdx, cost);
     closePetCost();
 }
-// 登记一笔成本（可为 0）并计数 +1（当前号）：成本入栈、明细追加、累计与表格同步刷新
+// 登记一笔成本（可为 0）并计数 +1（当前号）：成本入栈、明细追加、累计与表格同步刷新；
+// 这一号今天若已单独结束，重新记数等于接着跑，先解除“已结束”标记（今天这一条会更新成新数字）
 function petRecordCost(idx, c) {
+    if (petFrozenOn(petCurChar)) petClearFrozen(petCurChar);
     petCostHist[petCurChar][idx].push(c);
     petDetailList[petCurChar].push({ t: idx, c: c });
     petCostTotal[petCurChar] += c;
@@ -1428,16 +1768,29 @@ function petUndoOne(idx) {
     refreshPetSession();
     petAutoSave();
 }
-// 清零当前号的次数与累计成本（有记录时确认；清完立刻把当天快照同步到存储；其他号不受影响）
+// 清零当前号的次数与累计成本（其他号不受影响）。已单独结束的号不走这里：它今天那行就是结束留下的记录，
+// 清零也清不出东西，直接提示去点 + 重新跑。活跃号清零后计算区变空，下一次保存会把这一号今天的旧行去掉。
 function petCountReset() {
-    var hasData = petCostTotal[petCurChar] > 0, i;
-    for (i = 0; i < PET_TASK_COUNT && !hasData; i++) {
-        if (petCounts[petCurChar][i] > 0) hasData = true;
+    var t;
+    if (petFrozenOn(petCurChar)) {
+        alert(petCharName(petCurChar) + ' 今天已经结束过了，计算区本来就是空的。\n要重新跑这一号，直接点 +（今天这一条会更新成新的数字）。');
+        return;
     }
-    if (hasData && !confirm('将清空 ' + petCharName(petCurChar) + ' 的全部次数与累计成本（当前 ' + fmtPetCost(petCostTotal[petCurChar]) + ' 万梦幻币），其他号不受影响，今天已保存的记录会跟着同步。是否继续？')) return;
+    if (petCharHasData(petCurChar) && !confirm('将清空 ' + petCharName(petCurChar) + ' 的全部次数与累计成本（当前 ' + fmtPetCost(petCostTotal[petCurChar]) + ' 万梦幻币），其他号与本轮进度不受影响。\n这一号今天还没被当成一个“结束”写进记录；已经存过的旧数字会在下一次保存时去掉（别的日期不动）。是否继续？')) return;
     resetPetChar(petCurChar);
     refreshPetSession();
-    petAutoSave();
+    if (petRunId) {
+        t = petRunTotals();
+        if (!t.count && !t.cost) {
+            // 整轮都清空了：不留一个 0 次 0 元的空轮次（今天已结束号的标记还要留着）
+            petRunId = '';
+            petRunStart = '';
+            petRunDays = [];
+        }
+    }
+    if (!petRunId && !petFrozenAny()) petRunDelete();
+    else petRunSave();
+    refreshPetRunBar();
 }
 // ================== 宠环成本历史记录（localStorage 快照，同一天多次保存覆盖当天） ==================
 function petToday() {
@@ -1517,39 +1870,45 @@ function mergePetHistory(history, incoming) {
     Object.keys(incoming).forEach(function (date) { merged[date] = incoming[date]; });
     return merged;
 }
-// 把当前会话状态写成“今天”的快照（counts 明细 detail 为 "t:c,..." 字符串，与 HTA 端文件行格式同构）：
-// 先丢掉存储里今天的旧记录，再写入当前各号（今天已无数据就只删），所以今天的数字永远等于界面上的数字；
-// 其他日期原样保留。返回 status/data/raw/error。
+// 把当前会话状态写成“今天”的快照（counts 明细 detail 为 "t:c,..." 字符串，与 HTA 端文件行格式同构），按号合并：
+// - 计算区里有数据的号 → 用现在的数字覆盖；
+// - 今天已经单独结束、计算区已清零的号 → 保留存储里今天那一行；
+// - 其余号 → 今天不该有行（例如刚清零，等于放弃这一号今天的记录）。
+// 所以“结束某一个号”之后接着记别的号，这一号今天的记录不会被后面的快照抹掉；其他日期原样保留。
+// 返回 status/data/raw/error。
 function petHistorySnapshot() {
-    var today = petToday(), arr = [], i, n, has, d, k;
+    var today = petToday(), arr = [], i, n, d, k, loaded, merged, oldToday, rec, result;
     for (i = 0; i < PET_CHAR_COUNT; i++) {
-        has = false;
-        for (n = 0; n < PET_TASK_COUNT; n++) {
-            if (petCounts[i][n] > 0 || petCostHist[i][n].length) {
-                has = true;
-                break;
-            }
-        }
-        if (!has) continue;
+        if (!petCharHasData(i)) continue;
         d = [];
         for (k = 0; k < petDetailList[i].length; k++) d.push(petDetailList[i][k].t + ':' + petDetailList[i][k].c);
         arr.push({ c: i, counts: petCounts[i].slice(), detail: d.join(','), total: Math.round(petCostTotal[i] * 100) / 100 });
     }
-    var loaded = readPetHistory();
+    loaded = readPetHistory();
     if (loaded.status === 'error') return loaded;
-    var merged = {};
+    merged = {};
     Object.keys(loaded.data).forEach(function (day) {
         if (day !== today) merged[day] = loaded.data[day];
     });
+    // 今天已单独结束的号：计算区已清零，用存储里今天那一行原样保留
+    oldToday = loaded.data[today] || [];
+    for (i = 0; i < oldToday.length; i++) {
+        rec = oldToday[i];
+        if (!petFrozenOn(rec.c) || petCharHasData(rec.c)) continue;
+        arr.push({ c: Number(rec.c), counts: rec.counts.map(Number), detail: rec.detail || '', total: Math.round(Number(rec.total) * 100) / 100 });
+    }
     if (!arr.length && !Object.prototype.hasOwnProperty.call(loaded.data, today)) return operationResult('empty', loaded.data, loaded.raw);
     if (arr.length) merged[today] = arr;
     // 全清（今天没数据、其他日期也没记录）时直接把键删掉，不留下空对象
-    var result = writePetHistory(merged, loaded.raw, Object.keys(merged).length === 0);
+    result = writePetHistory(merged, loaded.raw, Object.keys(merged).length === 0);
     if (result.status === 'ok') petAutoSaveOk = true;
     return result;
 }
-// 自动保存：每次 + / - / 清零落盘，失败只在“由成功转失败”那一瞬提示一次，免得连点刷屏
+// 自动保存：每次 + / - 落盘两处——当天历史快照（petCostHistory）与本轮进度（petCostRun），
+// 失败只在“由成功转失败”那一瞬提示一次，免得连点刷屏
 function petAutoSave() {
+    petRunTouch();
+    petRunSave();
     var result = petHistorySnapshot();
     if (result.status === 'ok' || result.status === 'empty') {
         petAutoSaveOk = true;
@@ -1559,6 +1918,7 @@ function petAutoSave() {
         petAutoSaveOk = false;
         alert('宠环记录自动保存失败，刚才的改动只在内存里：' + result.error + '\n\n可以点「保存当天记录」重试（退出前请先存成功）。');
     }
+    refreshPetRunBar();
 }
 // “保存当天记录”按钮：手动再存一次（平时已由 petAutoSave 自动保存，这里用于失败后重试与心里确认）
 function savePetHistory() {
@@ -1631,7 +1991,7 @@ function shiftPetHistMonth(delta) {
     }
     renderPetHistCal();
 }
-// 点击日期：弹窗展示该日成本汇总（按号分组）与逐笔明细（最新在上）
+// 点击日期：弹窗展示该日成本汇总（任务 x 号矩阵）与逐笔明细（最新在上），标题带当日合计
 function showPetHist(ds) {
     var loaded = readPetHistory();
     if (loaded.status === 'error') {
@@ -1639,7 +1999,106 @@ function showPetHist(ds) {
         return;
     }
     var records = loaded.views[ds] || [];
-    if (records.length) openPetHistDlg(ds, renderPetTables(records, null));
+    if (!records.length) return;
+    var raw = loaded.data[ds] || [], i, t, n, cnt = 0, cost = 0, sum, chars = {}, charCnt;
+    // 手工导入时同一天同一个号可能有两行，标题的“N 个号”按去重后的号数算（与矩阵列数一致）
+    for (i = 0; i < raw.length; i++) {
+        n = 0;
+        for (t = 0; t < PET_TASK_COUNT; t++) n += Number(raw[i].counts[t]) || 0;
+        if (n > 0 || Number(raw[i].total) > 0) chars[raw[i].c] = true;
+        cnt += n;
+        cost += Number(raw[i].total) || 0;
+    }
+    charCnt = Object.keys(chars).length;
+    sum = charCnt + ' 个号 · ' + cnt + ' 次 · ' + fmtPetCost(cost) + ' 万梦幻币';
+    openPetHistDlg(ds, sum, '<div class="pet-note" style="margin-top: 0;">★想把这一天当作起点接着算？点号名下面的「回填此号」只补那一号；点底部「回填全部号」是 5 个号一起填回计算区。历史记录本身不变。</div>' + renderPetHistTables(records));
+}
+// 历史弹窗的汇总矩阵：行 = 任务，列 = 这一天有记录的号（最多 5 列）+ 合计。
+// 原来按号竖着分组，5 个号最多要 40 多行；矩阵一行一个任务，窄屏横向滑动还能直接比号。
+function renderPetHistTables(arr) {
+    var i, t, c, m, n, s, rec, rn, cls, body, h, any, rowCnt, rowSum, grandCnt = 0, grandSum = 0, anyDet = false;
+    var used = [], gridCnt = [], gridSum = [], colCnt = [], colSum = [];
+    for (c = 0; c < PET_CHAR_COUNT; c++) {
+        used[c] = false;
+        colCnt[c] = 0;
+        colSum[c] = 0;
+        gridCnt[c] = [];
+        gridSum[c] = [];
+        for (t = 0; t < PET_TASK_COUNT; t++) {
+            gridCnt[c][t] = 0;
+            gridSum[c][t] = 0;
+        }
+    }
+    // 同一天同一个号有两行（手工导入）也按号累加，网格里只占一列
+    for (i = 0; i < arr.length; i++) {
+        rec = arr[i];
+        c = Number(rec.c);
+        if (!(c >= 0 && c < PET_CHAR_COUNT)) continue;
+        for (t = 0; t < PET_TASK_COUNT; t++) {
+            n = Number(rec.counts[t]) || 0;
+            s = rec.present[t] ? (Number(rec.sums[t]) || 0) : 0;
+            gridCnt[c][t] += n;
+            gridSum[c][t] += s;
+            if (gridCnt[c][t] > 0 || gridSum[c][t] > 0) {
+                used[c] = true;
+                colCnt[c] += n;
+                colSum[c] += s;
+            }
+        }
+    }
+    var colNum = 0;
+    for (c = 0; c < PET_CHAR_COUNT; c++) if (used[c]) colNum++;
+    h = '<div class="pet-block-title" style="margin-top: 0;">【成本汇总】</div>';
+    if (!colNum) {
+        h += '<table><tr><td class="pet-empty">暂无成本记录</td></tr></table>';
+    } else {
+        h += '<div class="table-wrap" style="margin-top: 0;"><table class="pet-hist-mx"><tr><th style="width:28%">任务内容</th>';
+        for (c = 0; c < PET_CHAR_COUNT; c++) {
+            if (used[c]) h += '<th>' + petCharName(c) + '<br><button class="pet-mini-btn" onclick="backfillPetHistChar(' + c + ')" title="只把这一个号的次数、成本与明细填回计算区">回填此号</button></th>';
+        }
+        h += '<th>合计</th></tr>';
+        for (t = 0; t < PET_TASK_COUNT; t++) {
+            any = false;
+            rowCnt = 0;
+            rowSum = 0;
+            body = '';
+            for (c = 0; c < PET_CHAR_COUNT; c++) {
+                if (!used[c]) continue;
+                if (gridCnt[c][t] > 0 || gridSum[c][t] > 0) {
+                    any = true;
+                    rowCnt += gridCnt[c][t];
+                    rowSum += gridSum[c][t];
+                    body += '<td class="num">' + gridCnt[c][t] + ' 次 · ' + fmtPetCost(gridSum[c][t]) + ' 万</td>';
+                } else body += '<td class="num pet-hist-none">—</td>';
+            }
+            if (any) {
+                grandCnt += rowCnt;
+                grandSum += rowSum;
+                h += '<tr><td class="lv">' + petTaskName(t) + '</td>' + body + '<td class="num"><b>' + rowCnt + '</b> 次 · ' + fmtPetCost(rowSum) + ' 万</td></tr>';
+            }
+        }
+        h += '<tr><td class="pet-grand">全部号合计</td>';
+        for (c = 0; c < PET_CHAR_COUNT; c++) {
+            if (used[c]) h += '<td class="pet-grand"><b>' + colCnt[c] + '</b> 次 · ' + fmtPetCost(colSum[c]) + ' 万</td>';
+        }
+        h += '<td class="pet-grand"><b>' + grandCnt + '</b> 次 · ' + fmtPetCost(grandSum) + ' 万</td></tr></table></div>';
+    }
+    h += '<div class="pet-block-title">【成本明细（最新在上）】</div><div class="table-wrap" style="margin-top: 0;"><table><tr><th style="width:12%">序号</th><th style="width:58%">任务内容</th><th style="width:30%">成本（万）</th></tr>';
+    for (i = 0; i < arr.length; i++) {
+        rec = arr[i];
+        if (!rec.details.length) continue;
+        anyDet = true;
+        h += '<tr><td class="pet-char-cell" colspan="3">' + petCharName(rec.c) + '</td></tr>';
+        rn = 0;
+        for (m = rec.details.length - 1; m >= 0; m--) {
+            rn++;
+            cls = (rn % 2 === 0) ? ' class="alt"' : '';
+            h += '<tr' + cls + '><td class="num">' + (m + 1) + '</td><td class="lv">' + petTaskName(rec.details[m].t) + '</td><td class="num">' + fmtPetCost(rec.details[m].c) + '</td></tr>';
+        }
+    }
+    if (!anyDet) h += '<tr><td class="pet-empty" colspan="3">暂无成本记录</td></tr>';
+    h += '</table></div>';
+    return h;
 }
 function renderPetTables(arr, detailCharacter) {
     var i, m, rec, items, t, rows, cnt, sum, cls, allCnt = 0, allSum = 0, any = false, anyDet = false, rn;
@@ -1654,7 +2113,7 @@ function renderPetTables(arr, detailCharacter) {
         for (t = 0; t < PET_TASK_COUNT; t++) {
             if (!taskHas[t]) continue;
             if (rows === 0) {
-                h += '<tr><td class="pet-char-cell" colspan="3">' + petCharName(rec.c) + '</td></tr>';
+                h += '<tr><td class="pet-char-cell" colspan="3">' + petCharName(rec.c) + (historyView ? ' <button class="pet-mini-btn" onclick="backfillPetHistChar(' + rec.c + ')" title="只把这一个号的次数、成本与明细填回计算区">回填此号</button>' : '') + '</td></tr>';
                 any = true;
             }
             rows++;
@@ -1691,15 +2150,105 @@ function renderPetTables(arr, detailCharacter) {
     h += '</table></div>';
     return h;
 }
-function openPetHistDlg(ds, html) {
+function openPetHistDlg(ds, summary, html) {
     petHistSelectedDate = ds;
-    document.getElementById('petHistTitle').textContent = '📅 ' + ds + ' 宠环成本记录';
+    document.getElementById('petHistTitle').textContent = '📅 ' + ds + ' · ' + summary;
     document.getElementById('petHistBody').innerHTML = html;
     openPetDialog('petHist');
+    // 历史弹窗铺满可视区：标题 / 正文滚动 / 按钮固定三段式（与攻略弹窗一致）
+    document.getElementById('petHistDialog').style.display = 'flex';
 }
 function closePetHist() {
     petHistSelectedDate = '';
     closePetDialog('petHist');
+}
+// 回填：把历史里选中的这一天当作本轮起点。可以 5 个号一起回填，也可以只回填某一个号；
+// 之后点 + / - 继续累加。回填本身不写历史（否则会把旧数据当成今天的新记录），结束本轮时才落一条。
+function backfillPetHist() { backfillPetHistAsk(-1); }
+function backfillPetHistChar(character) { backfillPetHistAsk(Number(character)); }
+// 回填确认：character = -1 表示 5 个号一起，>=0 表示只回填这一号
+function backfillPetHistAsk(character) {
+    var ds = petHistSelectedDate, loaded, records, i, t, k, c, rec, details, msg, run, target, scope, found, n;
+    if (!ds) return;
+    loaded = readPetHistory();
+    if (loaded.status === 'error') {
+        alert('读取历史记录失败：' + loaded.error);
+        return;
+    }
+    records = loaded.data[ds] || [];
+    if (!records.length) {
+        alert(ds + ' 没有可回填的记录。');
+        return;
+    }
+    character = Number(character);
+    found = (character < 0);
+    if (character >= 0) {
+        if (!(character >= 0 && character < PET_CHAR_COUNT)) return;
+        for (n = 0; n < records.length; n++) {
+            if (Number(records[n].c) === character) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            alert(ds + ' 没有 ' + petCharName(character) + ' 的记录，没法单独回填这一号。');
+            return;
+        }
+        target = petCharName(character);
+        scope = '只把 ' + target + ' 的次数、累计成本与逐笔明细还原到计算区，其他号不动。';
+    } else {
+        target = '5 个号';
+        scope = '5 个号各自的次数、累计成本与逐笔明细一起还原。';
+    }
+    if (petRunId) {
+        run = petRunTotals();
+        if (character >= 0) msg = '当前有一轮进行中（' + petShortDate(petRunStart) + ' 开始 · 第 ' + petRunDayNo() + ' 天），回填会把 ' + target + ' 现在的进度换成 ' + ds + ' 的，其他号接着算。';
+        else msg = '当前有一轮进行中（' + petShortDate(petRunStart) + ' 开始 · 第 ' + petRunDayNo() + ' 天 · 合计 ' + run.count + ' 次 / ' + fmtPetCost(run.cost) + ' 万梦幻币），回填会把它整个替换掉。';
+    } else {
+        msg = '当前没有进行中的一轮，回填后以 ' + ds + ' 为起点接着算。';
+    }
+    msg = '将把 ' + ds + ' 的历史记录回填到成本计算区：' + scope + '\n\n' + msg + '\n已保存的历史记录不会改动，也不会把它写成今天的记录。\n';
+    if (character >= 0) msg += '注意：如果今天这一号已经记过记录，回填会把这一号的数字替换成 ' + ds + ' 的。';
+    else msg += '注意：如果今天已经记过记录，回填会把计算区整体替换成 ' + ds + ' 的数据。';
+    msg += '\n\n是否继续？';
+    if (!confirm(msg)) return;
+    if (character < 0) for (i = 0; i < PET_CHAR_COUNT; i++) resetPetChar(i);
+    for (i = 0; i < records.length; i++) {
+        rec = records[i];
+        c = Number(rec.c);
+        if (!(c >= 0 && c < PET_CHAR_COUNT)) continue;
+        if (character >= 0 && c !== character) continue;
+        details = parsePetDetails(rec.detail || '');
+        // 只动目标号：次数按记录还原，成本栈与明细重新按明细串建（撤销仍可用）
+        for (t = 0; t < PET_TASK_COUNT; t++) {
+            petCounts[c][t] = Math.max(0, Math.floor(Number(rec.counts[t]) || 0));
+            petCostHist[c][t] = [];
+        }
+        petDetailList[c] = [];
+        for (k = 0; k < details.length; k++) {
+            petCostHist[c][details[k].t].push(details[k].c);
+            petDetailList[c].push({ t: details[k].t, c: details[k].c });
+        }
+        petCostTotal[c] = Math.round(Number(rec.total) * 100) / 100;
+    }
+    // 回填后这一号要接着算：解除“今天已结束”标记（全量回填就把全部标记解除）
+    if (character >= 0) petClearFrozen(character);
+    else petClearAllFrozen();
+    // 本轮从这一天起算（状态条的天数按日历日算）；已有的一轮保留原起点中更早的那个
+    if (!petRunId) {
+        petRunId = 'R' + ds.replace(/-/g, '');
+        petRunStart = ds;
+        petRunDays = [ds];
+    } else if (!petRunStart || ds < petRunStart) {
+        petRunStart = ds;
+    }
+    // 进度同样落盘，关掉再开还能接着记
+    petRunTouch();
+    petRunSave();
+    refreshPetSession();
+    refreshPetRunBar();
+    closePetHist();
+    alert('已把 ' + ds + ' 的 ' + target + ' 记录回填到计算区，可以点 + / - 接着记。\n跑完点「结束本轮」或「结束当前号」，这一轮会写成 ' + petToday() + ' 的历史记录。');
 }
 // 删除只处理已保存快照，不改当前计数和成本；确认期间历史变化则中止，避免覆盖其他页面的新记录。
 function deletePetHistDay() {
@@ -2615,6 +3164,10 @@ function playBeep() {
 // ================== 初始化 ==================
 window.onload = function () {
     updatePetUndoButtons();
+    // 宠环：把上次没结束的那一轮读回来（跨天续跑），再按读回的数据重画计数与本轮状态条
+    petRunLoad();
+    refreshPetSession();
+    refreshPetRunBar();
     fillRemindOptions();
     renderSqLinks();
     tikuLoad();

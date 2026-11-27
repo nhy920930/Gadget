@@ -21,7 +21,7 @@
 | ⏰ 定时提醒 | 支持「每天 HH:MM:SS」与「每小时第 MM 分 SS 秒」两种模式，文案可自定义，可先点测试预览 |
 | ⚔️ 武器 / 装备换算 | 选种族 + 输入伤害命中（或防御）+ 附加五维，得出伤害/法伤/防御/气血/速度，支持最多 30 条历史对比 |
 | 🏯 修炼消耗计算 | 攻击/法术/防御/抗法/猎术/召唤兽六类修炼，按当前→目标等级与经验折算修炼次数、正常/免资材花费、九转金丹与修炼果、帮派贡献要求 |
-| 🐾 宠环任务 | 13 类任务积分登记、1~5 号独立计数、成本累计、按日历查历史、导出导入、积分奖励对照表 |
+| 🐾 宠环任务 | 13 类任务积分登记、1~5 号独立计数、成本累计、跨天续跑（没跑完的一轮下次打开接着算）、按号收尾（单个号结束不影响别的号）、从历史记录回填接着算（可只补一个号）、按日历查历史、导出导入、积分奖励对照表 |
 | 🔍 答题 OCR 识别 | 截取游戏画面识别题干，匹配本地题库给出答案（电脑版专属） |
 | ⚔️ 神器任务攻略 | 序章 / 起 / 转 / 合 任务列表，点击弹窗加载网络攻略 |
 | 🗺️ 捉鬼省眼 | 选场景 + 填假坐标，地图上压暗只留出鬼可能出现的范围；含找鬼规律速查表 |
@@ -52,12 +52,13 @@
 ### 移动版
 
 1. 用浏览器打开 `app\梦幻工具箱移动版.html`（可直接双击，也可放到手机里用浏览器打开）。
-2. 题库与宠环历史保存在浏览器的 `localStorage`，换设备或清缓存会丢失，请用「导出」按钮备份。
+2. 题库、宠环历史与本轮进度保存在浏览器的 `localStorage`，换设备或清缓存会丢失，请用「导出」按钮备份（本轮进度不参与导出）。
 
 **两端数据互通**
 
 - 题库：电脑版读写 `app\ocr_tiku.txt`（每行 `题目|答案`）；移动版在「题库管理」里可「选文件导入」该文件，也可「导出 ocr_tiku.txt」拿回电脑用。
 - 宠环历史：电脑版存 `app\data\pet_cost_history.txt`；移动版可导出/导入同一份文本。
+- 宠环本轮进度：电脑版存 `app\data\pet_run.txt`，移动版存在浏览器本地存储。它是「正在跑的这一轮」的进度，只在本机、不参与导出/导入；跑完点「结束本轮」或「结束当前号」就清零，轮次收尾后文件里只留一句「今天哪些号已经单独结束」（只当天有效，隔天自动作废）。
 
 ---
 
@@ -66,9 +67,9 @@
 ```
 Gadget/
 ├─ 启动工具箱.bat         ★ 入口：双击它（解除下载锁定 + 粗检文件 + 拉起工具箱，--check 只检查）
-├─ 打包发布.bat           双击打包发布：一次产出目录 + zip + exe，名字只带版本号（开发用）
+├─ 打包发布.bat           双击打包发布：一次产出目录 + zip + exe，并刷新 dist\MHToolbox（开发用）
 ├─ README.md
-├─ CHANGELOG.md            更新说明：既是版本号唯一来源（最新一节），也随发布包发出
+├─ CHANGELOG.md            更新说明：既是版本号唯一来源（最新一节），也随发布包发出（只记玩家能感知的变化）
 ├─ docs/preview.png        README 顶部的界面预览图（随 README 一起发出）
 ├─ app/                    运行件（整个目录必须完整，不能只拷单个文件）
 │  ├─ 梦幻工具箱.hta        电脑版主程序（HTML + VBScript + JScript）
@@ -89,12 +90,14 @@ Gadget/
 │     ├─ env_ok.txt        上次自检通过的日期（7 天内不重复自检）
 │     ├─ ocr_tiku.prev.txt 更新前备份的题库（没有更新过就没有这个文件）
 │     ├─ update_source.txt 可选：自定义更新源（share= / pwd= / folder= / version= / package=）
-│     └─ pet_cost_history.txt 宠环成本历史
+│     └─ pet_cost_history.txt 宠环成本历史（每天一行快照，双端通用）
+│     └─ pet_run.txt       宠环没跑完的那一轮（跨天续跑用；结束后只留“今天哪些号已单独结束”，隔天自动作废）
 ├─ tools/                  开发用脚本（玩家不需要，可整目录删掉）
 │  ├─ make-release.ps1     打发布包：dist\<名称>_v<版本>\ + 同名 .zip（白名单，同版本替换）
 │  ├─ make-exe.ps1         打单文件 exe：把上面刚产出的发布目录内嵌进 C# 启动器（根目录 打包发布.bat 双击调它）
+│  ├─ verify-release.ps1   出包后自检：zip / 目录 / 源文件哈希比对 + exe 静默解包检查（打包发布.bat 自动调）
 │  ├─ shot-preview.ps1     打包前自动重截 README 的界面预览图（docs\preview.png）
-│  ├─ sync-cloud.ps1       发布准备：把这一版收进 dist\MHToolbox，并拉起百度网盘客户端（最后拖一下）
+│  ├─ sync-cloud.ps1       发布准备：把这一版收进 dist\MHToolbox 并清掉旧版本；-NoOpen 只刷新目录、不碰客户端
 │  ├─ launcher-texts.txt   exe 启动器的中文提示文案（UTF-8，C# 源码保持纯 ASCII）
 │  ├─ cap_quest.ps1        把游戏客户区原样截成 PNG（离线验证任务 OCR）
 │  └─ crop_strip.ps1       裁出读取器实际查看的那一块，排查裁偏
@@ -181,13 +184,13 @@ Gadget/
 
 工具箱的识别、捉鬼监控、环境自检、定时提醒都要调用 **Windows PowerShell** 去跑 `app\ocr\*.ps1`。这些脚本没有数字签名，调用方式又是「隐藏窗口 + 启动后台进程」，正好落在杀毒软件和 EDR 的行为规则里，所以会在个别机器上被弹窗拦截或静默终止——**报错本身不是工具箱有 bug，是调用被外部截断了**。
 
-### 1.2.2 已经做了哪些降噪
+### 已经做过的降噪
 
-- **调用方式统一**：所有 PowerShell 调用走全路径 `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe`，参数固定为 `-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File <脚本>`，不再出现「无路径 powershell」和缺参数的写法。
-- **去掉内联脚本**：定时提醒原来用 `-Command` 内联一长串 `Add-Type` 弹气泡，已改为固定脚本 `app\ocr\remind_notify.ps1`。命令行从「一大段脚本」变成「一个脚本路径」，规则匹配面小得多。
-- **减少进程次数**：环境自检改成 7 天缓存（`app\data\env_ok.txt` 记日期）。通过一次后，之后一周内开机不再起 PowerShell；需要重查时点答题区那一行状态。
-- **启动器只解一次锁定**：`启动工具箱.bat` 不再每次启动都递归扫全目录跑 `Unblock-File`，改成首次运行做一次。
-- **exe 补了文件属性**：`MengHuan Toolbox` 的标题 / 产品 / 版本信息写进程序集，属性里不再是「0.0.0.0 / 无描述」。
+- **调用方式统一**：所有 PowerShell 调用走全路径 `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe`，参数固定为 `-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File <脚本>`。
+- **不用内联脚本**：定时提醒走固定脚本 `app\ocr\remind_notify.ps1`，命令行是一个脚本路径而不是一大段代码，规则匹配面小得多。
+- **少起进程**：环境自检结果缓存 7 天（`app\data\env_ok.txt` 记日期），一周内开机不再起 PowerShell；要重查就点答题区那一行状态。
+- **启动器只解一次锁定**：`启动工具箱.bat` 只在首次运行时跑一次 `Unblock-File`。
+- **exe 带文件属性**：标题 / 产品 / 版本信息写进程序集，属性里不再是「0.0.0.0 / 无描述」。
 
 ### 怎么放行
 
@@ -281,7 +284,13 @@ exe 没有代码签名，Windows 会对从网络下来的 exe 弹这个提示：
 移动版不读本地文件（浏览器限制），需要在「题库管理」里粘贴文本保存，或点「选文件导入」选择 `app\ocr_tiku.txt`。
 
 **宠环历史在哪**
-电脑版在 `app\data\pet_cost_history.txt`；移动版在浏览器 localStorage。两端通过「导出 / 导入」互换。两端都是**改一次存一次**（点 + / - / 清零立刻写入，直接关窗也不会丢），「保存当天记录」平时不用点，只在存失败（例如文件被别的程序占用）时用来重试。
+电脑版在 `app\data\pet_cost_history.txt`；移动版在浏览器 localStorage。两端通过「导出 / 导入」互换。两端都是**改一次存一次**（点 + / - 立刻写入，直接关窗也不会丢），「保存当天记录」平时不用点，只在存失败（例如文件被别的程序占用）时用来重试。
+
+没跑完的一轮另存一份进度（电脑版 `app\data\pet_run.txt`，移动版是浏览器本地存储）：隔天打开接着算，状态条上写着本轮第几天、合计多少；跑完点「结束本轮」清零（只清还在记的号，已单独结束的号保持原样）。只想收其中一个号，就点「结束本轮」旁边的「结束当前号」——它今天的记录立刻落好，其他号继续记。这份进度只在本机，不参与导出导入。
+
+想从以前某一天接着算（换了电脑、`pet_run.txt` 丢了、误点过清零）：在「历史记录查询」里点开那一天——5 个号一起搬回来就点弹窗底部的「回填全部号」；只补其中一个号，就点那个号名下面的「回填此号」，别的号不动。历史记录本身不动；当前有进行中的一轮时会先提示会被替换成什么样。点「结束本轮」或「结束当前号」时程序先写当天的历史记录、再清零，所以每收尾一次都能在历史里看到一行；写入失败（文件被占用）会提示「本轮尚未结束」，不会先清零。同一号同一天再记会覆盖它今天那一条，不会叠加；对已结束的号点「清零当前号」只提示去点 + 重跑。
+
+这一天的弹窗比照着「神器任务攻略」的弹窗做：标题栏按住可拖动、右下角手柄可拖大小、双击手柄回到默认居中，内容多了在弹窗里自己滚。标题写着当天合计（「3 个号 · 41 次 · 328 万梦幻币」），下面是「任务 × 号」矩阵——一行一个任务、一列一个号，单元格写「N 次 · M 万」，没数据的格子是「—」，每行右侧和最后一行都有合计，几个号并排一眼就能比。再往下是成本明细，按号分组、最新在上。
 
 **地图底图显示不出来**
 底图来自 `cdn.175lg.com` 在线加载。断网时会降级为灰框 + 象限红块，坐标范围与判断逻辑仍然可用。
@@ -291,17 +300,19 @@ exe 没有代码签名，Windows 会对从网络下来的 exe 弹这个提示：
 ## 开发说明
 
 - **双端同步**：`梦幻工具箱.hta` 与 `梦幻工具箱移动版.html` 的功能与视觉须保持一致。电脑版独有的能力（OCR、窗口浮层）在移动版必须有等价的文字说明，不能让用户以为是 bug。
-- **发布与入口**：项目根目录的 `打包发布.bat` 是**双击即打包**的入口（它是开发用文件，首行带 `gadget-devtool` 标记，白名单打包时会被跳过，不会混进发布包）；它只调 `tools\make-exe.ps1`，一次出齐目录 + zip + exe，结束后自动打开 `dist\`，并把这一版收进 `dist\MHToolbox`、拉起百度网盘客户端再打开那个文件夹（见下一条「发布到网盘」）。`tools\make-release.ps1` 用**白名单**打包，产出**只带版本号**的一对产物：`dist\<名称>_v<版本>\`（可直接双击启动器的独立目录）与同名 `.zip`——版本号已经能唯一标识一次发布，再叠时间戳只会把文件名拉长到影响使用。名字里没有时间戳，所以**同一版本重新打包会原地替换**那三件产物（先删同名目录 / zip / exe 再重建，否则 `dist\` 里会留下两份同版本、又无法分辨先后的包；exe 还在运行时脚本会提示先关掉）；**其它版本**不受影响，可以继续在 `dist\` 里并存。版本号不单独存文件：`CHANGELOG.md` **最新一节 `## <版本号>`** 就是当前版本，同一份文件也随包发出当更新说明，改一处就够（`-Version 1.1.0` 可临时覆盖，但会在没写说明时给出警告）。流程是先把选中文件按原相对路径复制到版本目录，再把这个目录压成 zip，两者内容始终一致。只装 `*.md`、`*.bat`、`docs\*.png`、`app\*.hta`、`app\*.html`、`app\ocr\*.ps1`、`app\ocr\ghost_texts.txt`、`app\ocr_tiku.txt`，`app\data\`（锁定角色 ID、框选区域、自检签名、宠环历史）与 `tools\`（开发脚本）整目录不进包，本机状态不可能被误打进去。入口是 `启动工具箱.bat`：先找 `app\*.hta`，找不到再回退到自身目录（兼容旧的平铺结构）；按通配找主程序（中文名被解压工具弄乱也照样能找到；多个 `.hta` 时取体积最大的那个）、首次运行时用 `Unblock-File` 清一遍下载标记（成功后在 `app\data\.unblocked` 留标记，之后不再重复跑隐藏 PowerShell）、粗检 `app\ocr\` 与题库，最后交给 `mshta`。`启动工具箱.bat` 与 `tools\*.ps1` **内容必须是纯 ASCII**——`cmd.exe` 按 OEM/ANSI 代码页解析批处理，中文字面量会乱码甚至打断解析（行尾符也必须是 CRLF）；中文提示一律放在 HTA（自检）与 README 里。
-- **单文件 exe**：`tools\make-exe.ps1` 先调 `make-release.ps1`，再把刚产出的目录内嵌进一个 C# 小启动器（用 `%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\csc.exe`，.NET Framework 4 自带，不需要装 SDK），产出同名的 `dist\<名称>_v<版本>.exe`，同版本重打会替换旧 exe（其它版本的 exe 不动）。exe 只是壳：首次运行在**自己所在目录**建 `MengHuanToolbox\`，解开内嵌内容后交给 `mshta`；`.version` 记录的是 `<版本>+<打包时间>`（例如 `1.2.2+20261126-143739`），一致就跳过解包；不一致——包括同版本重打出来的新包——就清空工作目录后重新解包，但**保留 `app\data\`**。文件名只带版本号，靠这个标记才分得清「同版本的另一份构建」，否则用户换了新 exe 也会因为版本号没变而继续跑旧的解包结果。加 `--extract` 只解包并打开目录。载荷是自己拼的容器（`[int32 清单长度][name|size 清单][原始字节]`，整体 gzip），因为启动器只引用 `System.dll` 与 `System.Windows.Forms.dll`，不依赖 `System.IO.Compression.FileSystem` 的 GAC 路径。中文文案在 `tools\launcher-texts.txt`（UTF-8，`|` 分段），C# 源码与脚本本身保持纯 ASCII。程序集带 `AssemblyTitle` / `AssemblyProduct` / `AssemblyVersion` 等文件属性（`make-exe.ps1` 里的 `__ASMVERSION__` 由版本号前三段补 `.0` 得出，格式不对时回退 `1.0.0.0`），属性页不再是「0.0.0.0 / 无描述」，也少一条「无信息二进制」的可疑特征。改完 HTA 记得重打 exe。
-- **发布到网盘**：`tools\sync-cloud.ps1`（打包脚本末尾自动调，`-NoCloud` 跳过）把 `CHANGELOG.md` 和本次的 `<名称>_v<版本>.zip` / `.exe` 收进 `dist\MHToolbox`（与网盘里的目标目录同名，拖拽时不会拖错），并把里面**其它版本**的清掉——网盘目录里永远只该有一个版本，否则玩家拿错包就成了答疑问题。然后它找百度网盘客户端（先取正在运行的进程路径，再找常见安装位置与卸载登记），没开就拉起来，并打开 `dist\MHToolbox`。**最后把文件拖进「我的网盘 / MHToolbox」还得手动**：百度网盘既没有命令行上传器，网页接口也不给脚本发上传令牌，这是唯一一步自动化不了的地方。`-NoOpen` 只准备目录、不动客户端（测试用）。
+- **发布与入口**：根目录的 `打包发布.bat` 是双击即打包的入口（开发用文件，首行带 `gadget-devtool` 标记，不会混进发布包），三步走：`tools\make-exe.ps1 -NoPreview -NoCloud` 出目录 + zip + exe → `tools\sync-cloud.ps1 -NoOpen` 刷新 `dist\MHToolbox`（只留当前版本）→ `tools\verify-release.ps1` 自检（zip 与目录逐文件一致、包内每份文件与仓库源文件逐字节一致、无 `data\` 与开发脚本、exe 用 `--unpack-only` 静默解包并逐文件比对），失败停在 `verify_failed` 且**不清产物**。打包全程不弹工具箱窗口、不重截预览图、不启网盘客户端；想看窗口真起来一次加 `-Smoke`。要真上传或换预览图，手动跑不带 `-NoOpen` 的 `sync-cloud.ps1` / 不带 `-NoPreview` 的 make-exe。
+- **打包规则**：`tools\make-release.ps1` 按白名单打包，产出只带版本号的 `dist\<名称>_v<版本>\` 与同名 `.zip`（同版本原地替换、其它版本共存；`app\data\` 与 `tools\` 不进包）。版本号取 `CHANGELOG.md` 最新一节，`-Version` 可临时覆盖。流程是先复制到版本目录再压 zip，两者内容始终一致。
+- **入口脚本**：`启动工具箱.bat` 先找 `app\*.hta`（找不到回退自身目录，多个取体积最大的），首次运行时 `Unblock-File` 并在 `app\data\.unblocked` 留标记，最后交给 `mshta`。`启动工具箱.bat` 与 `tools\*.ps1` **必须纯 ASCII + CRLF**（cmd 按 OEM 代码页解析），中文提示只放 HTA 与 README。
+- **单文件 exe**：`tools\make-exe.ps1` 先调 `make-release.ps1`，再把刚产出的目录内嵌进一个 C# 小启动器（用 `%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\csc.exe`，.NET Framework 4 自带，不需要装 SDK），产出同名的 `dist\<名称>_v<版本>.exe`，同版本重打会替换旧 exe（其它版本的 exe 不动）。exe 只是壳：首次运行在**自己所在目录**建 `MengHuanToolbox\`，解开内嵌内容后交给 `mshta`；`.version` 记录的是 `<版本>+<打包时间>`（例如 `1.3.8+20261127-145349`），一致就跳过解包；不一致——包括同版本重打出来的新包——就清空工作目录后重新解包，但**保留 `app\data\`**。文件名只带版本号，靠这个标记才分得清「同版本的另一份构建」，否则用户换了新 exe 也会因为版本号没变而继续跑旧的解包结果。加 `--extract` 只解包并打开目录；加 `--unpack-only` 只解包就退出，不启动 mshta、不弹任何窗口（`tools\verify-release.ps1` 自检用的静默模式）。载荷是自己拼的容器（`[int32 清单长度][name|size 清单][原始字节]`，整体 gzip），因为启动器只引用 `System.dll` 与 `System.Windows.Forms.dll`，不依赖 `System.IO.Compression.FileSystem` 的 GAC 路径。中文文案在 `tools\launcher-texts.txt`（UTF-8，`|` 分段），C# 源码与脚本本身保持纯 ASCII。程序集带 `AssemblyTitle` / `AssemblyProduct` / `AssemblyVersion` 等文件属性（`make-exe.ps1` 里的 `__ASMVERSION__` 由版本号前三段补 `.0` 得出，格式不对时回退 `1.0.0.0`），属性页不再是「0.0.0.0 / 无描述」，也少一条「无信息二进制」的可疑特征。改完 HTA 记得重打 exe。
+- **发布到网盘**：`tools\sync-cloud.ps1` 负责把 `CHANGELOG.md` 和本次的 `<名称>_v<版本>.zip` / `.exe` 收进 `dist\MHToolbox`（目录名与网盘里的目标一致，拖拽不会拖错），同时清掉里面**其它版本**的包——网盘目录永远只该留一个版本，否则玩家拿错包就成了答疑问题。调用方式见上面「发布与入口」；不带 `-NoOpen` 时会找百度网盘客户端并打开该目录。**最后把文件拖进「我的网盘 / MHToolbox」还得手动**：百度网盘既没有命令行上传器，网页接口也不给脚本发上传令牌，这是唯一一步自动化不了的地方。
 - **在线更新**：`app\ocr\update_toolbox.ps1` 两个模式共用一套流程——`-Mode check` 只比版本，`-Mode apply` 比完版本再下载（`status` 覆盖 `checking / downloading / extracting / applying / available / manual / latest / local_newer / applied / error`，结果文件每步整份重写，HTA 的 `UpdPoll` 只在终态结算）。版本号从 `CHANGELOG.md` 第一条 `## x.y.z` 取，两边同源；**先看百度网盘分享目录**（一两秒就回；`-Share` / `-SharePwd` / `-ShareFolder`，默认是分享 `1PPAo-s-AXvYV6QssWiAy7Q` 提取码 `ttcj` 下的 `MHToolbox`）：先 `GET /s/<分享>` 拿 cookie，`POST /share/verify` 提交提取码，从分享页 HTML 里正则取 `shareid` / `share_uk`，再问 `/share/list` 拿文件名——**只看文件名里的 `_v<版本>.zip|exe`，从不下载**，因为匿名请求 `/api/sharedownload` 只会得到 `errno=118`（违规操作）。网盘读不到（没网、被墙、目录还没传包）才去读 GitHub 的 raw CHANGELOG 取版本（15 秒没响应就算读不到）；整包只有 GitHub 有（`codeload`），所以 HTA 的「自动更新」按钮固定带 `-NoCloud`。网盘读到的版本更新时返回 `status=manual` 并把 `link=<分享页>` 交给 HTA，由 upd 弹窗给出可点链接和「自动更新」按钮（网盘目录里还没有包、GitHub 也读不到时是 `status=error` + `msg=pan_empty`——发布侧没传完，不是网络问题，HTA 会单独说这句）；显式配了 `package=`（或 `-PackageUrl`）仍会用它下载，不受影响。`app\data\update_source.txt`（`share=` / `pwd=` / `folder=` / `version=` / `package=`）可以整体换源，`-VersionUrl` / `-PackageUrl` 可临时覆盖（离线测试用），写了 `version=` 就不再读网盘；命令行 `-NoCloud` 直接跳过网盘，`-CloudOnly` 反过来只走网盘（离线验证用），`-PanHost` 把网盘主机换成别的地址——`.check\cloud_e2e_test.ps1` 用它指向本机假网盘，既不联网也不碰真分享（参数不能叫 `-PanBase`：PowerShell 变量名不区分大小写，会被脚本里的 `$panBase` 默认值盖掉）。复制白名单与打包脚本同源（`app\*.hta` / `app\*.html` / `app\ocr\*.ps1` / `app\ocr\ghost_texts.txt` / `app\ocr_tiku.txt` / 根 `*.md` / 根 `*.bat`（跳过带 `gadget-devtool` 的打包按钮）/ `docs\` / `tools\`），**`app\data\` 永远跳过**；zip 里的 `..` 越界条目由 `ZipFile.ExtractToDirectory` 在 .NET 4.6.1+ 拒绝。题库替换前备份到 `app\data\ocr_tiku.prev.txt`。exe 壳的 `.version` 不在白名单里，所以就地升级后下次启动不会被重解包回滚。脚本本身纯 ASCII、不写中文字面量（与 `ghost_monitor.ps1` 同一约束），错误原因交给 HTA 拼中文；结果文件放 `%TEMP%`，与 `env_check` 一致，不往工具箱里写临时状态。
-- **目录约定**：`app\` 是运行根——`.hta` 通过 `window.location.pathname` 取自身所在目录，再去找 `ocr\`、`ocr_tiku.txt`，所以三者必须同级；改了层级就要同步改 `OcrRoot()`。运行时数据统一走 `OcrDataDir()`（`app\data\`）：`ghost_config.txt`、`ocr_config.txt`、`env_warn.txt`、`env_ok.txt`、`update_auto.txt`、`pet_cost_history.txt` 都在那里，写入前调 `OcrEnsureData` 建目录，整个目录已 gitignore。开发用脚本一律放 `tools\`，不随发布包分发。
+- **目录约定**：`app\` 是运行根——`.hta` 通过 `window.location.pathname` 取自身所在目录，再去找 `ocr\`、`ocr_tiku.txt`，所以三者必须同级；改了层级就要同步改 `OcrRoot()`。运行时数据统一走 `OcrDataDir()`（`app\data\`）：`ghost_config.txt`、`ocr_config.txt`、`env_warn.txt`、`env_ok.txt`、`update_auto.txt`、`pet_cost_history.txt`、`pet_run.txt` 都在那里，写入前调 `OcrEnsureData` 建目录，整个目录已 gitignore。开发用脚本一律放 `tools\`，不随发布包分发。
 - **环境自检**：`app\ocr\env_check.ps1` 输出 `META` 行（`psver` / `psbits` / `mshta` / `files` / `tiku` / `ocr` / `ocrlang`），HTA 的 `EnvCheckRun → EnvCheckPoll → EnvCheckApply` 翻成中文。弹窗去重用 `app\data\env_warn.txt` 存「上一组问题」的签名：同一组问题只弹一次，问题修好后该文件自动删除；自检超时（10s）或脚本本身缺失时只写状态行、不弹窗。自检**通过**后在 `app\data\env_ok.txt` 写当天日期（`yyyyMMdd`），`EnvOkFresh` 判断 7 天内直接复用结果、不再起 PowerShell（每次开机少一个可能被拦的进程）；状态行是 `onclick="EnvCheckForce"`，先删标记再重查，保证手动点击一定真跑一遍；一旦查出问题，旧标记立即作废。
 - **PowerShell 启动入口**：HTA 里不再手写命令行，统一走 `PsCmdFile(strPs1, blnSta)`（`PsExePath()` 拼全路径 `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe`，固定 `-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden [-STA] -File`）。新增调用一律用它：无路径的 `powershell`、缺 `-WindowStyle Hidden`、「隐藏窗口 + 内联 `-Command`」都是安全软件的重点规则。定时提醒就是因此从内联 `-Command` 改成了固定脚本 `app\ocr\remind_notify.ps1`（缺这个脚本时退回系统提示音，不漏提醒）。
 - **编码**：两个主文件与 `ocr_tiku.txt` 一律 **UTF-8 无 BOM**。
 - **HTA 限制**：运行在 IE 内核 quirks 模式，不支持 `rgba()`、`border-radius`、`canvas`；半透明阴影用 `filter: alpha(opacity=…)`，圆角需降级为直角。
 - **窗口启动摆位**：`<hta:application>` 不支持预设窗口尺寸，mshta 先按引擎默认尺寸显示（实测 960x1480 物理像素，与页面内容无关），`Window_OnLoad` 再按内容贴合（先 resize 到 1100x600 量标题栏/边框补偿，再按 `body.scrollHeight` 定最终高度）。这两次 resize 若在可见状态下做，看到的就是「先小后大 + 闪一下」，所以把窗口先挪到屏幕外算完再一次性移回居中：`head` 里的 `window.moveTo` 会被引擎随后的摆位覆盖，真正生效的是 `Window_OnLoad` 开头那次，它之前仍会漏出一帧默认尺寸（约 0.1 秒，mshta 在 load 完成后才把窗口摆上来）；`WindowBootGuard` 是 4 秒兜底，载入中途报错时把窗口拉回屏幕内，避免窗口和错误弹框一起留在屏外。`windowstate="minimize"` 不可用：最小化状态下 `resizeTo` / `moveTo` 全部无效（实测尺寸、位置都不变）。改完用 `.check\win_trace.ps1` 采样窗口 rect 时间线核对，`.check\shot_check.ps1` 截图确认移回后内容正常重绘（屏幕外 resize 后不能出现白屏）。
-- **界面预览图**：README 顶部那张存在 `docs\preview.png`，由 `tools\shot-preview.ps1` 在**每次打包前自动重截**（`make-release.ps1` 列文件之前先跑一次）——起一次 mshta、等 `Window_OnLoad` 算完尺寸，把窗口拉到前台后按窗口矩形截屏，截到的就是用户默认打开时的样子（含自带的滚动条，不裁不拼）。所以加了功能只要重新打包，图就跟着变了，不用额外记住换图。新图与旧图字节一致就不覆盖，界面没改的重建不会弄脏工作区；截不到（无人值守、窗口被遮）只警告并保留旧图，不会因此把包搞掉；不想弹窗时加 `-NoPreview`。截图只固定 `width`、不写 `height`，换了 DPI/分辨率重截也不会被拉变形；窗口矩形取自 DWM 的可见边框（`DWMWA_EXTENDED_FRAME_BOUNDS`），不是 `GetWindowRect`——后者含不可见的阴影边框，会把桌面/任务栏截进来。脚本先 `SetProcessDPIAware` 再量窗口，否则在 125% 缩放下拿到的是虚拟化坐标，裁出来会错位。
+- **界面预览图**：README 顶部那张存在 `docs\preview.png`，由 `tools\shot-preview.ps1` 在**每次打包前自动重截**（`make-release.ps1` 列文件之前先跑一次）——起一次 mshta、等 `Window_OnLoad` 算完尺寸，把窗口拉到前台后按窗口矩形截屏，截到的就是用户默认打开时的样子（含自带的滚动条，不裁不拼）。所以加了功能只要重新打包，图就跟着变了，不用额外记住换图。新图与旧图字节一致就不覆盖，界面没改的重建不会弄脏工作区；截不到（无人值守、窗口被遮）只警告并保留旧图，不会因此把包搞掉；不想弹窗时加 `-NoPreview`。截图只固定 `width`、不写 `height`，换了 DPI/分辨率重截也不会被拉变形；窗口矩形取自 DWM 的可见边框（`DWMWA_EXTENDED_FRAME_BOUNDS`），不是 `GetWindowRect`——后者含不可见的阴影边框，会把桌面/任务栏截进来。脚本先 `SetProcessDPIAware` 再量窗口，否则在 125% 缩放下拿到的是虚拟化坐标，裁出来会错位。注意：`打包发布.bat` 带 `-NoPreview`，双击打包不会重截；界面改了要换图时，手动跑一次 `tools\shot-preview.ps1`（或 `make-release.ps1` 不带 `-NoPreview`）。
 - **PowerShell 脚本**：`app\ocr\ghost_monitor.ps1` 内**不得出现中文字面量**（Windows PowerShell 5.1 会按 ANSI 解析无 BOM 脚本导致乱码），中文提示一律用 `[char]` 码点拼装或从 `app\ocr\ghost_texts.txt` 以 UTF-8 显式读取。
 - **捉鬼任务栏识别规则**：`Read-QuestStrip` 固定三遍 —— 亮度 2.0、亮度 3.0、彩度掩码 4.0。`Convert-HueGray` 的彩度指标是 `max(R − max(G,B), Y)`，两项都 ×3/2：红字与色弱模式的黄字都亮，灰 / 绿 / 黑都暗。其中 `Y = (min(R,G) − B) × 3/2` 只在 `R ≥ G` 且 `min(R,G) ≥ 170` 时生效 —— 前一个条件挡掉绿色植被，后一个挡掉亮灰色的枯草（实测：色弱模式下任务彩字在 R/G 通道上为 176~232，透过半透明面板看到的草地为 128~160；不加门控时黄度指标会把 43% 的面板点成亮白）。`min(R,G,B) ≥ 210` 的近白像素压成 190，让白色锚点行在彩度遍存活。系数固定 3/2 并向下取整——更大的系数会把抗锯齿边缘也顶到 255，字形变胖后相邻的 `0` 粘连，坐标读成 `1,142`。遍数固定为三：每多一遍就多一票，丢数字的那遍会反超正确的遍；投票另有前缀折叠，被截断的读数不计票。两类任务（捉鬼 / 鬼王）由 `Get-QuestKind` 按锚点打上类型（含 `鬼王`/`地藏王` → `k`，含 `捉鬼`/`抓鬼`/`钟馗` → `g`）后**各投各的票**，两类都有胜出结果时输出 `status=choose` 加 `opt1/opt2=<kind>|<scene>|<x>|<y>`，由 HTA 侧的 `GhostQuestAsk` 弹框确认后才回填。HUD 坐标（`X:196 Y:64`）不走这条支路：先按 `-Scale`（默认 2.0）读，读不出坐标再沿 1.5 / 2.0 / 2.5 / 3.0 / 4.0 逐档重试，命中即停。实测同一帧在 2.0 把 `X:82` 读成 `X 祀 2`（冒号和 8 粘成一个汉字）、2.5 也不成，1.5 / 3.0 / 4.0 才读对——哪一档会粘连取决于数字和背后的场景，单档不可靠，而误读一帧不如多花 150ms。
 - **HUD 坐标识别**：`Find-Coord` 的顺序是「单行 `X:..Y:..` → 按轴分别取 X / Y 值（整块搜索）→ 关键字行 → 宽松兜底」。按轴取值是因为引擎经常把 HUD 那一行拆成 `X:11` / `Y:90` 两行、中间夹杂字，甚至前后颠倒；同一轴内「带冒号」优先于「不带冒号」（真机偶尔把杂字读成 `×0`，不能让它压过 `/X:11`），同档位下位数多者优先（OCR 只会丢数字、不会凭空造数字）。只要整块里出现过 `X:` / `Y:` 标记，就禁止走宽松兜底；`Parse-CoordText` 另会拒绝一行里出现两个冒号的时钟形状（`18:08:43`）。
@@ -325,8 +336,9 @@ exe 没有代码签名，Windows 会对从网络下来的 exe 弹这个提示：
   - 自检缓存：删掉 `app\data\env_ok.txt` 后开工具箱，状态行应短暂显示「环境检查中…」再变「环境检查通过」且文件重新生成；再开一次应直接显示「环境检查通过」（全程不出现新的 powershell 进程）；点状态行应强制重跑一遍
   - 提醒气泡：`powershell -ExecutionPolicy Bypass -File app\ocr\remind_notify.ps1 -Title t -Message m -Seconds 1` 应弹出一条气泡；工具箱里点「测试」走的是同一条命令行
   - 命令行形态：任何 PowerShell 调用都能在 `wmic process where "name='powershell.exe'" get commandline` 里看到全路径 + 固定参数，不应再出现光秃的 `powershell -Command ...`
-  - 发布包：双击根目录 `打包发布.bat`，或 `powershell -ExecutionPolicy Bypass -File tools\make-release.ps1` 只出目录 + zip（`tools\make-exe.ps1` 连 exe 一起出）→ `dist\<名称>_v<版本>\` 与同名 zip（同版本替换、其它版本目录不被动）。核对四点：① 目录名里的版本与 `CHANGELOG.md` 最新一节一致，且包内有这份文件；② 目录和 zip 里都没有 `data\` 与 `cap_quest.ps1` / `crop_strip.ps1`；③ 版本目录不用解压，直接双击 `启动工具箱.bat --check` 能认出 `app\`；④ 包里 `docs\preview.png` 与 `app\` 的界面一致（看日志里的 `Preview:` 行：`refreshed from the current window` 表示刚重截过）
-  - 单文件 exe：`powershell -ExecutionPolicy Bypass -File tools\make-exe.ps1 -OutDir dist-test` 后，把它拷到一个**空目录**双击，应出现 `MengHuanToolbox\`（14 个文件 + `.version`，内容形如 `1.3.2+20261126-164134`）并拉起工具箱（窗口标题「梦幻工具箱」）；再双击一次不应重新解包；`exe --extract` 只解包并打开目录。核对完删掉 `dist-test\`
+  - 发布包：双击根目录 `打包发布.bat`，或 `powershell -ExecutionPolicy Bypass -File tools\make-release.ps1` 只出目录 + zip（`tools\make-exe.ps1` 连 exe 一起出）→ `dist\<名称>_v<版本>\` 与同名 zip（同版本替换、其它版本目录不被动），并把这一版收进 `dist\MHToolbox`（该目录只留当前版本；`make-release.ps1` / 不带 `-NoCloud` 的 `make-exe.ps1` 不走这一步，双击 bat 才会）。核对四点：① 目录名里的版本与 `CHANGELOG.md` 最新一节一致，且包内有这份文件；② 目录和 zip 里都没有 `data\` 与 `cap_quest.ps1` / `crop_strip.ps1`；③ 版本目录不用解压，直接双击 `启动工具箱.bat --check` 能认出 `app\`；④ 包里 `docs\preview.png` 与 `app\` 的界面一致（看日志里的 `Preview:` 行：`refreshed from the current window` 表示刚重截过；双击 bat 打包时这里是 `Preview: skipped (-NoPreview)`，需先手动重截再核对）
+  - 发布自检（打包后自动跑，也可单独跑）：`powershell -ExecutionPolicy Bypass -File tools\verify-release.ps1` 输出 `RESULT = PASS` 即通过，失败会逐条列出（`README.md` 改过但还没重打时这里会 FAIL，重打一次包即消）；`-Smoke` 额外真启动一次 exe（会弹一次工具箱窗口，用来确认 mshta 能起来），`-SkipSmoke` 连静默解包都跳过（只比哈希），`-KeepSmoke` 保留 `.check\verify-release\` 方便看解包结果
+  - 单文件 exe：`powershell -ExecutionPolicy Bypass -File tools\make-exe.ps1 -OutDir dist-test` 后，把它拷到一个**空目录**双击，应出现 `MengHuanToolbox\`（14 个文件 + `.version`，内容形如 `1.3.8+20261127-145349`）并拉起工具箱（窗口标题「梦幻工具箱」）；再双击一次不应重新解包；`exe --extract` 只解包并打开目录。核对完删掉 `dist-test\`
 
 ---
 

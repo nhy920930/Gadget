@@ -175,6 +175,22 @@
     }
     #petHistTitle, #petCostTitle, #petIoTitle, #updTitle { font-weight: bold; font-size: 13px; color: #3d444d; margin-bottom: 8px; }
     #petHistBody { max-height: 380px; overflow-y: auto; }
+    /* 历史弹窗按攻略弹窗的规则来：标题栏拖动、右下角手柄调整大小；尺寸/位置由脚本按视口算（quirks 下 max-height 无效） */
+    .pet-hist-head { cursor: move; }
+    .pet-hist-head #petHistTitle { margin-bottom: 0; }
+    #petHistDragMask {
+        position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+        z-index: 990; display: none; cursor: move;
+        background-color: #ffffff;
+        filter: progid:DXImageTransform.Microsoft.Alpha(opacity=1);
+    }
+    /* 右下角给缩放手柄留位置，别压住“✕ 关闭” */
+    .pet-hist-btns { padding-right: 22px; }
+    /* 汇总矩阵：任务为行、号为列，5 个号并排一眼对比（字号压到 12px 省地方） */
+    .pet-hist-mx th { padding: 4px 2px; font-size: 12px; }
+    .pet-hist-mx td { padding: 4px 3px; font-size: 12px; }
+    .pet-hist-mx td.pet-hist-none { color: #a2a8b2; }
+    body.dark .pet-hist-mx td.pet-hist-none { color: #5c646c; }
     /* 宠环成本录入弹窗：点击 + 时弹出，登记本次成本（万梦幻币，非必填），样式沿用攻略弹窗 */
     #petCostOverlay { z-index: 960; }
     #petCostDialog { z-index: 961; width: 340px; }
@@ -271,12 +287,22 @@
     .input-bar .pet-tools .pet-danger-btn { color: #a52f2b; border-color: #c79794; background-color: transparent; filter: none; }
     .pet-cost-summary { margin-top: 10px; padding: 8px 0; border-bottom: 1px solid #c2c8d0; }
     .pet-cost-summary .pet-cost-total { display: inline-block; margin: 0 16px 4px 0; }
+    /* 本轮状态条：跨天续跑时变紫加粗，一眼看出不是今天新开的一轮 */
+    .pet-run-bar { margin-top: 8px; padding: 4px 8px; font-size: 13px; color: #5c646c; background-color: #f4f5f7; border: 1px solid #d5d9e0; }
+    .pet-run-bar-cont { color: #5b30c9; background-color: #f0ecfd; border-color: #cdbdf8; font-weight: bold; }
     body.dark .input-bar .pet-secondary-btn { color: #d2d6da; background-color: #292d33; border-color: #4a5058; filter: none; }
     body.dark .input-bar .pet-secondary-btn:active { background-color: #3c424a; filter: none; }
     body.dark .pet-tools { background-color: #292d33; border-color: #3c424a; }
     body.dark .pet-tool-label { color: #aeb4bc; }
     body.dark .pet-cost-summary { border-color: #3c424a; }
+    body.dark .pet-run-bar { color: #aeb4bc; background-color: #292d33; border-color: #3c424a; }
+    body.dark .pet-run-bar-cont { color: #c9b6ff; background-color: #332d40; border-color: #5a4a90; }
     body.dark .input-bar .pet-tools .pet-danger-btn { color: #f0a09b; border-color: #83534f; background-color: transparent; filter: none; }
+    /* 历史弹窗里每个号旁边的“回填此号”：小号按钮，别抢分组标题 */
+    .pet-mini-btn { height: 20px; padding: 0 6px; margin-left: 6px; font-size: 11px; font-weight: normal; color: #3d444d; background-color: #eef0f3; border: 1px solid #a2a8b2; filter: none; cursor: pointer; vertical-align: middle; }
+    .pet-mini-btn:active { background-color: #dce0e6; filter: none; }
+    body.dark .pet-mini-btn { color: #d2d6da; background-color: #292d33; border-color: #4a5058; filter: none; }
+    body.dark .pet-mini-btn:active { background-color: #3c424a; filter: none; }
     .pet-hist-delete, .input-bar .pet-hist-delete {
         height: 26px; padding: 0 10px; margin-left: 6px; cursor: pointer;
         font-size: 12px; font-weight: bold; color: #ffffff; vertical-align: middle;
@@ -2306,6 +2332,17 @@
     ' “是否计算成本”全局共享不分号；清零只清当前号；全部号合计为跨号只读汇总
     Dim petCostHist(4, 12), petCounts(4, 12), petCostTotal(4), petDetailList(4)
     Dim petCostIdx, petCostSavedScrollTop, petCurChar
+    ' 本轮（可跨天的同一轮宠环）：petRunId 为空 = 没有进行中的一轮；petRunStart 是开始日期（yyyy-mm-dd）；
+    ' petRunDays 是实际记过数的日期（逗号分隔，最后一项即最近更新日）。状态存在 app\data\pet_run.txt。
+    Dim petRunId, petRunStart, petRunDays, petRunSaveOk, petFrozenDay
+    ' 今天已经单独结束的号（True = 已结束）：它今天那一行要原样保留，不能因为接着记别的号被快照删掉。
+    ' 标记只在当天有效（petFrozenDay 不是今天即作废），存在 pet_run.txt 的 fday / f0..f4。
+    Dim petFrozen(4)
+    petRunId = ""
+    petRunStart = ""
+    petRunDays = ""
+    petRunSaveOk = True
+    petFrozenDay = ""
     Dim pcI, petTaskNames
     petTaskNames = Array("找人", "乐器", "60级装备", "花", "1级家具", "80级装备", "三级药", "2级家具", "烹饪", "非指定变异召唤兽", "70级装备", "指定变异召唤兽", "上交非变异召唤兽")
     petCostIdx = -1
@@ -2317,6 +2354,17 @@
     Dim petHistDateList(), petHistData
     Dim petHistSelectedDate
     petHistSelectedDate = ""
+    ' 历史弹窗尺寸/位置：与攻略弹窗同一套规则——没手动调整过就按视口 90% x 85%（高度不超过内容需要），
+    ' 拖动过标题栏就保持位置；右下角手柄拖动改尺寸、双击恢复默认。
+    Dim petHistUserW, petHistUserH, petHistUserL, petHistUserT
+    Dim petHistMoveOn, petHistResizeOn
+    Dim petHistDragStartX, petHistDragStartY, petHistDragStartW, petHistDragStartH, petHistDragStartL, petHistDragStartT
+    petHistUserW = 0
+    petHistUserH = 0
+    petHistUserL = -1
+    petHistUserT = -1
+    petHistMoveOn = False
+    petHistResizeOn = False
     Set petHistData = CreateObject("Scripting.Dictionary")
     petAutoSaveOk = True
     petHistYear = -1
@@ -2324,6 +2372,7 @@
     ReDim petHistDateList(-1)
     For pcI = 0 To PET_CHAR_COUNT - 1
         PetResetChar pcI
+        petFrozen(pcI) = False
     Next
     Sub PetResetChar(character)
         Dim task
@@ -2343,6 +2392,459 @@
         RefreshPetCostTotal
         RefreshPetDetail
     End Sub
+    ' ===================== 本轮（可跨天的同一轮宠环） =====================
+    ' 一轮宠环经常要分几天跑。次数与成本原本只在内存里，关掉工具箱就归零，隔天再开只能从头计；
+    ' 这里把“进行中的这一轮”存进 app\data\pet_run.txt，下次打开（哪怕隔了一两天）自动接着记，
+    ' 点“结束本轮”才清零。历史记录仍是每天一行快照（pet_cost_history.txt 格式不动，跨端交换不受影响）。
+    Function PetRunFile
+        PetRunFile = OcrDataDir() & "\pet_run.txt"
+    End Function
+    ' 短日期（11-27）：状态条上省地方
+    Function PetShortDate(strDate)
+        PetShortDate = strDate
+        If Len(strDate) >= 10 Then PetShortDate = Mid(strDate, 6, 5)
+    End Function
+    ' 今天距开始日第几天（按日历日算，中间断几天也算天数）；日期不合法时按第 1 天
+    Function PetRunDayNo
+        Dim dtStart, lngDiff
+        PetRunDayNo = 1
+        If Len(petRunStart) <> 10 Then Exit Function
+        On Error Resume Next
+        dtStart = DateSerial(CInt(Left(petRunStart, 4)), CInt(Mid(petRunStart, 6, 2)), CInt(Mid(petRunStart, 9, 2)))
+        If Err.Number = 0 Then
+            lngDiff = DateDiff("d", dtStart, Date) + 1
+            If lngDiff > 1 Then PetRunDayNo = lngDiff
+        End If
+        Err.Clear
+        On Error GoTo 0
+    End Function
+    ' 最近一次记数的日期（petRunDays 的最后一项）
+    Function PetRunLastDay
+        Dim lngP
+        PetRunLastDay = ""
+        If petRunDays = "" Then Exit Function
+        lngP = InStrRev(petRunDays, ",")
+        If lngP = 0 Then
+            PetRunLastDay = petRunDays
+        Else
+            PetRunLastDay = Mid(petRunDays, lngP + 1)
+        End If
+    End Function
+    ' 距最近一次记数过了几天：太久没动时状态条会提一句，避免以为早就结束了还接着记
+    Function PetRunIdleDays
+        Dim dtLast
+        PetRunIdleDays = 0
+        If Len(PetRunLastDay()) <> 10 Then Exit Function
+        On Error Resume Next
+        dtLast = DateSerial(CInt(Left(PetRunLastDay(), 4)), CInt(Mid(PetRunLastDay(), 6, 2)), CInt(Mid(PetRunLastDay(), 9, 2)))
+        If Err.Number = 0 Then PetRunIdleDays = DateDiff("d", dtLast, Date)
+        Err.Clear
+        On Error GoTo 0
+        If PetRunIdleDays < 0 Then PetRunIdleDays = 0
+    End Function
+    ' 有改动才推进这一轮：第一次记数开新一轮，换了日历日就把今天追加进 days
+    Sub PetRunTouch
+        Dim strToday
+        strToday = PetTodayStr
+        If petRunId = "" Then
+            petRunId = "R" & Replace(strToday, "-", "")
+            petRunStart = strToday
+            petRunDays = strToday
+            Exit Sub
+        End If
+        If PetRunLastDay() <> strToday Then
+            If petRunDays = "" Then
+                petRunDays = strToday
+            Else
+                petRunDays = petRunDays & "," & strToday
+            End If
+        End If
+    End Sub
+    ' 该号今天是否已经单独结束（冻结）：冻结的号今天那行要原样保留，直到它重新记数或被清零
+    Function PetFrozenOn(character)
+        PetFrozenOn = False
+        character = CLng(character)
+        If petFrozenDay <> PetTodayStr Then Exit Function
+        If character < 0 Or character >= PET_CHAR_COUNT Then Exit Function
+        PetFrozenOn = petFrozen(character)
+    End Function
+    ' 有没有任何一个号今天已结束：决定 pet_run.txt 在轮次收尾后还要不要留着
+    Function PetFrozenAny
+        Dim i
+        PetFrozenAny = False
+        If petFrozenDay <> PetTodayStr Then Exit Function
+        For i = 0 To PET_CHAR_COUNT - 1
+            If petFrozen(i) Then
+                PetFrozenAny = True
+                Exit Function
+            End If
+        Next
+    End Function
+    ' 标记某号今天已结束；换了一天先把上一轮的标记整体作废
+    Sub PetSetFrozen(character, ByVal blnOn)
+        Dim i
+        character = CLng(character)
+        If character < 0 Or character >= PET_CHAR_COUNT Then Exit Sub
+        If petFrozenDay <> PetTodayStr Then
+            petFrozenDay = PetTodayStr
+            For i = 0 To PET_CHAR_COUNT - 1
+                petFrozen(i) = False
+            Next
+        End If
+        petFrozen(character) = CBool(blnOn)
+    End Sub
+    ' 取消某号的“今天已结束”标记（该号又记数、被清零或被回填）
+    Sub PetClearFrozen(character)
+        Dim i
+        character = CLng(character)
+        If character < 0 Or character >= PET_CHAR_COUNT Then Exit Sub
+        petFrozen(character) = False
+        If Not PetFrozenAny() Then
+            petFrozenDay = ""
+            For i = 0 To PET_CHAR_COUNT - 1
+                petFrozen(i) = False
+            Next
+        End If
+    End Sub
+    Sub PetClearAllFrozen
+        Dim i
+        petFrozenDay = ""
+        For i = 0 To PET_CHAR_COUNT - 1
+            petFrozen(i) = False
+        Next
+    End Sub
+    ' 已结束号的名字串（状态条用，如“1号、4号”）
+    Function PetFrozenNames
+        Dim i, strText
+        strText = ""
+        If petFrozenDay <> PetTodayStr Then
+            PetFrozenNames = strText
+            Exit Function
+        End If
+        For i = 0 To PET_CHAR_COUNT - 1
+            If petFrozen(i) Then
+                If strText <> "" Then strText = strText & "、"
+                strText = strText & PetCharName(i)
+            End If
+        Next
+        PetFrozenNames = strText
+    End Function
+    ' 本轮合计（所有号 × 所有任务）
+    Sub PetRunTotals(ByRef lngCount, ByRef dblCost)
+        Dim character, task
+        lngCount = 0
+        dblCost = 0
+        For character = 0 To PET_CHAR_COUNT - 1
+            dblCost = dblCost + petCostTotal(character)
+            For task = 0 To PET_TASK_COUNT - 1
+                lngCount = lngCount + petCounts(character, task)
+            Next
+        Next
+    End Sub
+    ' 写本轮文件：纯 ASCII 的 KEY=VALUE，几 KB；返回是否写成功（调用方据此提醒）
+    Function PetWriteRunText(strText)
+        Dim fso, stream, message
+        message = ""
+        Set stream = Nothing
+        On Error Resume Next
+        Err.Clear
+        Set fso = CreateObject("Scripting.FileSystemObject")
+        Set stream = fso.CreateTextFile(PetRunFile(), True)
+        If Err.Number = 0 Then stream.Write strText
+        message = Err.Description
+        Err.Clear
+        If Not stream Is Nothing Then stream.Close
+        If message = "" Then message = Err.Description
+        Err.Clear
+        On Error GoTo 0
+        PetWriteRunText = (message = "")
+    End Function
+    Sub PetSaveRun
+        Dim character, task, strC, strText, i
+        ' 轮次已清空、但今天还有“已结束”的号：文件得留着，否则下次打开丢掉标记，
+        ' 第一次快照就会把那些号今天的记录一起删掉
+        If petRunId = "" And Not PetFrozenAny() Then Exit Sub
+        strText = "run=" & petRunId & vbCrLf & "start=" & petRunStart & vbCrLf & "days=" & petRunDays & vbCrLf
+        If petFrozenDay <> "" Then
+            strText = strText & "fday=" & petFrozenDay & vbCrLf
+            For i = 0 To PET_CHAR_COUNT - 1
+                If petFrozen(i) Then strText = strText & "f" & i & "=1" & vbCrLf
+            Next
+        End If
+        If petRunId <> "" Then
+            For character = 0 To PET_CHAR_COUNT - 1
+                strC = ""
+                For task = 0 To PET_TASK_COUNT - 1
+                    If task > 0 Then strC = strC & ","
+                    strC = strC & CStr(petCounts(character, task))
+                Next
+                strText = strText & "c" & character & "=" & strC & vbCrLf
+                strText = strText & "d" & character & "=" & petDetailList(character) & vbCrLf
+                strText = strText & "t" & character & "=" & PetFmtCostPlain(petCostTotal(character)) & vbCrLf
+            Next
+        End If
+        OcrEnsureData
+        If Not PetWriteRunText(strText) Then
+            ' 由成功转失败那一瞬间提醒一次，免得连点刷屏
+            If petRunSaveOk Then MsgBox "宠环本轮进度没能存到 data\pet_run.txt，关掉工具箱后可能接不上这一轮。可以检查一下磁盘/占用，稍后再点一次 + 重试。", vbExclamation, "保存失败"
+            petRunSaveOk = False
+        Else
+            petRunSaveOk = True
+        End If
+    End Sub
+    Sub PetDeleteRunFile
+        On Error Resume Next
+        CreateObject("Scripting.FileSystemObject").DeleteFile PetRunFile(), True
+        Err.Clear
+        On Error GoTo 0
+    End Sub
+    ' 启动时把上次没结束的一轮读回来；没有文件或内容不认（半截/关键字段缺失）就保持空白
+    Sub PetLoadRun
+        Dim fso, strAll, arrLine, i, lngP, strKey, strVal, character, task, arrCounts
+        petRunId = ""
+        petRunStart = ""
+        petRunDays = ""
+        petFrozenDay = ""
+        For i = 0 To PET_CHAR_COUNT - 1
+            PetResetChar i
+            petFrozen(i) = False
+        Next
+        strAll = ""
+        On Error Resume Next
+        Err.Clear
+        Set fso = CreateObject("Scripting.FileSystemObject")
+        If fso.FileExists(PetRunFile()) Then strAll = OcrReadFileSmart(PetRunFile())
+        Err.Clear
+        On Error GoTo 0
+        If Trim(strAll) = "" Then Exit Sub
+        arrLine = Split(Replace(strAll, vbCrLf, vbLf), vbLf)
+        For i = 0 To UBound(arrLine)
+            lngP = InStr(arrLine(i), "=")
+            If lngP > 1 Then
+                strKey = Left(arrLine(i), lngP - 1)
+                strVal = Mid(arrLine(i), lngP + 1)
+                If strKey = "run" Then
+                    petRunId = strVal
+                ElseIf strKey = "start" Then
+                    petRunStart = strVal
+                ElseIf strKey = "days" Then
+                    petRunDays = strVal
+                ElseIf strKey = "fday" Then
+                    petFrozenDay = strVal
+                ElseIf Len(strKey) = 2 And Mid(strKey, 2, 1) >= "0" And Mid(strKey, 2, 1) <= "4" Then
+                    character = CInt(Mid(strKey, 2, 1))
+                    If Left(strKey, 1) = "c" Then
+                        arrCounts = Split(strVal, ",")
+                        For task = 0 To PET_TASK_COUNT - 1
+                            petCounts(character, task) = 0
+                            If task <= UBound(arrCounts) Then
+                                If IsNumeric(arrCounts(task)) Then
+                                    If CDbl(arrCounts(task)) > 0 Then petCounts(character, task) = CLng(arrCounts(task))
+                                End If
+                            End If
+                        Next
+                    ElseIf Left(strKey, 1) = "d" Then
+                        petDetailList(character) = strVal
+                    ElseIf Left(strKey, 1) = "t" Then
+                        If IsNumeric(strVal) Then
+                            If CDbl(strVal) > 0 Then petCostTotal(character) = CDbl(strVal)
+                        End If
+                    ElseIf Left(strKey, 1) = "f" Then
+                        petFrozen(character) = (strVal = "1")
+                    End If
+                End If
+            End If
+        Next
+        ' 关键字段缺失就当没这一轮：不拿半截数据接着记，免得把成本接错
+        If petRunId = "" Or Len(petRunStart) <> 10 Then
+            petRunId = ""
+            petRunStart = ""
+            petRunDays = ""
+            For i = 0 To PET_CHAR_COUNT - 1
+                PetResetChar i
+            Next
+        End If
+        ' 结束标记只在当天有效：隔天打开时上一轮的标记自动作废（昨天那些行本来就是历史）
+        If Len(petFrozenDay) <> 10 Or petFrozenDay <> PetTodayStr Then
+            petFrozenDay = ""
+            For i = 0 To PET_CHAR_COUNT - 1
+                petFrozen(i) = False
+            Next
+        End If
+    End Sub
+    ' 本轮状态条：没开始 / 本轮第几天 + 合计次数与成本；跨天续跑时变色加粗，一眼看出不是今天新开的
+    Sub PetRefreshRunBar
+        Dim objBar, lngCount, dblCost, lngDay, lngIdle, strText
+        Set objBar = document.getElementById("petRunBar")
+        If objBar Is Nothing Then Exit Sub
+        If petRunId = "" Then
+            objBar.className = "pet-run-bar"
+            If PetFrozenAny() Then
+                objBar.innerText = "本轮：今天 " & PetFrozenNames() & " 已结束（今天的记录已写入；再点 + 开始新一轮）"
+            Else
+                objBar.innerText = "本轮：未开始（点 + 自动开始；今天没跑完，隔一两天打开会接着算）"
+            End If
+            Exit Sub
+        End If
+        PetRunTotals lngCount, dblCost
+        lngDay = PetRunDayNo()
+        strText = "本轮 " & PetShortDate(petRunStart) & " 开始 · 第 " & lngDay & " 天 · 合计 " & lngCount & " 次 / " & PetFmtCost(dblCost) & " 万梦幻币"
+        If PetFrozenAny() Then strText = strText & " · 已结束：" & PetFrozenNames()
+        If lngDay > 1 Then
+            objBar.className = "pet-run-bar pet-run-bar-cont"
+            strText = "🕒 " & strText
+        Else
+            objBar.className = "pet-run-bar"
+        End If
+        lngIdle = PetRunIdleDays()
+        If lngIdle > 7 Then
+            strText = strText & "（上次记数是 " & PetShortDate(PetRunLastDay()) & "，已 " & lngIdle & " 天；不是这一轮就点「结束本轮」）"
+        End If
+        objBar.innerText = strText
+    End Sub
+    ' 结束本轮：把还在记的号一起结束——先把这一轮写成今天的历史，再清零并打上“今天已结束”标记。
+    ' 顺序不能反：先清零再快照会把当天那行改成全 0，等于抹掉这一轮的记录。
+    ' 已经单独结束过的号不动：它们今天那行就是当时留下的记录，不会被这一轮重复写或删掉。
+    Sub PetEndRun
+        Dim lngCount, dblCost, lngDay, strAsk, strRange, result, strFrozen
+        If petRunId = "" Then
+            If PetFrozenAny() Then
+                MsgBox "今天 " & PetFrozenNames() & " 已经结束并写入记录了，没有还在记的号。" & vbCrLf & vbCrLf & "要再跑一轮，直接点 + 就行（会从今天重新起算）。", vbInformation, "结束本轮"
+            Else
+                MsgBox "现在没有进行中的宠环轮次（点 + 会自动开始一轮）。", vbInformation, "结束本轮"
+            End If
+            Exit Sub
+        End If
+        PetRunTotals lngCount, dblCost
+        If lngCount = 0 And dblCost = 0 Then
+            MsgBox "没有还在记的号可以结束。" & vbCrLf & "（已经单独结束过的号不会再记一遍，它们的记录就在「历史记录查询」今天那一行里。）", vbInformation, "结束本轮"
+            Exit Sub
+        End If
+        lngDay = PetRunDayNo()
+        strRange = PetShortDate(petRunStart)
+        If PetRunLastDay() <> petRunStart Then strRange = strRange & " ~ " & PetShortDate(PetRunLastDay())
+        strAsk = "结束本轮：" & strRange & "，已跨 " & lngDay & " 天，还在记的号合计 " & lngCount & " 次 / " & PetFmtCost(dblCost) & " 万梦幻币。" & vbCrLf & vbCrLf & _
+            "确认后先把这一轮写成「" & PetTodayStr & "」的历史记录，再把还在记的号的计数与成本一起清零，下次点 + 开始新的一轮。" & vbCrLf
+        strFrozen = PetFrozenNames()
+        If strFrozen <> "" Then strAsk = strAsk & "今天已经单独结束的 " & strFrozen & " 保持原样，不会重复记录。"
+        strAsk = strAsk & vbCrLf & "已经保存到「历史记录查询」里的每天数据不受影响。" & vbCrLf & vbCrLf & "要现在结束吗？"
+        If MsgBox(strAsk, vbYesNo + vbQuestion, "结束本轮") <> vbYes Then Exit Sub
+        Set result = PetEndRunCore
+        If result("status") = "error" Then
+            MsgBox "写入历史记录失败，本轮尚未结束：" & result("error") & vbCrLf & vbCrLf & "可以先关掉占用该文件的程序，再点一次「结束本轮」。", vbExclamation, "结束本轮"
+            Exit Sub
+        End If
+        petAutoSaveOk = True
+        If document.getElementById("petHistSection").style.display <> "none" Then Call PetHistShowData(result("data"))
+        RefreshPetSession
+        PetRefreshRunBar
+        strAsk = "本轮已结束，还在记的号已清零。" & vbCrLf & "这一轮已经写成 " & PetTodayStr & " 的历史记录（见「历史记录查询」）。"
+        If strFrozen <> "" Then strAsk = strAsk & vbCrLf & "今天单独结束过的 " & strFrozen & " 保持原样。"
+        MsgBox strAsk & vbCrLf & vbCrLf & "提示：同一天再开一轮并记数时，今天对应号的记录会更新成新的一轮。", vbInformation, "结束本轮"
+    End Sub
+    ' 结束本轮的核心：先快照，成功后再结束所有“还在记”的号（打标记 + 清零）。
+    ' 已单独结束的号不动；全部结束后轮次收尾，但 pet_run.txt 要留着记结束标记（PetSaveRun 会写）。
+    Function PetEndRunCore
+        Dim i, snapshot, blnAny
+        Set snapshot = PetSnapshotToday
+        If snapshot("status") = "error" Then
+            Set PetEndRunCore = snapshot
+            Exit Function
+        End If
+        blnAny = False
+        For i = 0 To PET_CHAR_COUNT - 1
+            If Not PetFrozenOn(i) Then
+                If PetCharHasData(i) Then
+                    PetSetFrozen i, True
+                    PetResetChar i
+                    blnAny = True
+                End If
+            End If
+        Next
+        petRunId = ""
+        petRunStart = ""
+        petRunDays = ""
+        If blnAny Or PetFrozenAny() Then
+            PetSaveRun
+        Else
+            PetDeleteRunFile
+        End If
+        Set PetEndRunCore = snapshot
+    End Function
+    ' 该号本轮次数与成本（结束当前号的确认框用）
+    Sub PetCharTotals(ByVal character, ByRef lngCount, ByRef dblCost)
+        Dim n
+        lngCount = 0
+        dblCost = petCostTotal(character)
+        For n = 0 To PET_TASK_COUNT - 1
+            lngCount = lngCount + petCounts(character, n)
+        Next
+    End Sub
+    ' 结束当前号：只把这一号现在的数字写进今天的记录，然后清零；其他号（包括已单独结束的）不受影响
+    Sub PetEndCharCurrent
+        PetEndChar petCurChar
+    End Sub
+    Sub PetEndChar(character)
+        Dim lngCount, dblCost, strAsk, result
+        character = CLng(character)
+        If character < 0 Or character >= PET_CHAR_COUNT Then Exit Sub
+        If Not PetCharHasData(character) Then
+            If PetFrozenOn(character) Then
+                MsgBox PetCharName(character) & " 今天已经结束过了，记录就在「历史记录查询」今天那一行里。" & vbCrLf & "要重新跑这一号，直接点 + 就行（今天这一条会更新成新的数字）。", vbInformation, "结束当前号"
+            Else
+                MsgBox PetCharName(character) & " 今天还没有可结束的记录（点 + 记一次再结束）。", vbInformation, "结束当前号"
+            End If
+            Exit Sub
+        End If
+        PetCharTotals character, lngCount, dblCost
+        strAsk = "结束 " & PetCharName(character) & "：" & lngCount & " 次 / " & PetFmtCost(dblCost) & " 万梦幻币。" & vbCrLf & vbCrLf & _
+            "确认后把这一号现在的数字写进「" & PetTodayStr & "」的记录并清零，其他号照常接着记。" & vbCrLf & _
+            "已经保存到「历史记录查询」里的每天数据不受影响；同一天这一号再记，会更新它今天这一条。" & vbCrLf & vbCrLf & _
+            "要现在结束吗？"
+        If MsgBox(strAsk, vbYesNo + vbQuestion, "结束当前号") <> vbYes Then Exit Sub
+        Set result = PetEndCharCore(character)
+        If result("status") = "error" Then
+            MsgBox "写入历史记录失败，" & PetCharName(character) & " 尚未结束：" & result("error") & vbCrLf & vbCrLf & "可以先关掉占用该文件的程序，再点一次「结束当前号」。", vbExclamation, "结束当前号"
+            Exit Sub
+        End If
+        petAutoSaveOk = True
+        If document.getElementById("petHistSection").style.display <> "none" Then Call PetHistShowData(result("data"))
+        RefreshPetSession
+        PetRefreshRunBar
+        MsgBox PetCharName(character) & " 已结束，计数与成本已清零。" & vbCrLf & "这一号今天的记录已写入（点开「历史记录查询」的今天就能看到）。" & vbCrLf & vbCrLf & "提示：其他号照常接着记；同一天这一号再记，会更新它今天这一条。", vbInformation, "结束当前号"
+    End Sub
+    ' 单号结束核心：先快照（把这一号写进今天），成功后才清零并打上“今天已结束”标记
+    Function PetEndCharCore(ByVal character)
+        Dim snapshot
+        Set snapshot = PetSnapshotToday
+        If snapshot("status") = "error" Then
+            Set PetEndCharCore = snapshot
+            Exit Function
+        End If
+        PetSetFrozen character, True
+        PetResetChar character
+        ' 其他号都结束了：轮次本身收尾，但文件的结束标记要留着（见 PetSaveRun）
+        If Not PetRunHasLive() Then
+            petRunId = ""
+            petRunStart = ""
+            petRunDays = ""
+        End If
+        PetSaveRun
+        Set PetEndCharCore = snapshot
+    End Function
+    ' 还有没有没结束、且计算区有数据的号
+    Function PetRunHasLive
+        Dim i
+        PetRunHasLive = False
+        For i = 0 To PET_CHAR_COUNT - 1
+            If Not PetFrozenOn(i) Then
+                If PetCharHasData(i) Then
+                    PetRunHasLive = True
+                    Exit Function
+                End If
+            End If
+        Next
+    End Function
     Sub PetAdd(idx)
         Dim objSel, lngIdx
         Set objSel = document.getElementById("selPetCostMode")
@@ -2529,6 +3031,8 @@
     Sub PetRecordCost(ByVal idx, ByVal dblCost)
         idx = CLng(idx)
         dblCost = CDbl(dblCost)
+        ' 这一号今天已经单独结束过、现在又点 +：算同一天重新跑，今天这一条会用新数字覆盖
+        If PetFrozenOn(petCurChar) Then PetClearFrozen petCurChar
         If petCostHist(petCurChar, idx) = "" Then
             petCostHist(petCurChar, idx) = CStr(dblCost)
         Else
@@ -2630,19 +3134,38 @@
         If objWrap Is Nothing Then Exit Sub
         objWrap.innerHTML = PetRenderTables(PetSessionViews, petCurChar)
     End Sub
-    ' 清零当前号的次数与累计成本（有记录时确认；清完立刻把当天快照同步到历史文件；其他号不受影响）
+    ' 清零当前号的次数与累计成本（其他号不受影响）。已单独结束的号不走这里：它今天那行就是结束留下的记录，
+    ' 清零也清不出东西，直接提示去点 + 重新跑。活跃号清零后计算区变空，下一次保存会把这一号今天的旧行去掉。
     Sub PetCountReset
-        Dim i, blnHasData
+        Dim i, blnHasData, lngCount, dblCost
+        If PetFrozenOn(petCurChar) Then
+            MsgBox PetCharName(petCurChar) & " 今天已经结束过了，计算区本来就是空的。" & vbCrLf & "要重新跑这一号，直接点 +（今天这一条会更新成新的数字）。", vbInformation, "清零当前号"
+            Exit Sub
+        End If
         blnHasData = False
         For i = 0 To PET_TASK_COUNT - 1
             If petCounts(petCurChar, i) > 0 Then blnHasData = True
         Next
         If blnHasData Or petCostTotal(petCurChar) > 0 Then
-            If MsgBox("将清空 " & PetCharName(petCurChar) & " 的全部次数与累计成本（当前 " & PetFmtCost(petCostTotal(petCurChar)) & " 万梦幻币），其他号不受影响，今天已保存的记录会跟着同步。是否继续？", vbYesNo + vbQuestion, "清零确认") <> vbYes Then Exit Sub
+            If MsgBox("将清空 " & PetCharName(petCurChar) & " 的全部次数与累计成本（当前 " & PetFmtCost(petCostTotal(petCurChar)) & " 万梦幻币），其他号与本轮进度不受影响。" & vbCrLf & "这一号今天还没被当成一个“结束”写进记录；已经存过的旧数字会在下一次保存时去掉（别的日期不动）。是否继续？", vbYesNo + vbQuestion, "清零确认") <> vbYes Then Exit Sub
         End If
         PetResetChar petCurChar
         RefreshPetSession
-        PetAutoSave
+        If petRunId <> "" Then
+            PetRunTotals lngCount, dblCost
+            If lngCount = 0 And dblCost = 0 Then
+                ' 整轮都清空了：不留一个 0 次 0 元的空轮次（今天已结束号的标记还要留着）
+                petRunId = ""
+                petRunStart = ""
+                petRunDays = ""
+            End If
+        End If
+        If petRunId = "" And Not PetFrozenAny() Then
+            PetDeleteRunFile
+        Else
+            PetSaveRun
+        End If
+        PetRefreshRunBar
     End Sub
     ' ===================== 宠环成本历史记录（文件按行存储：日期|号|次数CSV|明细CSV|累计成本，同一天多次保存覆盖当天） =====================
     ' 行格式即双端交换格式：与移动版“历史记录导入/导出”通用；total 一律无千分位（见 PetFmtCostPlain），跨端解析不被逗号截断
@@ -2914,31 +3437,44 @@
             Set petHistCacheData = Nothing
         End If
     End Function
+    ' 该号计算区里是否还有数据（次数或成本栈任一非空）
+    Function PetCharHasData(character)
+        Dim n
+        PetCharHasData = False
+        For n = 0 To PET_TASK_COUNT - 1
+            If petCounts(character, n) > 0 Or petCostHist(character, n) <> "" Then
+                PetCharHasData = True
+                Exit Function
+            End If
+        Next
+    End Function
     ' 组装当天全部有数据号的记录行（无数据返回空数组）
     Function PetBuildTodayLines
-        Dim d, i, n, strCounts, blnHas, arrLines
+        Dim d, i, n, strCounts, arrLines
         d = PetTodayStr
         ReDim arrLines(-1)
         For i = 0 To PET_CHAR_COUNT - 1
-            blnHas = False
-            strCounts = ""
-            For n = 0 To PET_TASK_COUNT - 1
-                If n > 0 Then strCounts = strCounts & ","
-                strCounts = strCounts & CStr(petCounts(i, n))
-                If petCounts(i, n) > 0 Or petCostHist(i, n) <> "" Then blnHas = True
-            Next
-            If blnHas Then
+            If PetCharHasData(i) Then
+                strCounts = ""
+                For n = 0 To PET_TASK_COUNT - 1
+                    If n > 0 Then strCounts = strCounts & ","
+                    strCounts = strCounts & CStr(petCounts(i, n))
+                Next
                 ReDim Preserve arrLines(UBound(arrLines) + 1)
                 arrLines(UBound(arrLines)) = d & "|" & i & "|" & strCounts & "|" & petDetailList(i) & "|" & PetFmtCostPlain(petCostTotal(i))
             End If
         Next
         PetBuildTodayLines = arrLines
     End Function
-    ' 把当前会话状态写成“今天”的快照：先丢掉文件里今天的旧行，再写入当前各号（今天已无数据就只删）。
-    ' 所以文件里今天的数字永远等于界面上的数字，关窗前不必再问“要不要保存”。
+    ' 把当前会话状态写成“今天”的快照，按号合并：
+    ' - 计算区里有数据的号 → 用现在的数字覆盖；
+    ' - 今天已经单独结束、计算区已清零的号 → 保留文件里今天那一行；
+    ' - 其余号 → 今天不该有行（例如刚清零，等于放弃这一号今天的记录）。
+    ' 所以“结束某一个号”之后接着记别的号，这一号今天的记录不会被后面的快照抹掉。
     ' 返回 status/data/raw/error（PetResult 结构）。
     Function PetSnapshotToday
-        Dim incoming, loaded, merged, result, day
+        Dim incoming, loaded, merged, result, day, record, strDate, arrDay
+        strDate = PetTodayStr
         Set incoming = PetParseHistText(Join(PetBuildTodayLines, vbCrLf), True)
         If incoming("status") = "error" Then
             Set PetSnapshotToday = incoming
@@ -2949,26 +3485,41 @@
             Set PetSnapshotToday = loaded
             Exit Function
         End If
-        ' 今天本来就没记录、现在也没有数据：文件不用动，省一次写盘
-        If incoming("status") = "empty" And Not loaded("data").Exists(PetTodayStr) Then
+        arrDay = Array()
+        If incoming("status") = "ok" Then
+            For Each day In incoming("data").Keys
+                For Each record In incoming("data")(day)
+                    AppendValue arrDay, record
+                Next
+            Next
+        End If
+        ' 已结束的号：实时没有数据时，用文件里今天那一行原样保留（total 统一重写成无千分位）
+        If loaded("data").Exists(strDate) Then
+            For Each record In loaded("data")(strDate)
+                If PetFrozenOn(record("c")) Then
+                    If Not PetCharHasData(record("c")) Then AppendValue arrDay, PetParseLine(record("line"), True)
+                End If
+            Next
+        End If
+        ' 今天本来就没记录、现在也没有要写的行：文件不用动，省一次写盘
+        If UBound(arrDay) < 0 And Not loaded("data").Exists(strDate) Then
             Set PetSnapshotToday = PetResult("empty", loaded("data"), loaded("raw"), "")
             Exit Function
         End If
         Set merged = CreateObject("Scripting.Dictionary")
         For Each day In loaded("data").Keys
-            If day <> PetTodayStr Then merged.Add day, loaded("data")(day)
+            If day <> strDate Then merged.Add day, loaded("data")(day)
         Next
-        If incoming("status") = "ok" Then
-            For Each day In incoming("data").Keys
-                merged.Add day, incoming("data")(day)
-            Next
-        End If
+        If UBound(arrDay) >= 0 Then merged.Add strDate, arrDay
         Set result = PetWriteHistory(merged, loaded("raw"), True)
         Set PetSnapshotToday = result
     End Function
-    ' 自动保存：每次 + / - / 清零落盘，失败只提示一次（由成功转失败那一瞬间），免得连点刷屏
+    ' 自动保存：每次 + / - 落盘两处——当天历史快照（pet_cost_history.txt）与本轮进度（pet_run.txt），
+    ' 失败只提示一次（由成功转失败那一瞬间），免得连点刷屏
     Sub PetAutoSave
         Dim result, objSec
+        PetRunTouch
+        PetSaveRun
         Set result = PetSnapshotToday
         If result("status") = "ok" Or result("status") = "empty" Then
             petAutoSaveOk = True
@@ -2981,6 +3532,7 @@
             If petAutoSaveOk Then MsgBox "宠环记录自动保存失败，刚才的改动只在内存里：" & result("error") & vbCrLf & vbCrLf & "可以先关掉占用该文件的程序，再点「保存当天记录」重试（退出前请先存成功）。", vbExclamation, "自动保存失败"
             petAutoSaveOk = False
         End If
+        PetRefreshRunBar
     End Sub
     ' “保存当天记录”按钮：手动再存一次（平时已由 PetAutoSave 自动保存，这里用于失败后重试与心里确认）
     Sub PetSaveHistory
@@ -3118,9 +3670,9 @@
         End If
         RefreshPetHist
     End Sub
-    ' 点击日历日期：弹窗展示该日保存的成本汇总（按号分组）与逐笔明细（最新在上）
+    ' 点击日历日期：弹窗展示该日保存的成本汇总（任务 x 号矩阵）与逐笔明细（最新在上），标题带当日合计
     Sub PetShowHist(idx)
-        Dim strDate, records, views, record
+        Dim strDate, records, views, record, t, lngCnt, dblCost, lngChars, lngRecCnt, strSum, dicChars
         idx = CLng(idx)
         If idx < 0 Or idx > UBound(petHistDateList) Then Exit Sub
         strDate = petHistDateList(idx)
@@ -3128,11 +3680,134 @@
         If Not petHistData.Exists(strDate) Then Exit Sub
         records = petHistData(strDate)
         views = Array()
+        ' 手工导入时同一天同一个号可能有两行，标题的“N 个号”按去重后的号数算（与下面的矩阵列数一致）
+        Set dicChars = CreateObject("Scripting.Dictionary")
+        lngCnt = 0
+        dblCost = 0
         For Each record In records
             AppendValue views, PetViewRecord(record)
+            lngRecCnt = 0
+            For t = 0 To PET_TASK_COUNT - 1
+                lngRecCnt = lngRecCnt + CLng(record("counts")(t))
+            Next
+            If lngRecCnt > 0 Or CDbl(record("total")) > 0 Then
+                If Not dicChars.Exists(record("c")) Then dicChars.Add record("c"), 0
+            End If
+            lngCnt = lngCnt + lngRecCnt
+            dblCost = dblCost + CDbl(record("total"))
         Next
-        OpenPetHistDlg strDate, PetRenderTables(views, -1)
+        lngChars = dicChars.Count
+        strSum = lngChars & " 个号 · " & lngCnt & " 次 · " & PetFmtCost(dblCost) & " 万梦幻币"
+        OpenPetHistDlg strDate, strSum, "<div class=""pet-note"" style=""margin-top: 0;"">★想把这一天当作起点接着算？点号名下面的「回填此号」只补那一号；点底部「回填全部号」是 5 个号一起填回计算区。历史记录本身不变。</div>" & PetRenderHistTables(views)
     End Sub
+    ' 历史弹窗的汇总矩阵：行 = 任务，列 = 这一天有记录的号（最多 5 列）+ 合计。
+    ' 原来按号竖着分组，5 个号最多要 40 多行；矩阵一行一个任务，横向还能直接比号。
+    Function PetRenderHistTables(records)
+        Dim n, t, c, m, rn, strH, strCls, strBody, record
+        Dim arrCnt, arrDet, arrItem, taskSum
+        Dim lngGrid(), dblGrid(), lngCols(), dblCols(), blnUsed()
+        Dim lngRowCnt, dblRowSum, lngGrandCnt, dblGrandSum, blnRow, lngColNum, blnHas
+        ReDim lngGrid(PET_CHAR_COUNT - 1, PET_TASK_COUNT - 1)
+        ReDim dblGrid(PET_CHAR_COUNT - 1, PET_TASK_COUNT - 1)
+        ReDim lngCols(PET_CHAR_COUNT - 1)
+        ReDim dblCols(PET_CHAR_COUNT - 1)
+        ReDim blnUsed(PET_CHAR_COUNT - 1)
+        For c = 0 To PET_CHAR_COUNT - 1
+            lngCols(c) = 0
+            dblCols(c) = 0
+            blnUsed(c) = False
+            For t = 0 To PET_TASK_COUNT - 1
+                lngGrid(c, t) = 0
+                dblGrid(c, t) = 0
+            Next
+        Next
+        ' 同一天同一个号有两行（手工导入）也按号累加，网格里只占一列
+        For n = 0 To UBound(records)
+            Set record = records(n)
+            c = CLng(record("c"))
+            If c >= 0 And c < PET_CHAR_COUNT Then
+                arrCnt = record("counts")
+                Set taskSum = record("sums")
+                For t = 0 To PET_TASK_COUNT - 1
+                    lngGrid(c, t) = lngGrid(c, t) + CLng(arrCnt(t))
+                    If taskSum.Exists(t) Then dblGrid(c, t) = dblGrid(c, t) + CDbl(taskSum(t))
+                    If lngGrid(c, t) > 0 Or dblGrid(c, t) > 0 Then
+                        blnUsed(c) = True
+                        lngCols(c) = lngCols(c) + CLng(arrCnt(t))
+                        If taskSum.Exists(t) Then dblCols(c) = dblCols(c) + CDbl(taskSum(t))
+                    End If
+                Next
+            End If
+        Next
+        lngColNum = 0
+        For c = 0 To PET_CHAR_COUNT - 1
+            If blnUsed(c) Then lngColNum = lngColNum + 1
+        Next
+        strH = "<div class=""pet-block-title"" style=""margin-top: 0;"">【成本汇总】</div>"
+        If lngColNum = 0 Then
+            strH = strH & "<table><tr><td class=""pet-empty"">暂无成本记录</td></tr></table>"
+        Else
+            strH = strH & "<table class=""pet-hist-mx""><tr><th width=""28%"">任务内容</th>"
+            For c = 0 To PET_CHAR_COUNT - 1
+                If blnUsed(c) Then
+                    strH = strH & "<th>" & PetCharName(c) & "<br><button class=""pet-mini-btn"" onclick=""PetHistBackfillChar " & c & """ title=""只把这一个号的次数、成本与明细填回计算区"">回填此号</button></th>"
+                End If
+            Next
+            strH = strH & "<th>合计</th></tr>"
+            lngGrandCnt = 0
+            dblGrandSum = 0
+            For t = 0 To PET_TASK_COUNT - 1
+                blnRow = False
+                lngRowCnt = 0
+                dblRowSum = 0
+                strBody = ""
+                For c = 0 To PET_CHAR_COUNT - 1
+                    If blnUsed(c) Then
+                        If lngGrid(c, t) > 0 Or dblGrid(c, t) > 0 Then
+                            blnRow = True
+                            lngRowCnt = lngRowCnt + lngGrid(c, t)
+                            dblRowSum = dblRowSum + dblGrid(c, t)
+                            strBody = strBody & "<td class=""num"">" & lngGrid(c, t) & " 次 · " & PetFmtCost(dblGrid(c, t)) & " 万</td>"
+                        Else
+                            strBody = strBody & "<td class=""num pet-hist-none"">—</td>"
+                        End If
+                    End If
+                Next
+                If blnRow Then
+                    lngGrandCnt = lngGrandCnt + lngRowCnt
+                    dblGrandSum = dblGrandSum + dblRowSum
+                    strH = strH & "<tr><td class=""lv"">" & PetTaskName(t) & "</td>" & strBody & "<td class=""num""><b>" & lngRowCnt & "</b> 次 · " & PetFmtCost(dblRowSum) & " 万</td></tr>"
+                End If
+            Next
+            strH = strH & "<tr><td class=""pet-grand"">全部号合计</td>"
+            For c = 0 To PET_CHAR_COUNT - 1
+                If blnUsed(c) Then strH = strH & "<td class=""pet-grand""><b>" & lngCols(c) & "</b> 次 · " & PetFmtCost(dblCols(c)) & " 万</td>"
+            Next
+            strH = strH & "<td class=""pet-grand""><b>" & lngGrandCnt & "</b> 次 · " & PetFmtCost(dblGrandSum) & " 万</td></tr></table>"
+        End If
+        ' 明细：按号分组、最新在上（序号仍是录入顺序）
+        strH = strH & "<div class=""pet-block-title"">【成本明细（最新在上）】</div><table><tr><th width=""12%"">序号</th><th width=""58%"">任务内容</th><th width=""30%"">成本（万）</th></tr>"
+        blnHas = False
+        For n = 0 To UBound(records)
+            Set record = records(n)
+            arrDet = record("details")
+            If UBound(arrDet) >= 0 Then
+                blnHas = True
+                strH = strH & "<tr><td class=""pet-char-cell"" colspan=""3"">" & PetCharName(record("c")) & "</td></tr>"
+                rn = 0
+                For m = UBound(arrDet) To 0 Step -1
+                    arrItem = arrDet(m)
+                    rn = rn + 1
+                    strCls = ""
+                    If rn Mod 2 = 0 Then strCls = " class=""alt"""
+                    strH = strH & "<tr" & strCls & "><td class=""num"">" & (m + 1) & "</td><td class=""lv"">" & PetTaskName(CLng(arrItem(0))) & "</td><td class=""num"">" & PetFmtCost(CDbl(arrItem(1))) & "</td></tr>"
+                Next
+            End If
+        Next
+        If Not blnHas Then strH = strH & "<tr><td class=""pet-empty"" colspan=""3"">暂无成本记录</td></tr>"
+        strH = strH & "</table>"
+        PetRenderHistTables = strH
+    End Function
     Function PetRenderTables(records, detailCharacter)
         Dim n, m, record, arrCnt, arrDet, arrItem, strH, strCls, c, detailTitle
         Dim lngRows, lngCnt, dblSum, lngAllCnt, dblAllSum, blnAny, blnAnyDet, rn, taskSum, t
@@ -3154,7 +3829,9 @@
             For t = 0 To PET_TASK_COUNT - 1
                 If taskSum.Exists(t) Then
                     If lngRows = 0 Then
-                        strH = strH & "<tr><td class=""pet-char-cell"" colspan=""3"">" & PetCharName(c) & "</td></tr>"
+                        strH = strH & "<tr><td class=""pet-char-cell"" colspan=""3"">" & PetCharName(c)
+                        If detailCharacter = -1 Then strH = strH & " <button class=""pet-mini-btn"" onclick=""PetHistBackfillChar " & c & """ title=""只把这一个号的次数、成本与明细填回计算区"">回填此号</button>"
+                        strH = strH & "</td></tr>"
                         blnAny = True
                     End If
                     lngRows = lngRows + 1
@@ -3203,17 +3880,332 @@
         strH = strH & "</table></div>"
         PetRenderTables = strH
     End Function
-    ' 打开历史弹窗：遮罩 + 视口居中 + 锁背景滚动（内容超高时顶部对齐）
-    Sub OpenPetHistDlg(strDate, strHtml)
+    ' 打开历史弹窗：遮罩 + 锁背景滚动，尺寸按攻略弹窗规则（90% x 85% 上限，内容少时按内容高）
+    Sub OpenPetHistDlg(strDate, strSum, strHtml)
         petHistSelectedDate = strDate
-        document.getElementById("petHistTitle").innerText = "📅 " & strDate & " 宠环成本记录"
+        document.getElementById("petHistTitle").innerText = "📅 " & strDate & " · " & strSum
         document.getElementById("petHistBody").innerHTML = strHtml
         OpenPetDialog "petHist", petHistSavedScrollTop, True
+        PositionPetHistDlg
     End Sub
     Sub ClosePetHist
+        FinishPetHistDrag
         petHistSelectedDate = ""
         ClosePetDialog "petHist", petHistSavedScrollTop
     End Sub
+    ' 历史弹窗定位与尺寸：规则同攻略弹窗——未手动调整时宽 90%（上限 1020）、高取内容需要且不超视口 85%，
+    ' 拖动/缩放过后按用户尺寸（超视口则压缩，下限 420x320）；位置未拖动过居中，拖动过保持并限制在视口内。
+    Sub PositionPetHistDlg
+        Dim vw, vh, dw, dh, dlgL, dlgT, maxL, maxT, needH, objDialog, objBody
+        Set objDialog = document.getElementById("petHistDialog")
+        Set objBody = document.getElementById("petHistBody")
+        vw = document.body.clientWidth
+        vh = document.body.clientHeight
+        If petHistUserW > 0 And petHistUserH > 0 Then
+            dw = petHistUserW
+            dh = petHistUserH
+            If dw > vw Then dw = vw
+            If dh > vh Then dh = vh
+            If dw < 420 Then dw = 420
+            If dh < 320 Then dh = 320
+        Else
+            dw = Int(vw * 0.9)
+            If dw > 1020 Then dw = 1020
+            If dw < 420 Then dw = 420
+            ' 先让正文按内容自然撑开量一次，再决定要不要压在视口 85% 内（内容少时不留一大片空白）
+            objBody.style.height = ""
+            objBody.style.overflow = "hidden"
+            needH = objBody.scrollHeight + 96
+            dh = Int(vh * 0.85)
+            If needH < dh Then dh = needH
+            If dh < 320 Then dh = 320
+        End If
+        document.getElementById("petHistOverlay").style.pixelWidth = document.body.scrollWidth
+        document.getElementById("petHistOverlay").style.pixelHeight = document.body.scrollHeight
+        objDialog.style.pixelWidth = dw
+        objDialog.style.pixelHeight = dh
+        ' quirks 下 max-height 不生效：正文高度按弹窗高减标题/按钮/内边距算死，内容超出走正文内部滚动条
+        If dh - 96 < 120 Then
+            objBody.style.height = "120px"
+        Else
+            objBody.style.height = (dh - 96) & "px"
+        End If
+        objBody.style.overflow = "auto"
+        If petHistUserL >= 0 And petHistUserT >= 0 Then
+            dlgL = petHistUserL
+            dlgT = petHistUserT
+            maxL = document.body.scrollLeft + vw - dw
+            maxT = document.body.scrollTop + vh - dh
+            If dlgL < document.body.scrollLeft Then dlgL = document.body.scrollLeft
+            If dlgL > maxL Then dlgL = maxL
+            If dlgT < document.body.scrollTop Then dlgT = document.body.scrollTop
+            If dlgT > maxT Then dlgT = maxT
+        Else
+            dlgL = Int((vw - dw) / 2) + document.body.scrollLeft
+            dlgT = Int((vh - dh) / 2) + document.body.scrollTop
+        End If
+        objDialog.style.pixelLeft = dlgL
+        objDialog.style.pixelTop = dlgT
+    End Sub
+    ' 按住标题栏拖动历史弹窗（标题栏按钮除外）：位置限制在工具箱窗口可视范围内
+    Sub StartPetHistMove
+        Dim objDialog
+        If UCase(window.event.srcElement.tagName) = "BUTTON" Then Exit Sub
+        Set objDialog = document.getElementById("petHistDialog")
+        petHistDragStartX = window.event.clientX
+        petHistDragStartY = window.event.clientY
+        petHistDragStartL = objDialog.offsetLeft
+        petHistDragStartT = objDialog.offsetTop
+        petHistMoveOn = True
+        document.getElementById("petHistDragMask").style.pixelWidth = objDialog.offsetWidth
+        document.getElementById("petHistDragMask").style.pixelHeight = objDialog.offsetHeight
+        document.getElementById("petHistDragMask").style.cursor = "move"
+        document.getElementById("petHistDragMask").style.display = "block"
+        document.onmousemove = GetRef("DoPetHistMove")
+        document.onmouseup = GetRef("StopPetHistMove")
+        document.body.style.cursor = "move"
+        On Error Resume Next
+        document.getElementById("petHistDragMask").setCapture
+        On Error GoTo 0
+        window.event.returnValue = False
+    End Sub
+    Sub DoPetHistMove
+        Dim objDialog, vw, vh, minL, minT, maxL, maxT, nleft, ntop
+        If Not petHistMoveOn Then Exit Sub
+        Set objDialog = document.getElementById("petHistDialog")
+        vw = document.body.clientWidth
+        vh = document.body.clientHeight
+        minL = document.body.scrollLeft
+        minT = document.body.scrollTop
+        maxL = minL + vw - objDialog.offsetWidth
+        maxT = minT + vh - objDialog.offsetHeight
+        If maxL < minL Then maxL = minL
+        If maxT < minT Then maxT = minT
+        nleft = petHistDragStartL + window.event.clientX - petHistDragStartX
+        ntop = petHistDragStartT + window.event.clientY - petHistDragStartY
+        If nleft < minL Then nleft = minL
+        If nleft > maxL Then nleft = maxL
+        If ntop < minT Then ntop = minT
+        If ntop > maxT Then ntop = maxT
+        objDialog.style.pixelLeft = nleft
+        objDialog.style.pixelTop = ntop
+    End Sub
+    Sub StopPetHistMove
+        If Not petHistMoveOn Then Exit Sub
+        petHistMoveOn = False
+        petHistUserL = document.getElementById("petHistDialog").style.pixelLeft
+        petHistUserT = document.getElementById("petHistDialog").style.pixelTop
+        FinishPetHistDrag
+    End Sub
+    ' 开始拖拽右下角手柄：拖动中实时调整弹窗尺寸（420x320 ~ 当前视口），正文高度随之重算
+    Sub StartPetHistResize
+        Dim objDialog
+        Set objDialog = document.getElementById("petHistDialog")
+        petHistDragStartX = window.event.clientX
+        petHistDragStartY = window.event.clientY
+        petHistDragStartW = objDialog.offsetWidth
+        petHistDragStartH = objDialog.offsetHeight
+        petHistResizeOn = True
+        document.getElementById("petHistDragMask").style.pixelWidth = petHistDragStartW
+        document.getElementById("petHistDragMask").style.pixelHeight = petHistDragStartH
+        document.getElementById("petHistDragMask").style.cursor = "se-resize"
+        document.getElementById("petHistDragMask").style.display = "block"
+        document.onmousemove = GetRef("DoPetHistResize")
+        document.onmouseup = GetRef("StopPetHistResize")
+        document.body.style.cursor = "se-resize"
+        On Error Resume Next
+        document.getElementById("petHistDragMask").setCapture
+        On Error GoTo 0
+        window.event.returnValue = False
+    End Sub
+    Sub DoPetHistResize
+        Dim vw, vh, nw, nh, objDialog, objBody
+        If Not petHistResizeOn Then Exit Sub
+        Set objDialog = document.getElementById("petHistDialog")
+        Set objBody = document.getElementById("petHistBody")
+        vw = document.body.clientWidth
+        vh = document.body.clientHeight
+        nw = petHistDragStartW + window.event.clientX - petHistDragStartX
+        nh = petHistDragStartH + window.event.clientY - petHistDragStartY
+        If nw < 420 Then nw = 420
+        If nh < 320 Then nh = 320
+        If nw > vw Then nw = vw
+        If nh > vh Then nh = vh
+        petHistUserW = nw
+        petHistUserH = nh
+        objDialog.style.pixelWidth = nw
+        objDialog.style.pixelHeight = nh
+        If nh - 96 < 120 Then
+            objBody.style.height = "120px"
+        Else
+            objBody.style.height = (nh - 96) & "px"
+        End If
+        document.getElementById("petHistDragMask").style.pixelWidth = nw
+        document.getElementById("petHistDragMask").style.pixelHeight = nh
+    End Sub
+    Sub StopPetHistResize
+        If Not petHistResizeOn Then Exit Sub
+        petHistResizeOn = False
+        FinishPetHistDrag
+    End Sub
+    Sub FinishPetHistDrag
+        Dim objMask
+        Set objMask = document.getElementById("petHistDragMask")
+        If Not objMask Is Nothing Then
+            objMask.style.display = "none"
+            On Error Resume Next
+            objMask.releaseCapture
+            On Error GoTo 0
+        End If
+        Set document.onmousemove = Nothing
+        Set document.onmouseup = Nothing
+        document.body.style.cursor = ""
+        petHistMoveOn = False
+        petHistResizeOn = False
+    End Sub
+    ' 双击手柄恢复默认自适应大小并重新居中
+    Sub ResetPetHistDlgSize
+        petHistUserW = 0
+        petHistUserH = 0
+        petHistUserL = -1
+        petHistUserT = -1
+        If Not petHistResizeOn Then PositionPetHistDlg
+    End Sub
+    ' 回填：把历史里选中的这一天当作本轮起点。可以 5 个号一起回填，也可以只回填某一个号；
+    ' 之后点 + / - 继续累加。回填本身不写历史（否则会把旧数据当成今天的新记录），结束本轮时才落一条。
+    Sub PetHistBackfill
+        PetHistBackfillAsk -1
+    End Sub
+    Sub PetHistBackfillChar(character)
+        PetHistBackfillAsk CLng(character)
+    End Sub
+    ' 回填确认：character = -1 表示 5 个号一起，>=0 表示只回填这一号
+    Sub PetHistBackfillAsk(ByVal character)
+        Dim strDate, lngCnt, dblCost, strAsk, result, strTarget, strScope, blnFound, record
+        If petHistSelectedDate = "" Then Exit Sub
+        strDate = petHistSelectedDate
+        If petHistData Is Nothing Then Exit Sub
+        If Not petHistData.Exists(strDate) Then Exit Sub
+        character = CLng(character)
+        blnFound = (character < 0)
+        If character >= 0 Then
+            For Each record In petHistData(strDate)
+                If CLng(record("c")) = character Then blnFound = True
+            Next
+            If Not blnFound Then
+                MsgBox strDate & " 没有 " & PetCharName(character) & " 的记录，没法单独回填这一号。", vbInformation, "回填历史记录"
+                Exit Sub
+            End If
+            strTarget = PetCharName(character)
+            strScope = "只把 " & strTarget & " 的次数、累计成本与逐笔明细还原到计算区，其他号不动。"
+        Else
+            strTarget = "5 个号"
+            strScope = "5 个号各自的次数、累计成本与逐笔明细一起还原。"
+        End If
+        If petRunId <> "" Then
+            PetRunTotals lngCnt, dblCost
+            If character >= 0 Then
+                strAsk = "当前有一轮进行中（" & PetShortDate(petRunStart) & " 开始 · 第 " & PetRunDayNo() & " 天），回填会把 " & strTarget & " 现在的进度换成 " & strDate & " 的，其他号接着算。"
+            Else
+                strAsk = "当前有一轮进行中（" & PetShortDate(petRunStart) & " 开始 · 第 " & PetRunDayNo() & " 天 · 合计 " & lngCnt & " 次 / " & PetFmtCost(dblCost) & " 万梦幻币），回填会把它整个替换掉。"
+            End If
+        Else
+            strAsk = "当前没有进行中的一轮，回填后以 " & strDate & " 为起点接着算。"
+        End If
+        strAsk = "将把 " & strDate & " 的历史记录回填到成本计算区：" & strScope & vbCrLf & vbCrLf & strAsk & vbCrLf & "已保存的历史记录不会改动，也不会把它写成今天的记录。" & vbCrLf
+        If character >= 0 Then
+            strAsk = strAsk & "注意：如果今天这一号已经记过记录，回填会把这一号的数字替换成 " & strDate & " 的。"
+        Else
+            strAsk = strAsk & "注意：如果今天已经记过记录，回填会把计算区整体替换成 " & strDate & " 的数据。"
+        End If
+        strAsk = strAsk & vbCrLf & vbCrLf & "是否继续？"
+        If MsgBox(strAsk, vbYesNo + vbQuestion, "回填历史记录") <> vbYes Then Exit Sub
+        Set result = PetHistBackfillCore(strDate, character)
+        If result("status") <> "ok" Then
+            MsgBox "回填失败：" & result("error"), vbExclamation, "回填历史记录"
+            Exit Sub
+        End If
+        RefreshPetSession
+        PetRefreshRunBar
+        ClosePetHist
+        MsgBox "已把 " & strDate & " 的 " & strTarget & " 记录回填到计算区，可以点 + / - 接着记。" & vbCrLf & "跑完点「结束本轮」或「结束当前号」，这一轮会写成 " & PetTodayStr & " 的历史记录。", vbInformation, "回填完成"
+    End Sub
+    ' 回填核心：把某天的历史还原进 1 个号的次数、成本栈与明细（撤销仍可用）；character = -1 时是全 5 个号。
+    ' 回填不是新记录，所以不写历史，只落本轮进度文件；失败返回 PetResult("error")。
+    Function PetHistBackfillCore(ByVal strDate, ByVal character)
+        ' 每个任务一条成本栈；VBScript 的 Dim 只认整型常数，所以用 ReDim 按 PET_TASK_COUNT 开
+        Dim records, record, c, n, t, m, strDet, arrCnt, arrDet, arrItem, strStack(), blnFound, lngFrom, lngTo
+        ReDim strStack(PET_TASK_COUNT - 1)
+        character = CLng(character)
+        Set PetHistBackfillCore = PetResult("error", Nothing, "", "没有找到 " & strDate & " 的历史记录。")
+        If petHistData Is Nothing Then Exit Function
+        If Not petHistData.Exists(strDate) Then Exit Function
+        records = petHistData(strDate)
+        If character >= 0 Then
+            lngFrom = character
+            lngTo = character
+        Else
+            lngFrom = 0
+            lngTo = PET_CHAR_COUNT - 1
+            For c = 0 To PET_CHAR_COUNT - 1
+                PetResetChar c
+            Next
+        End If
+        blnFound = False
+        For n = 0 To UBound(records)
+            Set record = records(n)
+            c = CLng(record("c"))
+            If c >= lngFrom And c <= lngTo Then
+                blnFound = True
+                If character >= 0 Then PetResetChar c
+                arrCnt = record("counts")
+                arrDet = record("details")
+                For t = 0 To PET_TASK_COUNT - 1
+                    If arrCnt(t) > 0 Then petCounts(c, t) = CLng(arrCnt(t))
+                    strStack(t) = ""
+                Next
+                ' 明细是“任务序号:成本”的录入顺序串：既还原明细列表（- 撤销用），也按任务重建成本栈
+                strDet = ""
+                For m = 0 To UBound(arrDet)
+                    arrItem = arrDet(m)
+                    t = CLng(arrItem(0))
+                    If strStack(t) = "" Then
+                        strStack(t) = PetFmtCostPlain(arrItem(1))
+                    Else
+                        strStack(t) = strStack(t) & "," & PetFmtCostPlain(arrItem(1))
+                    End If
+                    If strDet <> "" Then strDet = strDet & ","
+                    strDet = strDet & t & ":" & PetFmtCostPlain(arrItem(1))
+                Next
+                For t = 0 To PET_TASK_COUNT - 1
+                    petCostHist(c, t) = strStack(t)
+                Next
+                petDetailList(c) = strDet
+                petCostTotal(c) = CDbl(record("total"))
+            End If
+        Next
+        If Not blnFound Then
+            Set PetHistBackfillCore = PetResult("error", Nothing, "", strDate & " 没有可回填的记录。")
+            Exit Function
+        End If
+        ' 回填后这一号要接着算：解除“今天已结束”标记（全量回填就把全部标记解除）
+        If character >= 0 Then
+            PetClearFrozen character
+        Else
+            PetClearAllFrozen
+        End If
+        ' 本轮从这一天起算（状态条的天数按日历日算）；已有的一轮保留原起点中更早的那个
+        If petRunId = "" Then
+            petRunId = "R" & Replace(strDate, "-", "")
+            petRunStart = strDate
+            petRunDays = strDate
+        ElseIf petRunStart = "" Or strDate < petRunStart Then
+            petRunStart = strDate
+        End If
+        PetRunTouch
+        PetSaveRun
+        Set PetHistBackfillCore = PetResult("ok", records, "", "")
+    End Function
     ' 删除仅处理已保存快照，不改当前计数和成本；空日期仅由全部清空入口传入。
     Sub PetDeleteHistDay
         If petHistSelectedDate <> "" Then PetRemoveHistory petHistSelectedDate
@@ -3728,12 +4720,16 @@
     Sub Window_OnResize
         PinTopButtons
         If sqCurrentIdx >= 0 Then PositionSqDialog
+        ' 历史弹窗开着时跟着主窗口重新算尺寸与位置（与攻略弹窗同规则）
+        If document.getElementById("petHistDialog").style.display = "block" Then PositionPetHistDlg
         ' 窗口宽度变化后按新宽度重画捉鬼地图（折叠中会自动跳过）
         If gGhostLastMap <> "" Then RenderGhostMap gGhostLastMap, gGhostLastX, gGhostLastY, gGhostLastHalf
     End Sub
     Sub Window_OnBlur
         If sqResizeOn Then StopSqResize
         If sqMoveOn Then StopSqMove
+        If petHistMoveOn Then StopPetHistMove
+        If petHistResizeOn Then StopPetHistResize
     End Sub
     ' 实时识别期间切回工具箱：识别的渲染发生在游戏处于前台时（用户看不到滚动），
     ' 这里兜底再定位一次——答案卡已被滚出视野就带回顶部，省得每次手动往上滚
@@ -6137,6 +7133,10 @@
         GhostMonLoadConfig
         GhostMonRefreshStatus
         OcrRefreshTiku
+        ' 宠环：把上次没结束的那一轮读回来（跨天续跑），再按读回的数据重画计数与本轮状态条
+        PetLoadRun
+        RefreshPetSession
+        PetRefreshRunBar
         ' 环境自检在后台跑（大约 1~2s），结果写进答题区状态行，缺东西才弹提示
         EnvCheckRun
         ' 版本号只读本地 CHANGELOG.md，不联网；点“检查更新”才会去比对远程版本
@@ -6284,8 +7284,11 @@ function OcrUrlEncodeJs(s) { return encodeURIComponent(String(s)); }
                 <tr><td class="lv">上交非变异召唤兽</td><td class="num">-15</td><td class="pet-cnt"><button class="pet-cnt-btn pet-undo-btn" onclick="PetSub 12">-</button> <span id="petCnt12">0</span> <button class="pet-cnt-btn" onclick="PetAdd 12">+</button></td><td class="lv"></td><td class="num"></td><td class="pet-cnt"></td></tr>
             </table>
             <div class="pet-cost-summary"><span class="pet-cost-total">当前号成本：<b id="petTotalCost">0</b> 万梦幻币</span><span class="pet-cost-total">全部号合计：<b id="petAllCost">0</b> 万梦幻币</span></div>
+            <div class="pet-run-bar" id="petRunBar">本轮：未开始</div>
             <div class="pet-action-bar">
                 <button onclick="PetSaveHistory">保存当天记录</button>
+                <button class="pet-secondary-btn" onclick="PetEndRun">结束本轮</button>
+                <button class="pet-secondary-btn" onclick="PetEndCharCurrent">结束当前号</button>
                 <button class="pet-secondary-btn" id="btnPetTools" aria-expanded="false" aria-controls="petToolsSection" onclick="TogglePetTools">更多操作 <span id="petToolsToggleHint">▼ 展开</span></button>
             </div>
             <div class="pet-tools" id="petToolsSection" style="display: none;">
@@ -6305,7 +7308,7 @@ function OcrUrlEncodeJs(s) { return encodeURIComponent(String(s)); }
             <div id="petDetailSection" style="display: none;"></div>
             <div style="cursor: pointer; margin-top: 8px;" onclick="TogglePetHist"><label style="width: auto; text-align: left;">📅 历史记录查询：</label><span class="sq-toggle" id="petHistToggleHint">▼ 展开</span><span class="tip">按日历查看每天保存的成本记录</span></div>
             <div id="petHistSection" style="display: none;"></div>
-            <div class="pet-note">★点击 “+” 记录一次任务，成本可不填（按 0 计入），取消则不计数。需要改错时，在“更多操作”中勾选“显示撤销按钮”，再点对应任务的 “-” 撤销最近一笔并扣回成本。<br>★1~5 号独立计数；每次 + / - / 清零都会自动保存当天记录（关窗也不会丢），“保存当天记录”保存全部号（平时不用点，存失败时用来重试），“更多操作”中的“清零当前号”不影响其他号。</div>
+            <div class="pet-note">★点 “+” 记一次任务，成本可以不填（按 0 算），取消不算数。记错了就在“更多操作”里勾“显示撤销按钮”，再点对应任务的 “-” 撤掉最近一笔，成本也一起扣回去。<br>★一轮跑不完没关系：次数和成本会自动存在 data\pet_run.txt 里，第二天（隔两三天也行）打开会接着算，上面那行写着本轮第几天、一共多少；跑完点“结束本轮”，程序先把还在记的号写进今天的历史记录、再清零，下次点 + 就是新的一轮。<br>★只想收其中一个号？切到那个号点“结束本轮”旁边的“结束当前号”，它今天的记录就落好了，其他号照常接着记；已经单独结束的号再点“结束本轮”也不会重记一遍。<br>★以前哪一轮跑到一半没接上（换了电脑、文件丢了、点过清零）？打开“历史记录查询”点开那一天：想把 5 个号一起搬回来就点底下「回填全部号」；只补其中一个号，就点那个号右边的「回填此号」，别的号不动。回填只是把数字搬进计算区，那一天的历史一个字都不动，也不会顺手记成今天的记录。<br>★今天既存过“当天记录”、又回填了旧记录，算谁的？今天这一行永远等于计算区现在的样子——每点一次 + / -、点“保存当天记录”、点“结束本轮”，都会把今天整行重写，不会往上叠加。先记今天再回填：计算区整个换成旧那天的，今天之前记的那点东西会被顶掉，之后再保存或结束，今天这行就变成回填来的数字；先回填再记今天：计算区是“旧那天 + 今天新记的”，保存或结束本轮会整笔写进今天，旧那天照样原封不动。只回填一个号时只换那个号，其他号今天的数字不受影响。两边都想留，就回填前先把今天的记录导出（或者自己抄一下）。历史里看到两天数字差不多也别奇怪：一天是当时的原样，一天是这一轮的总账。<br>★1~5 号各算各的；每次 + / - 都会自动存一遍“当天记录”和本轮进度（关窗也不丢），“保存当天记录”是把 5 个号再整体存一遍（平时不用点，存失败时拿来重试），“清零当前号”只清当前号、不动别的号；已经单独结束的号今天那条记录不会因为清零消失（要重跑直接点 +）。同一天一个号只留一条记录，再记就会覆盖它今天那条。</div>
             <div class="pet-note">★上交烹饪、三药品质不满足要求，会扣除一定任务积分，修炼经验/修炼点不受影响<br>★烹饪三药扣分规则：（应交品质-实际品质）/2，积分向下取整<br>★实际积分：（应交品质-实际品质）/2+2，积分向下取整<br>例如需上交63品质的珍露酒，实际上交58品质的，相差5品，扣除2分加上本身应得2分（上交三级药/烹饪获得2分），实际不扣分（即-2分+2分）</div>
             <div class="pet-block-title" style="cursor: pointer;" onclick="TogglePetReward">【召唤兽修炼任务积分奖励】<span class="sq-toggle" id="petRewardToggleHint">▼ 展开</span></div>
             <div id="petRewardSection" style="display: none;">
@@ -6449,9 +7452,11 @@ function OcrUrlEncodeJs(s) { return encodeURIComponent(String(s)); }
     </div>
     <div id="petHistOverlay" onclick="ClosePetHist"></div>
     <div id="petHistDialog">
-        <div id="petHistTitle"></div>
+        <div class="sq-dialog-head pet-hist-head" onmousedown="StartPetHistMove" title="按住可拖动弹窗"><span id="petHistTitle"></span></div>
         <div id="petHistBody"></div>
-        <div class="pet-cost-btns"><button class="pet-hist-delete" onclick="PetDeleteHistDay">删除该日记录</button><button class="sq-dialog-btn" onclick="ClosePetHist">✕ 关闭</button></div>
+        <div class="pet-cost-btns pet-hist-btns"><button class="pet-hist-delete" onclick="PetDeleteHistDay">删除该日记录</button><button class="sq-dialog-btn" onclick="PetHistBackfill">回填全部号</button><button class="sq-dialog-btn" onclick="ClosePetHist">✕ 关闭</button></div>
+        <div id="petHistDragMask"></div>
+        <div class="sq-resize-handle" onmousedown="StartPetHistResize" ondblclick="ResetPetHistDlgSize" title="拖动可自由调整弹窗大小（双击恢复默认）"><span class="sq-rh-1"></span><span class="sq-rh-2"></span><span class="sq-rh-3"></span></div>
     </div>
     <div id="petIoOverlay" onclick="PetIoClose"></div>
     <div id="petIoDialog">

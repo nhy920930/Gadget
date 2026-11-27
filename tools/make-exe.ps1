@@ -171,9 +171,13 @@ internal static class Program
     private static int Main(string[] args)
     {
         bool extractOnly = false;
+        // verify-release.ps1 uses this mode: unpack next to the exe and exit without starting mshta,
+        // so a packaging run can prove the payload is complete without popping the toolbox window.
+        bool unpackOnly = false;
         for (int i = 0; i < args.Length; i++)
         {
             if (string.Compare(args[i], "--extract", true) == 0) { extractOnly = true; }
+            if (string.Compare(args[i], "--unpack-only", true) == 0) { unpackOnly = true; }
         }
 
         try { texts = LoadTexts(); }
@@ -206,6 +210,8 @@ internal static class Program
             Info(string.Format(T("info_extracted"), work));
             return 0;
         }
+
+        if (unpackOnly) { return 0; }
 
         try
         {
